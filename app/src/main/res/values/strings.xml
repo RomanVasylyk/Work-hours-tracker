@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Трекер робочого часу</string>
+    <string name="add_job">Додати роботу</string>
+    <string name="add_entry">Додати/Редагувати запис</string>
+    <string name="hours_worked_month">Відпрацьовано годин за місяць: %1$d</string>
+    <string name="days_worked_month">Відпрацьовано днів за місяць: %1$d</string>
+    <string name="hours_worked_format">Відпрацьовано годин: %1$.1f</string>
+    <string name="days_worked_format">Відпрацьовано днів: %1$d</string>
+    <string name="select_date">Виберіть дату</string>
+    <string name="worked_hours">Відпрацьовано годин</string>
+    <string name="break_hours">Години перерви</string>
+    <string name="shift_type">Тип зміни</string>
+    <string name="holiday">Святковий день</string>
+    <string name="save">Зберегти</string>
+    <string name="share">Поділитися</string>
+    <string name="export">Експорт </string>
+    <string name="morning_shifts_format">Ранкових змін: %1$d</string>
+    <string name="day_shifts_format">Денних змін: %1$d</string>
+    <string name="night_shifts_format">Нічних змін: %1$d</string>
+    <string name="saturday_days_format">Субот: %1$d</string>
+    <string name="sunday_days_format">Неділя: %1$d</string>
+    <string name="duplicate_entry">Запис за цю дату існує. Дані завантажено для редагування.</string>
+
+    <string-array name="months">
+        <item>Січень</item>
+        <item>Лютий</item>
+        <item>Березень</item>
+        <item>Квітень</item>
+        <item>Травень</item>
+        <item>Червень</item>
+        <item>Липень</item>
+        <item>Серпень</item>
+        <item>Вересень</item>
+        <item>Жовтень</item>
+        <item>Листопад</item>
+        <item>Грудень</item>
+    </string-array>
+
+    <string-array name="shift_types">
+        <item>Ранкова</item>
+        <item>Денна</item>
+        <item>Нічна</item>
+    </string-array>
+
+    <string-array name="years">
+        <item>2020</item>
+        <item>2021</item>
+        <item>2022</item>
+        <item>2023</item>
+        <item>2024</item>
+        <item>2025</item>
+        <item>2026</item>
+        <item>2027</item>
+        <item>2028</item>
+        <item>2029</item>
+        <item>2030</item>
+    </string-array>
+</resources>

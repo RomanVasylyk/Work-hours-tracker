@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/jobListFragment">
+
+    <fragment
+        android:id="@+id/jobListFragment"
+        android:name="com.example.worktr.ui.JobListFragment"
+        android:label="Job List">
+        <action
+            android:id="@+id/action_jobListFragment_to_jobDetailFragment"
+            app:destination="@id/jobDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/jobDetailFragment"
+        android:name="com.example.worktr.ui.JobDetailFragment"
+        android:label="Job Detail">
+        <argument
+            android:name="jobId"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_jobDetailFragment_to_addEntryFragment"
+            app:destination="@id/addEntryFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addEntryFragment"
+        android:name="com.example.worktr.ui.AddEntryFragment"
+        android:label="Add Entry">
+        <argument
+            android:name="jobId"
+            app:argType="integer" />
+    </fragment>
+
+</navigation>

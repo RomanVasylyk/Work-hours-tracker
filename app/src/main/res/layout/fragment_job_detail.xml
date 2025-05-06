@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="16dp"
+    tools:context=".ui.JobDetailFragment">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:padding="16dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/textJobName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/TextAppearance.Material3.TitleLarge"
+                        tools:text="Назва роботи" />
+
+                    <Spinner
+                        android:id="@+id/spinnerYear"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:entries="@array/years"
+                        app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+
+                    <Spinner
+                        android:id="@+id/spinnerMonth"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:entries="@array/months"
+                        app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+
+                    <TextView
+                        android:id="@+id/textMonth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        tools:text="Травень 2025" />
+
+                    <TextView
+                        android:id="@+id/textHours"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Годин: 160" />
+
+                    <TextView
+                        android:id="@+id/textDays"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Днів: 20" />
+
+                    <TextView
+                        android:id="@+id/textMorning"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Ранкових: 5" />
+
+                    <TextView
+                        android:id="@+id/textDay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Денних: 10" />
+
+                    <TextView
+                        android:id="@+id/textNight"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Нічних: 5" />
+
+                    <TextView
+                        android:id="@+id/textSaturday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Субот: 3" />
+
+                    <TextView
+                        android:id="@+id/textSunday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Неділя: 2" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddEntry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/add_entry"
+                app:cornerRadius="16dp" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+</ScrollView>
