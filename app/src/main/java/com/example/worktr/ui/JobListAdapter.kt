@@ -11,11 +11,13 @@ import com.example.worktr.R
 import com.example.worktr.data.Job
 
 class JobListAdapter(
-    private val onClick: (Job) -> Unit
+    private val onClick: (Job) -> Unit,
+    private val onLongClick: (Job) -> Unit
 ) : ListAdapter<Job, JobListAdapter.JobViewHolder>(JobDiff) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_job, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_job, parent, false)
         return JobViewHolder(view)
     }
 
@@ -28,11 +30,12 @@ class JobListAdapter(
         fun bind(job: Job) {
             nameText.text = job.name
             itemView.setOnClickListener { onClick(job) }
+            itemView.setOnLongClickListener { onLongClick(job); true }
         }
     }
 
     object JobDiff : DiffUtil.ItemCallback<Job>() {
-        override fun areItemsTheSame(oldItem: Job, newItem: Job): Boolean = oldItem.jobId == newItem.jobId
-        override fun areContentsTheSame(oldItem: Job, newItem: Job): Boolean = oldItem == newItem
+        override fun areItemsTheSame(oldItem: Job, newItem: Job) = oldItem.jobId == newItem.jobId
+        override fun areContentsTheSame(oldItem: Job, newItem: Job) = oldItem == newItem
     }
 }

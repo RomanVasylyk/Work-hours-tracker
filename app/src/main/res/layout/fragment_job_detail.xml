@@ -105,6 +105,14 @@
                         tools:text="Нічних: 5" />
 
                     <TextView
+                        android:id="@+id/textHolidays"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        tools:text="Святкових днів: 2" />
+
+                    <TextView
                         android:id="@+id/textSaturday"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

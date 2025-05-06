@@ -98,6 +98,8 @@ class JobDetailFragment : Fragment() {
                 var day = 0
                 var night = 0
                 val dates = mutableSetOf<LocalDate>()
+                var holidays = 0
+                val holidayDates = mutableSetOf<LocalDate>()
                 var saturdays = 0
                 var sundays = 0
 
@@ -120,6 +122,9 @@ class JobDetailFragment : Fragment() {
                             else -> {}
                         }
                     }
+                    if (it.isHoliday && holidayDates.add(date)) {
+                        holidays++
+                    }
                 }
 
                 binding.textMonth.text =
@@ -134,6 +139,8 @@ class JobDetailFragment : Fragment() {
                     getString(R.string.day_shifts_format, day)
                 binding.textNight.text =
                     getString(R.string.night_shifts_format, night)
+                binding.textHolidays.text =
+                    getString(R.string.holiday_days_format, holidays)
                 binding.textSaturday.text =
                     getString(R.string.saturday_days_format, saturdays)
                 binding.textSunday.text =

@@ -41,6 +41,7 @@ class AddEntryFragment : Fragment() {
 
         binding.buttonSelectDate.setOnClickListener { showDatePicker() }
         binding.buttonSaveEntry.setOnClickListener { saveEntry() }
+        binding.buttonDeleteEntry.setOnClickListener { deleteEntry() }
     }
 
     private fun showDatePicker() {
@@ -68,11 +69,13 @@ class AddEntryFragment : Fragment() {
                 val index = resources.getStringArray(R.array.shift_types).indexOf(entry.shiftType)
                 if (index >= 0) binding.spinnerShift.setSelection(index)
                 binding.checkHoliday.isChecked = entry.isHoliday
+                binding.buttonDeleteEntry.visibility = View.VISIBLE
             } else {
                 binding.inputHours.text = null
                 binding.inputBreak.text = null
                 binding.spinnerShift.setSelection(0)
                 binding.checkHoliday.isChecked = false
+                binding.buttonDeleteEntry.visibility = View.GONE
             }
         }
     }
@@ -101,6 +104,13 @@ class AddEntryFragment : Fragment() {
 
         if (currentEntry == null) viewModel.insert(entry) else viewModel.update(entry)
         findNavController().popBackStack()
+    }
+
+    private fun deleteEntry() {
+        currentEntry?.let {
+            viewModel.delete(it)
+            findNavController().popBackStack()
+        }
     }
 
     override fun onDestroyView() {

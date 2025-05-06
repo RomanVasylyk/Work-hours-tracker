@@ -21,6 +21,10 @@
     <string name="saturday_days_format">Субот: %1$d</string>
     <string name="sunday_days_format">Неділя: %1$d</string>
     <string name="duplicate_entry">Запис за цю дату існує. Дані завантажено для редагування.</string>
+    <string name="holiday_days_format">Святкових днів: %1$d</string>
+    <string name="edit_job">Редагувати роботу</string>
+    <string name="delete_job">Видалити роботу</string>
+    <string name="delete_entry">Видалити запис</string>
 
     <string-array name="months">
         <item>Січень</item>

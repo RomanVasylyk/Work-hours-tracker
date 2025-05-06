@@ -109,5 +109,15 @@
             android:text="@string/save"
             app:cornerRadius="16dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonDeleteEntry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/delete_entry"
+            app:cornerRadius="16dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:buttonStyle="@style/Widget.Material3.Button.OutlinedButton"/>
+
     </LinearLayout>
 </ScrollView>
