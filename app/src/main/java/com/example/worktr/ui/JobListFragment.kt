@@ -14,6 +14,8 @@ import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.Job
 import com.example.worktr.data.JobRepository
 import com.example.worktr.databinding.FragmentJobListBinding
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 
 class JobListFragment : Fragment() {
     private var _binding: FragmentJobListBinding? = null
@@ -52,34 +54,59 @@ class JobListFragment : Fragment() {
     }
 
     private fun showJobOptions(job: Job) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_edit_job, null)
-        val editName = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editJobName)
-        val btnSave = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonSave)
-        val btnDelete = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonDelete)
-        editName.setText(job.name)
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-            .setView(dialogView)
-            .create()
-        btnSave.setOnClickListener {
-            val newName = editName.text.toString().trim()
-            if (newName.isNotEmpty()) viewModel.update(job.copy(name = newName))
-            dialog.dismiss()
+        val v = layoutInflater.inflate(R.layout.dialog_edit_job, null)
+        val name = v.findViewById<TextInputEditText>(R.id.editJobName)
+        val hourly = v.findViewById<TextInputEditText>(R.id.editHourly)
+        val night = v.findViewById<TextInputEditText>(R.id.editNight)
+        val sat = v.findViewById<TextInputEditText>(R.id.editSat)
+        val sun = v.findViewById<TextInputEditText>(R.id.editSun)
+        val hol = v.findViewById<TextInputEditText>(R.id.editHol)
+        name.setText(job.name)
+        hourly.setText(job.hourlyRate.toString())
+        night.setText(job.nightBonus.toString())
+        sat.setText(job.saturdayBonus.toString())
+        sun.setText(job.sundayBonus.toString())
+        hol.setText(job.holidayBonus.toString())
+        val dlg = MaterialAlertDialogBuilder(requireContext()).setView(v).create()
+        v.findViewById<MaterialButton>(R.id.buttonSave).setOnClickListener {
+            val updated = job.copy(
+                name = name.text.toString().trim(),
+                hourlyRate = hourly.text.toString().toDoubleOrNull() ?: 0.0,
+                nightBonus = night.text.toString().toDoubleOrNull() ?: 0.0,
+                saturdayBonus = sat.text.toString().toDoubleOrNull() ?: 0.0,
+                sundayBonus = sun.text.toString().toDoubleOrNull() ?: 0.0,
+                holidayBonus = hol.text.toString().toDoubleOrNull() ?: 0.0
+            )
+            viewModel.update(updated)
+            dlg.dismiss()
         }
-        btnDelete.setOnClickListener {
+        v.findViewById<MaterialButton>(R.id.buttonDelete).setOnClickListener {
             viewModel.delete(job)
-            dialog.dismiss()
+            dlg.dismiss()
         }
-        dialog.show()
+        dlg.show()
     }
 
     private fun showAddJobDialog() {
-        val input = EditText(requireContext())
+        val v = layoutInflater.inflate(R.layout.dialog_add_job, null)
+        val name = v.findViewById<TextInputEditText>(R.id.editJobName)
+        val hourly = v.findViewById<TextInputEditText>(R.id.editHourly)
+        val night = v.findViewById<TextInputEditText>(R.id.editNight)
+        val sat = v.findViewById<TextInputEditText>(R.id.editSat)
+        val sun = v.findViewById<TextInputEditText>(R.id.editSun)
+        val hol = v.findViewById<TextInputEditText>(R.id.editHol)
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.add_job))
-            .setView(input)
+            .setView(v)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                val name = input.text.toString().trim()
-                if (name.isNotEmpty()) viewModel.insert(Job(name = name))
+                val j = Job(
+                    name = name.text.toString().trim(),
+                    hourlyRate = hourly.text.toString().toDoubleOrNull() ?: 0.0,
+                    nightBonus = night.text.toString().toDoubleOrNull() ?: 0.0,
+                    saturdayBonus = sat.text.toString().toDoubleOrNull() ?: 0.0,
+                    sundayBonus = sun.text.toString().toDoubleOrNull() ?: 0.0,
+                    holidayBonus = hol.text.toString().toDoubleOrNull() ?: 0.0
+                )
+                if (j.name.isNotEmpty()) viewModel.insert(j)
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

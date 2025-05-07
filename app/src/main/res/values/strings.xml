@@ -18,13 +18,23 @@
     <string name="morning_shifts_format">Ранкових змін: %1$d</string>
     <string name="day_shifts_format">Денних змін: %1$d</string>
     <string name="night_shifts_format">Нічних змін: %1$d</string>
-    <string name="saturday_days_format">Субот: %1$d</string>
+    <string name="saturday_days_format">Субота: %1$d</string>
     <string name="sunday_days_format">Неділя: %1$d</string>
     <string name="duplicate_entry">Запис за цю дату існує. Дані завантажено для редагування.</string>
     <string name="holiday_days_format">Святкових днів: %1$d</string>
     <string name="edit_job">Редагувати роботу</string>
     <string name="delete_job">Видалити роботу</string>
     <string name="delete_entry">Видалити запис</string>
+    <string name="hourly_rate">Погодинна ставка</string>
+    <string name="night_bonus">Надбавка нічна</string>
+    <string name="sat_bonus">Надбавка субота</string>
+    <string name="sun_bonus">Надбавка неділя</string>
+    <string name="hol_bonus">Надбавка свято</string>
+    <string name="salary_format">Зарплата: %1$.2f</string>
+    <string name="night_bonus_total">Доплата нічні: %1$.2f</string>
+    <string name="saturday_bonus_total">Доплата субота: %1$.2f</string>
+    <string name="sunday_bonus_total">Доплата неділя: %1$.2f</string>
+    <string name="holiday_bonus_total">Доплата свята: %1$.2f</string>
 
     <string-array name="months">
         <item>Січень</item>

@@ -24,6 +24,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.DayOfWeek
+import java.time.Instant
 
 class JobDetailFragment : Fragment() {
     private var _binding: FragmentJobDetailBinding? = null
@@ -92,29 +93,31 @@ class JobDetailFragment : Fragment() {
         val end = ym.atEndOfMonth().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
 
         lifecycleScope.launch {
+            val job = viewModel.job.value ?: return@launch
             workRepository.getEntriesForPeriod(args.jobId, start, end).collectLatest { list ->
                 var hours = 0.0
                 var morning = 0
                 var day = 0
                 var night = 0
+                var salary = 0.0
                 val dates = mutableSetOf<LocalDate>()
-                var holidays = 0
                 val holidayDates = mutableSetOf<LocalDate>()
                 var saturdays = 0
                 var sundays = 0
-
+                var holidays = 0
+                var nightBonusSum = 0.0
+                var saturdayBonusSum = 0.0
+                var sundayBonusSum = 0.0
+                var holidayBonusSum = 0.0
                 list.forEach {
-                    hours += it.hoursWorked - it.breakHours
-
-                    val type = it.shiftType.lowercase()
-                    when {
-                        type in listOf("morning",  "ранкова") -> morning++
-                        type in listOf("day",      "денна")   -> day++
-                        type in listOf("night",    "нічна")   -> night++
+                    val h = it.hoursWorked - it.breakHours
+                    hours += h
+                    val date = Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate()
+                    when (it.shiftType.lowercase()) {
+                        "morning", "ранкова" -> morning++
+                        "day",     "денна"   -> day++
+                        "night",   "нічна"   -> night++
                     }
-
-                    val date = java.time.Instant.ofEpochMilli(it.date)
-                        .atZone(zone).toLocalDate()
                     if (dates.add(date)) {
                         when (date.dayOfWeek) {
                             DayOfWeek.SATURDAY -> saturdays++
@@ -122,8 +125,27 @@ class JobDetailFragment : Fragment() {
                             else -> {}
                         }
                     }
-                    if (it.isHoliday && holidayDates.add(date)) {
-                        holidays++
+                    if (it.isHoliday && holidayDates.add(date)) holidays++
+                    salary += h * job.hourlyRate
+                    if (it.shiftType.lowercase() in listOf("night", "нічна")) {
+                        val nb = h * job.nightBonus
+                        salary += nb
+                        nightBonusSum += nb
+                    }
+                    if (date.dayOfWeek == DayOfWeek.SATURDAY) {
+                        val sb = h * job.saturdayBonus
+                        salary += sb
+                        saturdayBonusSum += sb
+                    }
+                    if (date.dayOfWeek == DayOfWeek.SUNDAY) {
+                        val sb = h * job.sundayBonus
+                        salary += sb
+                        sundayBonusSum += sb
+                    }
+                    if (it.isHoliday) {
+                        val hb = h * job.holidayBonus
+                        salary += hb
+                        holidayBonusSum += hb
                     }
                 }
 
@@ -145,6 +167,16 @@ class JobDetailFragment : Fragment() {
                     getString(R.string.saturday_days_format, saturdays)
                 binding.textSunday.text =
                     getString(R.string.sunday_days_format, sundays)
+                binding.textSalary.text =
+                    getString(R.string.salary_format, salary)
+                binding.textNightBonus.text =
+                    getString(R.string.night_bonus_total, nightBonusSum)
+                binding.textSaturdayBonus.text =
+                    getString(R.string.saturday_bonus_total, saturdayBonusSum)
+                binding.textSundayBonus.text =
+                    getString(R.string.sunday_bonus_total, sundayBonusSum)
+                binding.textHolidayBonus.text =
+                    getString(R.string.holiday_bonus_total, holidayBonusSum)
             }
         }
     }

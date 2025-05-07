@@ -1,0 +1,77 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editJobName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/add_job"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editHourly"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/hourly_rate"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editNight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/night_bonus"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editSat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/sat_bonus"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editSun"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/sun_bonus"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editHol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/hol_bonus"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>
