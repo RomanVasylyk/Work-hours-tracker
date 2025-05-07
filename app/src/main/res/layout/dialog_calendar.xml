@@ -12,8 +12,9 @@
 
         <ImageButton
             android:id="@+id/buttonPrevMonth"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="12dp"
             android:src="@drawable/ic_arrow_left"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
@@ -27,8 +28,9 @@
 
         <ImageButton
             android:id="@+id/buttonNextMonth"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="12dp"
             android:src="@drawable/ic_arrow_right"
             android:background="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
@@ -52,4 +54,12 @@
         android:horizontalSpacing="4dp"
         android:verticalSpacing="4dp"
         android:stretchMode="columnWidth" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonBulkAdd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/add"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
 </LinearLayout>

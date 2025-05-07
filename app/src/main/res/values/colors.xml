@@ -19,4 +19,5 @@
     <color name="surface">#FFFBFE</color>
     <color name="onSurface">#1C1B1F</color>
     <color name="purple_200">#BB86FC</color>
+    <color name="teal_200">#4CAF50</color>
 </resources>

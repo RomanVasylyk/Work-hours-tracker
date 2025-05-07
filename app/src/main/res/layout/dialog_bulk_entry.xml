@@ -1,0 +1,48 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/inputHours"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/worked_hours"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/inputBreak"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/break_hours"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/shift_type"
+        style="@style/TextAppearance.Material3.BodyMedium" />
+    <Spinner
+        android:id="@+id/spinnerShift"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/shift_types"
+        android:text="@string/shift_type"
+        android:layout_marginTop="8dp" />
+
+    <CheckBox
+        android:id="@+id/checkHoliday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/holiday"
+        android:layout_marginTop="8dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonSaveBulk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/save"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

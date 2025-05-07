@@ -7,6 +7,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -17,6 +18,7 @@ import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.databinding.FragmentJobDetailBinding
 import com.example.worktr.util.ExcelExporter
+import com.example.worktr.viewmodel.JobDetailViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -48,45 +50,57 @@ class JobDetailFragment : Fragment() {
         val jobRepository = JobRepository(db.jobDao())
         workRepository = WorkEntryRepository(db.workEntryDao())
         viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return com.example.worktr.viewmodel.JobDetailViewModel(jobRepository, args.jobId) as T
-            }
-        })[com.example.worktr.viewmodel.JobDetailViewModel::class.java]
-        viewModel.job.observe(viewLifecycleOwner) { job -> binding.textJobName.text = job?.name ?: "" }
+            override fun <T : ViewModel> create(modelClass: Class<T>) =
+                JobDetailViewModel(jobRepository, args.jobId) as T
+        })[JobDetailViewModel::class.java]
 
-        val years = resources.getStringArray(R.array.years)
-        val yearsAdapter = ArrayAdapter.createFromResource(requireContext(), R.array.years, android.R.layout.simple_spinner_item).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        viewModel.job.observe(viewLifecycleOwner) { job ->
+            binding.textJobName.text = job?.name ?: ""
         }
-        binding.spinnerYear.adapter = yearsAdapter
-        val currentYear = LocalDate.now().year.toString()
-        val yearIndex = years.indexOf(currentYear)
-        if (yearIndex >= 0) binding.spinnerYear.setSelection(yearIndex)
 
-        val monthsAdapter = ArrayAdapter.createFromResource(requireContext(), R.array.months, android.R.layout.simple_spinner_item).also {
+        ArrayAdapter.createFromResource(
+            requireContext(), R.array.years, android.R.layout.simple_spinner_item
+        ).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.spinnerYear.adapter = it
         }
-        binding.spinnerMonth.adapter = monthsAdapter
+        binding.spinnerYear.setSelection(
+            resources.getStringArray(R.array.years)
+                .indexOf(LocalDate.now().year.toString())
+        )
+        ArrayAdapter.createFromResource(
+            requireContext(), R.array.months, android.R.layout.simple_spinner_item
+        ).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.spinnerMonth.adapter = it
+        }
         binding.spinnerMonth.setSelection(LocalDate.now().monthValue - 1)
 
-        val listener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                val month = binding.spinnerMonth.selectedItemPosition + 1
-                val year = binding.spinnerYear.selectedItem.toString().toInt()
-                loadStats(month, year)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+        val refreshStats: () -> Unit = {
+            val m = binding.spinnerMonth.selectedItemPosition + 1
+            val y = binding.spinnerYear.selectedItem.toString().toInt()
+            loadStats(m, y)
         }
-        binding.spinnerYear.onItemSelectedListener = listener
-        binding.spinnerMonth.onItemSelectedListener = listener
+
+        binding.spinnerYear.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>, v: View?, pos: Int, id: Long) = refreshStats()
+            override fun onNothingSelected(p: AdapterView<*>) {}
+        }
+        binding.spinnerMonth.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>, v: View?, pos: Int, id: Long) = refreshStats()
+            override fun onNothingSelected(p: AdapterView<*>) {}
+        }
 
         binding.buttonAddEntry.setOnClickListener {
-            findNavController().navigate(JobDetailFragmentDirections.actionJobDetailFragmentToAddEntryFragment(args.jobId))
+            findNavController().navigate(
+                JobDetailFragmentDirections
+                    .actionJobDetailFragmentToAddEntryFragment(args.jobId)
+            )
         }
         binding.buttonStats.setOnClickListener {
             findNavController().navigate(
-                JobDetailFragmentDirections.actionJobDetailFragmentToStatsFragment(args.jobId)
+                JobDetailFragmentDirections
+                    .actionJobDetailFragmentToStatsFragment(args.jobId)
             )
         }
     }
@@ -97,92 +111,63 @@ class JobDetailFragment : Fragment() {
         val start = ym.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
         val end = ym.atEndOfMonth().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
 
-        lifecycleScope.launch {
-            val job = viewModel.job.value ?: return@launch
-            workRepository.getEntriesForPeriod(args.jobId, start, end).collectLatest { list ->
-                var hours = 0.0
-                var morning = 0
-                var day = 0
-                var night = 0
-                var salary = 0.0
-                val dates = mutableSetOf<LocalDate>()
-                val holidayDates = mutableSetOf<LocalDate>()
-                var saturdays = 0
-                var sundays = 0
-                var holidays = 0
-                var nightBonusSum = 0.0
-                var saturdayBonusSum = 0.0
-                var sundayBonusSum = 0.0
-                var holidayBonusSum = 0.0
-                list.forEach {
-                    val h = it.hoursWorked - it.breakHours
-                    hours += h
-                    val date = Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate()
-                    when (it.shiftType.lowercase()) {
-                        "morning", "ранкова" -> morning++
-                        "day",     "денна"   -> day++
-                        "night",   "нічна"   -> night++
-                    }
-                    if (dates.add(date)) {
-                        when (date.dayOfWeek) {
-                            DayOfWeek.SATURDAY -> saturdays++
-                            DayOfWeek.SUNDAY   -> sundays++
-                            else -> {}
-                        }
-                    }
-                    if (it.isHoliday && holidayDates.add(date)) holidays++
-                    salary += h * job.hourlyRate
-                    if (it.shiftType.lowercase() in listOf("night", "нічна")) {
-                        val nb = h * job.nightBonus
-                        salary += nb
-                        nightBonusSum += nb
-                    }
-                    if (date.dayOfWeek == DayOfWeek.SATURDAY) {
-                        val sb = h * job.saturdayBonus
-                        salary += sb
-                        saturdayBonusSum += sb
-                    }
-                    if (date.dayOfWeek == DayOfWeek.SUNDAY) {
-                        val sb = h * job.sundayBonus
-                        salary += sb
-                        sundayBonusSum += sb
-                    }
-                    if (it.isHoliday) {
-                        val hb = h * job.holidayBonus
-                        salary += hb
-                        holidayBonusSum += hb
-                    }
-                }
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            workRepository.getEntriesForPeriod(args.jobId, start, end)
+                .collectLatest { list ->
+                    val job = viewModel.job.value ?: return@collectLatest
+                    var hours = 0.0
+                    var morning = 0; var dayCount = 0; var night = 0
+                    var salary = 0.0
+                    val dates = mutableSetOf<LocalDate>()
+                    var holidays = 0; var saturdays = 0; var sundays = 0
 
-                binding.textMonth.text =
-                    "${resources.getStringArray(R.array.months)[month - 1]} $year"
-                binding.textHours.text =
-                    getString(R.string.hours_worked_format, hours)
-                binding.textDays.text =
-                    getString(R.string.days_worked_format, dates.size)
-                binding.textMorning.text =
-                    getString(R.string.morning_shifts_format, morning)
-                binding.textDay.text =
-                    getString(R.string.day_shifts_format, day)
-                binding.textNight.text =
-                    getString(R.string.night_shifts_format, night)
-                binding.textHolidays.text =
-                    getString(R.string.holiday_days_format, holidays)
-                binding.textSaturday.text =
-                    getString(R.string.saturday_days_format, saturdays)
-                binding.textSunday.text =
-                    getString(R.string.sunday_days_format, sundays)
-                binding.textSalary.text =
-                    getString(R.string.salary_format, salary)
-                binding.textNightBonus.text =
-                    getString(R.string.night_bonus_total, nightBonusSum)
-                binding.textSaturdayBonus.text =
-                    getString(R.string.saturday_bonus_total, saturdayBonusSum)
-                binding.textSundayBonus.text =
-                    getString(R.string.sunday_bonus_total, sundayBonusSum)
-                binding.textHolidayBonus.text =
-                    getString(R.string.holiday_bonus_total, holidayBonusSum)
-            }
+                    list.forEach { entry ->
+                        val h = entry.hoursWorked - entry.breakHours
+                        hours += h
+                        when (entry.shiftType.lowercase()) {
+                            "ранкова","morning" -> morning++
+                            "денна","day"       -> dayCount++
+                            "нічна","night"     -> night++
+                        }
+                        val date = Instant.ofEpochMilli(entry.date).atZone(zone).toLocalDate()
+                        if (dates.add(date)) {
+                            if (date.dayOfWeek == DayOfWeek.SATURDAY) saturdays++
+                            if (date.dayOfWeek == DayOfWeek.SUNDAY)   sundays++
+                        }
+                        if (entry.isHoliday && dates.add(date)) holidays++
+
+                        salary += h * job.hourlyRate
+                        if (entry.shiftType.lowercase() in listOf("нічна","night"))
+                            salary += h * job.nightBonus
+                        if (date.dayOfWeek == DayOfWeek.SATURDAY)
+                            salary += h * job.saturdayBonus
+                        if (date.dayOfWeek == DayOfWeek.SUNDAY)
+                            salary += h * job.sundayBonus
+                        if (entry.isHoliday)
+                            salary += h * job.holidayBonus
+                    }
+
+                    binding.textMonth.text =
+                        "${resources.getStringArray(R.array.months)[month - 1]} $year"
+                    binding.textHours.text =
+                        getString(R.string.hours_worked_format, hours)
+                    binding.textDays.text =
+                        getString(R.string.days_worked_format, dates.size)
+                    binding.textMorning.text =
+                        getString(R.string.morning_shifts_format, morning)
+                    binding.textDay.text =
+                        getString(R.string.day_shifts_format, dayCount)
+                    binding.textNight.text =
+                        getString(R.string.night_shifts_format, night)
+                    binding.textHolidays.text =
+                        getString(R.string.holiday_days_format, holidays)
+                    binding.textSaturday.text =
+                        getString(R.string.saturday_days_format, saturdays)
+                    binding.textSunday.text =
+                        getString(R.string.sunday_days_format, sundays)
+                    binding.textSalary.text =
+                        getString(R.string.salary_format, salary)
+                }
         }
     }
 

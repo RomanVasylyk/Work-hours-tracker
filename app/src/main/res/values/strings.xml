@@ -14,7 +14,7 @@
     <string name="holiday">Святковий день</string>
     <string name="save">Зберегти</string>
     <string name="share">Поділитися</string>
-    <string name="export">Експорт </string>
+    <string name="export">Експорт</string>
     <string name="morning_shifts_format">Ранкових змін: %1$d</string>
     <string name="day_shifts_format">Денних змін: %1$d</string>
     <string name="night_shifts_format">Нічних змін: %1$d</string>
@@ -36,6 +36,7 @@
     <string name="sunday_bonus_total">Доплата неділя: %1$.2f</string>
     <string name="holiday_bonus_total">Доплата свята: %1$.2f</string>
     <string name="stat">Статистика</string>
+    <string name="add">Додати спільний запис</string>
 
     <string-array name="months">
         <item>Січень</item>
