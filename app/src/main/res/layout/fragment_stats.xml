@@ -1,0 +1,59 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioGroup
+            android:id="@+id/radioGroupMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioYear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Рік"
+                android:checked="true"/>
+
+            <RadioButton
+                android:id="@+id/radioMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Місяць"
+                android:layout_marginStart="16dp"/>
+        </RadioGroup>
+
+        <Spinner
+            android:id="@+id/spinnerStatsYear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:entries="@array/years"/>
+
+        <Spinner
+            android:id="@+id/spinnerStatsMonth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:entries="@array/months"
+            android:visibility="gone"/>
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chartHours"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginTop="16dp"/>
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/chartSalary"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginTop="16dp"/>
+    </LinearLayout>
+</ScrollView>

@@ -84,6 +84,11 @@ class JobDetailFragment : Fragment() {
         binding.buttonAddEntry.setOnClickListener {
             findNavController().navigate(JobDetailFragmentDirections.actionJobDetailFragmentToAddEntryFragment(args.jobId))
         }
+        binding.buttonStats.setOnClickListener {
+            findNavController().navigate(
+                JobDetailFragmentDirections.actionJobDetailFragmentToStatsFragment(args.jobId)
+            )
+        }
     }
 
     private fun loadStats(month: Int, year: Int) {

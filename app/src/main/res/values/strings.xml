@@ -35,6 +35,7 @@
     <string name="saturday_bonus_total">Доплата субота: %1$.2f</string>
     <string name="sunday_bonus_total">Доплата неділя: %1$.2f</string>
     <string name="holiday_bonus_total">Доплата свята: %1$.2f</string>
+    <string name="stat">Статистика</string>
 
     <string-array name="months">
         <item>Січень</item>
