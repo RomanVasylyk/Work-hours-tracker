@@ -1,15 +1,25 @@
-Work Hours Tracker is a lightweight Android app designed to help you log, visualize and manage your work time across multiple projects. With a clean Material 3 interface and intuitive navigation, you can:
+Work Hours Tracker — your all-in-one Android companion for logging, visualizing and maximizing your work time:
 
-Organize by job or project
-Create any number of “jobs” (projects or clients) and switch between them to keep your time entries neatly grouped.
+• Projects & Jobs
+Create unlimited jobs or projects and switch instantly to keep all your time entries organized.
 
-Log daily entries
-Tap a custom calendar dialog to pick a date, then enter hours worked, break time, shift type (morning/day/night) and mark holidays. If you revisit a date that already has an entry, the form pre-loads your previous data for easy editing or deletion.
+• Daily Time Logging
+Tap the calendar, pick a date and record hours worked, break time, shift type (morning/day/night) and holidays. Revisit any date to edit or delete your previous entry.
 
-Review detailed statistics
-View per-month summaries showing total hours, days worked, breakdown by shift type, weekend days and holidays. Quickly switch between years and months using dropdowns.
+• Flexible Bonus & Rate Settings
+Set a base hourly rate plus custom bonuses for nights, Saturdays, Sundays and holidays. All rates are stored per job, so you never have to re-enter them.
 
-Export your data
-Generate a CSV file of all entries for a job and share it via your favorite apps or cloud storage.
+• Rich Statistics & Charts
+Switch between year-view (12-month trend) and month-view (day-by-day breakdown) to see your total hours, days worked, shift counts, weekends, holidays—and exactly how much you earned (base pay + bonuses). Interactive line and bar charts bring your data to life.
 
-Under the hood, Work Hours Tracker uses Room for a robust local database, Kotlin Coroutines & Flow for asynchronous data loading, ViewModel + LiveData for lifecycle-safe UI updates, and the Navigation Component with SafeArgs for seamless screen transitions. Whether you’re a freelancer tracking billable hours or just want to understand your work patterns, Work Hours Tracker gives you full control over your time.
+• CSV Export & Sharing
+Generate and share a CSV of all entries for any job via email, messaging or cloud storage.
+
+Under the hood:
+• Room + Room Auto-Migrations for reliable local storage
+• Kotlin Coroutines & Flow for smooth, asynchronous data flows
+• ViewModel + LiveData for lifecycle-aware UI updates
+• Navigation Component + SafeArgs for seamless, type-safe screen transitions
+• MPAndroidChart for beautiful, responsive charts
+
+Whether you’re billing clients, managing multiple gigs or simply curious about your work habits, Work Hours Tracker puts the power of your time—and earnings—at your fingertips.
