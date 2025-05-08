@@ -115,20 +115,29 @@ class JobDetailFragment : Fragment() {
             workRepository.getEntriesForPeriod(args.jobId, start, end)
                 .collectLatest { list ->
                     val job = viewModel.job.value ?: return@collectLatest
+
                     var hours = 0.0
                     var morning = 0; var dayCount = 0; var night = 0
-                    var salary = 0.0
+                    var baseSalary = 0.0
+
+                    var bonusNight = 0.0
+                    var bonusSat = 0.0
+                    var bonusSun = 0.0
+                    var bonusHol = 0.0
+
                     val dates = mutableSetOf<LocalDate>()
                     var holidays = 0; var saturdays = 0; var sundays = 0
 
                     list.forEach { entry ->
                         val h = entry.hoursWorked - entry.breakHours
                         hours += h
+
                         when (entry.shiftType.lowercase()) {
                             "ранкова","morning" -> morning++
                             "денна","day"       -> dayCount++
                             "нічна","night"     -> night++
                         }
+
                         val date = Instant.ofEpochMilli(entry.date).atZone(zone).toLocalDate()
                         if (dates.add(date)) {
                             if (date.dayOfWeek == DayOfWeek.SATURDAY) saturdays++
@@ -136,15 +145,20 @@ class JobDetailFragment : Fragment() {
                         }
                         if (entry.isHoliday && dates.add(date)) holidays++
 
-                        salary += h * job.hourlyRate
-                        if (entry.shiftType.lowercase() in listOf("нічна","night"))
-                            salary += h * job.nightBonus
-                        if (date.dayOfWeek == DayOfWeek.SATURDAY)
-                            salary += h * job.saturdayBonus
-                        if (date.dayOfWeek == DayOfWeek.SUNDAY)
-                            salary += h * job.sundayBonus
-                        if (entry.isHoliday)
-                            salary += h * job.holidayBonus
+                        baseSalary += h * job.hourlyRate
+
+                        if (entry.shiftType.lowercase() in listOf("нічна","night")) {
+                            bonusNight += h * job.nightBonus
+                        }
+                        if (date.dayOfWeek == DayOfWeek.SATURDAY) {
+                            bonusSat += h * job.saturdayBonus
+                        }
+                        if (date.dayOfWeek == DayOfWeek.SUNDAY) {
+                            bonusSun += h * job.sundayBonus
+                        }
+                        if (entry.isHoliday) {
+                            bonusHol += h * job.holidayBonus
+                        }
                     }
 
                     binding.textMonth.text =
@@ -165,8 +179,16 @@ class JobDetailFragment : Fragment() {
                         getString(R.string.saturday_days_format, saturdays)
                     binding.textSunday.text =
                         getString(R.string.sunday_days_format, sundays)
+                    binding.textNightBonus.text =
+                        getString(R.string.night_bonus_total, bonusNight)
+                    binding.textSaturdayBonus.text =
+                        getString(R.string.saturday_bonus_total, bonusSat)
+                    binding.textSundayBonus.text =
+                        getString(R.string.sunday_bonus_total, bonusSun)
+                    binding.textHolidayBonus.text =
+                        getString(R.string.holiday_bonus_total, bonusHol)
                     binding.textSalary.text =
-                        getString(R.string.salary_format, salary)
+                        getString(R.string.salary_format, baseSalary + bonusNight + bonusSat + bonusSun + bonusHol)
                 }
         }
     }

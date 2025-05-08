@@ -37,6 +37,10 @@
     <string name="holiday_bonus_total">Доплата свята: %1$.2f</string>
     <string name="stat">Статистика</string>
     <string name="add">Додати спільний запис</string>
+    <string name="total_hours">Загалом годин: %1$.1f</string>
+    <string name="avg_hours">Середньо годин: %1$.1f</string>
+    <string name="total_salary">Загальна зарплата: %1$.2f</string>
+    <string name="avg_salary">Середня зарплата: %1$.2f</string>
 
     <string-array name="months">
         <item>Січень</item>
