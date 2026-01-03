@@ -22,18 +22,31 @@ import com.example.worktr.viewmodel.JobDetailViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
-import java.time.DayOfWeek
-import java.time.Instant
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.worktr.util.CsvImporter
 
 class JobDetailFragment : Fragment() {
     private var _binding: FragmentJobDetailBinding? = null
     private val binding get() = _binding!!
     private val args by navArgs<JobDetailFragmentArgs>()
-    private lateinit var viewModel: com.example.worktr.viewmodel.JobDetailViewModel
+    private lateinit var viewModel: JobDetailViewModel
     private lateinit var workRepository: WorkEntryRepository
+    private val importCsvLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            viewLifecycleOwner.lifecycleScope.launch {
+                CsvImporter.importWorkEntriesCsv(requireContext(), args.jobId, uri)
+                val m = binding.spinnerMonth.selectedItemPosition + 1
+                val y = binding.spinnerYear.selectedItem.toString().toInt()
+                loadStats(m, y)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +81,7 @@ class JobDetailFragment : Fragment() {
             resources.getStringArray(R.array.years)
                 .indexOf(LocalDate.now().year.toString())
         )
+
         ArrayAdapter.createFromResource(
             requireContext(), R.array.months, android.R.layout.simple_spinner_item
         ).also {
@@ -111,7 +125,7 @@ class JobDetailFragment : Fragment() {
         val start = ym.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
         val end = ym.atEndOfMonth().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
 
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+        viewLifecycleOwner.lifecycleScope.launch {
             workRepository.getEntriesForPeriod(args.jobId, start, end)
                 .collectLatest { list ->
                     val job = viewModel.job.value ?: return@collectLatest
@@ -125,7 +139,7 @@ class JobDetailFragment : Fragment() {
                     var bonusSun = 0.0
                     var bonusHol = 0.0
 
-                    val dates = mutableSetOf<LocalDate>()
+                    val uniqueDays = mutableSetOf<LocalDate>()
                     var holidays = 0; var saturdays = 0; var sundays = 0
 
                     list.forEach { entry ->
@@ -139,11 +153,13 @@ class JobDetailFragment : Fragment() {
                         }
 
                         val date = Instant.ofEpochMilli(entry.date).atZone(zone).toLocalDate()
-                        if (dates.add(date)) {
+                        val isNewDay = uniqueDays.add(date)
+
+                        if (isNewDay) {
                             if (date.dayOfWeek == DayOfWeek.SATURDAY) saturdays++
-                            if (date.dayOfWeek == DayOfWeek.SUNDAY)   sundays++
+                            if (date.dayOfWeek == DayOfWeek.SUNDAY) sundays++
+                            if (entry.isHoliday) holidays++
                         }
-                        if (entry.isHoliday && dates.add(date)) holidays++
 
                         baseSalary += h * job.hourlyRate
 
@@ -166,7 +182,7 @@ class JobDetailFragment : Fragment() {
                     binding.textHours.text =
                         getString(R.string.hours_worked_format, hours)
                     binding.textDays.text =
-                        getString(R.string.days_worked_format, dates.size)
+                        getString(R.string.days_worked_format, uniqueDays.size)
                     binding.textMorning.text =
                         getString(R.string.morning_shifts_format, morning)
                     binding.textDay.text =
@@ -188,7 +204,10 @@ class JobDetailFragment : Fragment() {
                     binding.textHolidayBonus.text =
                         getString(R.string.holiday_bonus_total, bonusHol)
                     binding.textSalary.text =
-                        getString(R.string.salary_format, baseSalary + bonusNight + bonusSat + bonusSun + bonusHol)
+                        getString(
+                            R.string.salary_format,
+                            baseSalary + bonusNight + bonusSat + bonusSun + bonusHol
+                        )
                 }
         }
     }
@@ -201,7 +220,11 @@ class JobDetailFragment : Fragment() {
         return when (item.itemId) {
             R.id.action_export -> {
                 val file: File = ExcelExporter(requireContext()).export(args.jobId)
-                val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
+                val uri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.fileprovider",
+                    file
+                )
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/csv"
                     putExtra(Intent.EXTRA_STREAM, uri)
@@ -210,6 +233,11 @@ class JobDetailFragment : Fragment() {
                 startActivity(Intent.createChooser(intent, getString(R.string.share)))
                 true
             }
+            R.id.action_import -> {
+                importCsvLauncher.launch(arrayOf("text/*", "text/csv", "application/vnd.ms-excel"))
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }

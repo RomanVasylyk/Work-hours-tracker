@@ -24,5 +24,10 @@ interface WorkEntryDao {
 
     @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end LIMIT 1")
     fun getEntryForDay(jobId: Int, start: Long, end: Long): Flow<WorkEntry?>
-}
 
+    @Query("DELETE FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end")
+    suspend fun deleteForDay(jobId: Int, start: Long, end: Long)
+
+    @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end LIMIT 1")
+    suspend fun getEntryForDayOnce(jobId: Int, start: Long, end: Long): WorkEntry?
+}

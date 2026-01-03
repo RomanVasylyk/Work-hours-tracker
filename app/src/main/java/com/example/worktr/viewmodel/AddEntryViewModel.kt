@@ -20,4 +20,6 @@ class AddEntryViewModel(
 
     fun delete(entry: WorkEntry) = viewModelScope.launch { repository.delete(entry) }
 
+    fun upsertForDay(jobId: Int, start: Long, end: Long, entry: WorkEntry) =
+        viewModelScope.launch { repository.upsertForDay(jobId, start, end, entry) }
 }

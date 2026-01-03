@@ -11,7 +11,8 @@ class WorkEntryRepository(
     fun getEntriesForPeriod(jobId: Int, start: Long, end: Long) =
         dao.getEntriesForPeriod(jobId, start, end)
 
-    fun getEntryForDay(jobId: Int, start: Long, end: Long) = dao.getEntryForDay(jobId, start, end)
+    fun getEntryForDay(jobId: Int, start: Long, end: Long) =
+        dao.getEntryForDay(jobId, start, end)
 
     suspend fun insert(entry: WorkEntry) = withContext(ioDispatcher) { dao.insert(entry) }
 
@@ -19,4 +20,8 @@ class WorkEntryRepository(
 
     suspend fun delete(entry: WorkEntry) = withContext(ioDispatcher) { dao.delete(entry) }
 
+    suspend fun upsertForDay(jobId: Int, start: Long, end: Long, entry: WorkEntry) = withContext(ioDispatcher) {
+        dao.deleteForDay(jobId, start, end)
+        dao.insert(entry)
+    }
 }

@@ -1,12 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="40dp"
-    android:layout_height="40dp"
-    android:foregroundGravity="center">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/dayRoot"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:padding="6dp">
 
-    <TextView
-        android:id="@+id/dayNumber"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/dayCard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:textColor="?android:textColorPrimary" />
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/dayNumber"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                style="@style/TextAppearance.Material3.BodyMedium" />
+
+            <View
+                android:id="@+id/dayDot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="6dp"
+                android:background="@drawable/bg_day_dot"
+                android:visibility="gone" />
+        </FrameLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
 </FrameLayout>

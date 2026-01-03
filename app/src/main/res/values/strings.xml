@@ -41,6 +41,13 @@
     <string name="avg_hours">Середньо годин: %1$.1f</string>
     <string name="total_salary">Загальна зарплата: %1$.2f</string>
     <string name="avg_salary">Середня зарплата: %1$.2f</string>
+    <string name="required_field">Обовʼязкове поле</string>
+    <string name="break_gt_hours">Перерва не може бути більшою за робочі години</string>
+    <string name="back">Назад</string>
+    <string name="next">Далі</string>
+    <string name="today">Сьогодні</string>
+    <string name="selected_days_count">Вибрано днів: %1$d</string>
+    <string name="import_csv">Імпорт CSV</string>
 
     <string-array name="months">
         <item>Січень</item>
