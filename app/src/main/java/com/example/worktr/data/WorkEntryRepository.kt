@@ -24,4 +24,8 @@ class WorkEntryRepository(
         dao.deleteForDay(jobId, start, end)
         dao.insert(entry)
     }
+
+    suspend fun getYearsWithEntries(jobId: Int): List<Int> = withContext(ioDispatcher) {
+        dao.getYearsWithEntries(jobId).mapNotNull { it.toIntOrNull() }
+    }
 }

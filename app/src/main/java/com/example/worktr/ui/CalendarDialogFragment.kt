@@ -32,6 +32,10 @@ class CalendarDialogFragment : DialogFragment() {
     private lateinit var adapter: DayListAdapter
     private var entriesJob: Job? = null
     private val jobId get() = requireArguments().getInt("jobId")
+    private lateinit var yearAdapter: ArrayAdapter<String>
+    private val yearList = mutableListOf<Int>()
+    private val yearWindow = 200
+    private var suppressYearCallback = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,31 +58,76 @@ class CalendarDialogFragment : DialogFragment() {
         repo = WorkEntryRepository(DatabaseProvider.get(requireContext()).workEntryDao())
 
         val spinnerYear = view.findViewById<Spinner>(R.id.spinnerYear)
-        ArrayAdapter.createFromResource(
-            requireContext(), R.array.years, android.R.layout.simple_spinner_item
-        ).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerYear.adapter = it
-        }
-        spinnerYear.setSelection(resources.getStringArray(R.array.years).indexOf(currentMonth.year.toString()))
+
+        yearAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            mutableListOf<String>()
+        ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        spinnerYear.adapter = yearAdapter
+
+        val startYear = currentMonth.year
+        refreshYearSpinnerSelection(spinnerYear, startYear)
+
         spinnerYear.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, v: View?, pos: Int, id: Long) {
-                currentMonth = YearMonth.of(resources.getStringArray(R.array.years)[pos].toInt(), currentMonth.month)
+                if (suppressYearCallback) return
+
+                val selectedYear = yearList.getOrNull(pos) ?: return
+                if (selectedYear == currentMonth.year) return
+
+                currentMonth = YearMonth.of(selectedYear, currentMonth.month)
                 render(view)
+
+                val minY = yearList.firstOrNull() ?: return
+                val maxY = yearList.lastOrNull() ?: return
+                if (selectedYear <= minY + 10 || selectedYear >= maxY - 10) {
+                    refreshYearSpinnerSelection(spinnerYear, selectedYear)
+                }
             }
+
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
+
         view.findViewById<ImageButton>(R.id.buttonPrevMonth).setOnClickListener {
             currentMonth = currentMonth.minusMonths(1)
-            spinnerYear.setSelection(resources.getStringArray(R.array.years).indexOf(currentMonth.year.toString()))
             render(view)
+
+            val y = currentMonth.year
+            val minY = yearList.firstOrNull() ?: y
+            val maxY = yearList.lastOrNull() ?: y
+            if (y <= minY + 10 || y >= maxY - 10) {
+                refreshYearSpinnerSelection(spinnerYear, y)
+            } else {
+                // просто пересунути selection без перебудови адаптера
+                val idx = yearList.indexOf(y)
+                if (idx >= 0) {
+                    suppressYearCallback = true
+                    spinnerYear.setSelection(idx, false)
+                    suppressYearCallback = false
+                }
+            }
         }
 
         view.findViewById<ImageButton>(R.id.buttonNextMonth).setOnClickListener {
             currentMonth = currentMonth.plusMonths(1)
-            spinnerYear.setSelection(resources.getStringArray(R.array.years).indexOf(currentMonth.year.toString()))
             render(view)
+
+            val y = currentMonth.year
+            val minY = yearList.firstOrNull() ?: y
+            val maxY = yearList.lastOrNull() ?: y
+            if (y <= minY + 10 || y >= maxY - 10) {
+                refreshYearSpinnerSelection(spinnerYear, y)
+            } else {
+                val idx = yearList.indexOf(y)
+                if (idx >= 0) {
+                    suppressYearCallback = true
+                    spinnerYear.setSelection(idx, false)
+                    suppressYearCallback = false
+                }
+            }
         }
 
         actionButton = view.findViewById(R.id.buttonBulkAdd)
@@ -286,4 +335,40 @@ class CalendarDialogFragment : DialogFragment() {
             arguments = Bundle().apply { putInt("jobId", jobId) }
         }
     }
+
+    private fun ensureYearsAround(year: Int) {
+        if (yearList.isEmpty()) {
+            val nowY = Year.now().value
+            for (y in (nowY - yearWindow)..(nowY + yearWindow)) yearList.add(y)
+            return
+        }
+
+        val minY = yearList.first()
+        val maxY = yearList.last()
+
+        if (year <= minY + 10) {
+            val newMin = year - yearWindow
+            for (y in (newMin until minY)) yearList.add(0, y)
+        }
+        if (year >= maxY - 10) {
+            val newMax = year + yearWindow
+            for (y in (maxY + 1)..newMax) yearList.add(y)
+        }
+    }
+
+    private fun refreshYearSpinnerSelection(spinner: Spinner, year: Int) {
+        ensureYearsAround(year)
+
+        val items = yearList.map { it.toString() }
+
+        suppressYearCallback = true
+        yearAdapter.clear()
+        yearAdapter.addAll(items)
+        yearAdapter.notifyDataSetChanged()
+
+        val idx = yearList.indexOf(year).coerceAtLeast(0)
+        spinner.setSelection(idx, false)
+        suppressYearCallback = false
+    }
+
 }

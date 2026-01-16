@@ -30,4 +30,12 @@ interface WorkEntryDao {
 
     @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end LIMIT 1")
     suspend fun getEntryForDayOnce(jobId: Int, start: Long, end: Long): WorkEntry?
+
+    @Query("""
+    SELECT DISTINCT strftime('%Y', date/1000, 'unixepoch', 'localtime') AS y
+    FROM work_entries
+    WHERE jobId = :jobId
+    ORDER BY y
+""")
+    suspend fun getYearsWithEntries(jobId: Int): List<String>
 }
