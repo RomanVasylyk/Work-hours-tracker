@@ -48,6 +48,7 @@
     <string name="today">Сьогодні</string>
     <string name="selected_days_count">Вибрано днів: %1$d</string>
     <string name="import_csv">Імпорт CSV</string>
+    <string name="no_data">Немає даних для вибраного періоду</string>
 
     <string-array name="months">
         <item>Січень</item>
