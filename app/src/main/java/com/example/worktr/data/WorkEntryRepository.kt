@@ -28,4 +28,8 @@ class WorkEntryRepository(
     suspend fun getYearsWithEntries(jobId: Int): List<Int> = withContext(ioDispatcher) {
         dao.getYearsWithEntries(jobId).mapNotNull { it.toIntOrNull() }
     }
+
+    suspend fun deleteForDay(jobId: Int, start: Long, end: Long) = withContext(ioDispatcher) {
+        dao.deleteForDay(jobId, start, end)
+    }
 }

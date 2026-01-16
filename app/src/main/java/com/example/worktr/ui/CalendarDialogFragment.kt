@@ -36,6 +36,8 @@ class CalendarDialogFragment : DialogFragment() {
     private val yearList = mutableListOf<Int>()
     private val yearWindow = 200
     private var suppressYearCallback = false
+    private enum class SelectionMode { NONE, ADD, DELETE }
+    private var selectionMode: SelectionMode = SelectionMode.NONE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,19 +135,48 @@ class CalendarDialogFragment : DialogFragment() {
         actionButton = view.findViewById(R.id.buttonBulkAdd)
         actionButton.text = getString(R.string.next)
         actionButton.isVisible = false
-        actionButton.setOnClickListener { submitSelectedAndClose() }
+        actionButton.setOnClickListener {
+            when (selectionMode) {
+                SelectionMode.ADD -> submitSelectedAndClose()
+                SelectionMode.DELETE -> deleteSelectedEntries()
+                SelectionMode.NONE -> {}
+            }
+        }
+
 
         adapter = DayListAdapter(
             onClick = { date ->
-                if (selectedDates.isNotEmpty()) {
-                    if (entries.contains(date)) return@DayListAdapter
-                    toggleSelected(date)
-                } else {
+                val hasEntry = entries.contains(date)
+
+                if (selectedDates.isEmpty()) {
                     submitAndClose(listOf(date))
+                    return@DayListAdapter
+                }
+
+                when (selectionMode) {
+                    SelectionMode.ADD -> {
+                        if (hasEntry) return@DayListAdapter
+                        toggleSelected(date)
+                    }
+                    SelectionMode.DELETE -> {
+                        if (!hasEntry) return@DayListAdapter
+                        toggleSelected(date)
+                    }
+                    SelectionMode.NONE -> Unit
                 }
             },
             onLongClick = { date ->
-                if (entries.contains(date)) return@DayListAdapter
+                val hasEntry = entries.contains(date)
+
+                if (selectedDates.isEmpty()) {
+                    selectionMode = if (hasEntry) SelectionMode.DELETE else SelectionMode.ADD
+                    actionButton.text = if (selectionMode == SelectionMode.DELETE) "Видалити" else getString(R.string.next)
+                }
+
+                if (selectionMode == SelectionMode.ADD && hasEntry) return@DayListAdapter
+
+                if (selectionMode == SelectionMode.DELETE && !hasEntry) return@DayListAdapter
+
                 toggleSelected(date)
             }
         )
@@ -178,7 +209,14 @@ class CalendarDialogFragment : DialogFragment() {
 
     private fun toggleSelected(date: LocalDate) {
         if (selectedDates.contains(date)) selectedDates.remove(date) else selectedDates.add(date)
+
         actionButton.isVisible = selectedDates.isNotEmpty()
+
+        if (selectedDates.isEmpty()) {
+            selectionMode = SelectionMode.NONE
+            actionButton.text = getString(R.string.next)
+        }
+
         adapter.setState(entries, selectedDates, currentMonth)
     }
 
@@ -187,6 +225,8 @@ class CalendarDialogFragment : DialogFragment() {
             currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) + " " + currentMonth.year
 
         selectedDates.clear()
+        selectionMode = SelectionMode.NONE
+        actionButton.text = getString(R.string.next)
         actionButton.isVisible = false
 
         adapter.submitList(buildDays(currentMonth))
@@ -369,6 +409,22 @@ class CalendarDialogFragment : DialogFragment() {
         val idx = yearList.indexOf(year).coerceAtLeast(0)
         spinner.setSelection(idx, false)
         suppressYearCallback = false
+    }
+
+    private fun deleteSelectedEntries() {
+        if (selectedDates.isEmpty()) return
+
+        val zone = ZoneId.systemDefault()
+        val toDelete = selectedDates.toList()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            toDelete.forEach { date ->
+                val start = date.atStartOfDay(zone).toInstant().toEpochMilli()
+                val end = start + 86_399_999
+                repo.deleteForDay(jobId, start, end)
+            }
+            dismiss()
+        }
     }
 
 }
