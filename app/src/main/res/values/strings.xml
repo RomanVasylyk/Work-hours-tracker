@@ -15,6 +15,36 @@
     <string name="save">Зберегти</string>
     <string name="share">Поділитися</string>
     <string name="export">Експорт</string>
+    <string name="export_all_data">Експортувати всі дані</string>
+    <string name="import_data">Імпорт CSV</string>
+    <string name="import_dialog_title">Куди імпортувати CSV</string>
+    <string name="import_dialog_subtitle">Можна або автоматично знайти/створити роботи за CSV, або завантажити всі записи в одну наявну роботу.</string>
+    <string name="import_dialog_auto">Автоматично по CSV</string>
+    <string name="import_dialog_existing">У вибрану наявну роботу</string>
+    <string name="import_dialog_pick_job">Оберіть роботу для імпорту</string>
+    <string name="overall_stats">Загальна статистика</string>
+    <string name="jobs_overview_title">Усі роботи під контролем</string>
+    <string name="jobs_overview_subtitle">Швидкий доступ до загальної аналітики, експорту та редагування ставок.</string>
+    <string name="jobs_overview_count">Активних робіт: %1$d</string>
+    <string name="jobs_overview_empty">Поки немає жодної роботи. Додайте першу, щоб почати облік.</string>
+    <string name="jobs_overview_empty_badge">Немає робіт</string>
+    <string name="quick_action_stats_title">Аналітика</string>
+    <string name="quick_action_stats_subtitle">Зведення по всіх роботах</string>
+    <string name="quick_action_import_title">Імпорт</string>
+    <string name="quick_action_import_subtitle">Завантажити CSV у програму</string>
+    <string name="quick_action_export_title">Експорт</string>
+    <string name="quick_action_export_subtitle">Поділитися всіма записами</string>
+    <string name="jobs_section_title">Ваші роботи</string>
+    <string name="jobs_section_subtitle">Кожна картка веде в деталі, календар і графіки.</string>
+    <string name="jobs_empty_state">Додайте першу роботу, щоб почати вести години і зарплату.</string>
+    <string name="job_dialog_create_title">Нова робота</string>
+    <string name="job_dialog_edit_title">Налаштування роботи</string>
+    <string name="job_dialog_subtitle">Оновіть базову ставку і бонуси. Історія вже збережених записів не зміниться.</string>
+    <string name="job_dialog_rate_title">Базова ставка</string>
+    <string name="job_dialog_bonus_title">Надбавки</string>
+    <string name="job_rate_badge">%1$s / год</string>
+    <string name="job_bonuses_summary">Ніч: %1$s  •  Сб: %2$s  •  Нд: %3$s  •  Свято: %4$s</string>
+    <string name="job_item_hint">Натисніть для деталей. Довге натискання відкриває редагування.</string>
     <string name="morning_shifts_format">Ранкових змін: %1$d</string>
     <string name="day_shifts_format">Денних змін: %1$d</string>
     <string name="night_shifts_format">Нічних змін: %1$d</string>
@@ -41,6 +71,64 @@
     <string name="avg_hours">Середньо годин: %1$.1f</string>
     <string name="total_salary">Загальна зарплата: %1$.2f</string>
     <string name="avg_salary">Середня зарплата: %1$.2f</string>
+    <string name="calendar_title">Календар записів</string>
+    <string name="calendar_hint">Натисніть день, щоб відкрити запис. Довге натискання на порожній день вмикає масове додавання, а на день із записом показує деталі та дії.</string>
+    <string name="calendar_selected_days">Вибрано днів: %1$d</string>
+    <string name="calendar_selected_entries">Вибрано записів: %1$d</string>
+    <string name="calendar_legend_selected">Вибрано</string>
+    <string name="calendar_legend_saved">Є запис</string>
+    <string name="calendar_legend_today">Сьогодні</string>
+    <string name="today_short">Сьогодні</string>
+    <string name="add_selected_entries">Додати запис для %1$d дн.</string>
+    <string name="delete_selected_entries">Видалити %1$d записів</string>
+    <string name="delete_selected_entries_title">Видалити записи?</string>
+    <string name="delete_selected_entries_message">Буде видалено записів: %1$d.</string>
+    <string name="delete_selected_entries_confirm">Видалити</string>
+    <string name="entry_details_title">Дані за день</string>
+    <string name="entry_details_date">Дата: %1$s</string>
+    <string name="entry_details_shift">Зміна: %1$s</string>
+    <string name="entry_details_hours">Години: %1$s</string>
+    <string name="entry_details_break">Перерва: %1$s</string>
+    <string name="entry_details_worked">Чисто відпрацьовано: %1$s</string>
+    <string name="entry_details_day_type">День: %1$s</string>
+    <string name="entry_details_salary">Зарплата за день: %1$s</string>
+    <string name="entry_details_holiday_yes">Святковий</string>
+    <string name="entry_details_holiday_no">Звичайний</string>
+    <string name="entry_details_edit">Редагувати</string>
+    <string name="entry_details_multi_delete">Мультивидалення</string>
+    <string name="weekday_mon">Пн</string>
+    <string name="weekday_tue">Вт</string>
+    <string name="weekday_wed">Ср</string>
+    <string name="weekday_thu">Чт</string>
+    <string name="weekday_fri">Пт</string>
+    <string name="weekday_sat">Сб</string>
+    <string name="weekday_sun">Нд</string>
+    <string name="stats_title">Візуальна статистика</string>
+    <string name="stats_hint">Перемикайте режим і торкайтеся точок або стовпчиків, щоб подивитися значення.</string>
+    <string name="stats_scope_job">Робота: %1$s</string>
+    <string name="stats_scope_all">Усі роботи</string>
+    <string name="stats_scope_all_meta">Активних робіт у періоді: %1$d</string>
+    <string name="stats_scope_job_meta">Аналітика лише для цієї роботи.</string>
+    <string name="stats_mode_year">Рік</string>
+    <string name="stats_mode_month">Місяць</string>
+    <string name="chart_hours_title">Години по періодах</string>
+    <string name="chart_hours_subtitle">Лінія показує динаміку навантаження по місяцях або днях.</string>
+    <string name="chart_salary_title">Зарплата по періодах</string>
+    <string name="chart_salary_subtitle">Стовпчики враховують базову ставку та всі надбавки зі snapshot записів.</string>
+    <string name="stats_summary_title">Підсумок періоду</string>
+    <string name="marker_hours_value">%1$s год</string>
+    <string name="marker_salary_value">%1$s</string>
+    <string name="chart_no_data">Поки немає даних для побудови графіка.</string>
+    <string name="break_picker_title">Оберіть тривалість перерви</string>
+    <string name="break_picker_label">Перерва</string>
+    <string name="break_picker_change">Змінити перерву</string>
+    <string name="break_picker_zero">Без перерви</string>
+    <string name="break_picker_hours_minutes">%1$d год %2$d хв</string>
+    <string name="break_picker_minutes">%1$d хв</string>
+    <string name="break_picker_hours">%1$d год</string>
+    <string name="export_success_all">Створено CSV для всіх робіт.</string>
+    <string name="import_success_summary">Імпортовано %1$d записів. Нових робіт: %2$d, знайдено існуючих: %3$d.</string>
+    <string name="import_failed">Не вдалося імпортувати CSV.</string>
 
     <string-array name="months">
         <item>Січень</item>
@@ -61,19 +149,5 @@
         <item>Ранкова</item>
         <item>Денна</item>
         <item>Нічна</item>
-    </string-array>
-
-    <string-array name="years">
-        <item>2020</item>
-        <item>2021</item>
-        <item>2022</item>
-        <item>2023</item>
-        <item>2024</item>
-        <item>2025</item>
-        <item>2026</item>
-        <item>2027</item>
-        <item>2028</item>
-        <item>2029</item>
-        <item>2030</item>
     </string-array>
 </resources>

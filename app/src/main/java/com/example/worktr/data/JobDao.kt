@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface JobDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(job: Job)
+    suspend fun insert(job: Job): Long
 
     @Update
     suspend fun update(job: Job)
@@ -21,4 +21,13 @@ interface JobDao {
 
     @Query("SELECT * FROM jobs ORDER BY name")
     fun getAllJobs(): Flow<List<Job>>
+
+    @Query("SELECT * FROM jobs ORDER BY name")
+    suspend fun getAllJobsList(): List<Job>
+
+    @Query("SELECT * FROM jobs WHERE jobId = :jobId LIMIT 1")
+    suspend fun getJobById(jobId: Int): Job?
+
+    @Query("SELECT * FROM jobs WHERE name = :name LIMIT 1")
+    suspend fun getJobByName(name: String): Job?
 }

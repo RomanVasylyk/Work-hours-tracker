@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="270"
+        android:endColor="@color/chart_hours_fill_bottom"
+        android:startColor="@color/chart_hours_fill_top" />
+    <corners android:radius="24dp" />
+</shape>

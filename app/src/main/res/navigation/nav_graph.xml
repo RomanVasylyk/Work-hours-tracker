@@ -10,7 +10,18 @@
         android:label="Job List">
         <action
             android:id="@+id/action_jobListFragment_to_jobDetailFragment"
-            app:destination="@id/jobDetailFragment" />
+            app:destination="@id/jobDetailFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
+        <action
+            android:id="@+id/action_jobListFragment_to_statsFragment"
+            app:destination="@id/statsFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
     </fragment>
 
     <fragment
@@ -22,10 +33,18 @@
             app:argType="integer" />
         <action
             android:id="@+id/action_jobDetailFragment_to_addEntryFragment"
-            app:destination="@id/addEntryFragment" />
+            app:destination="@id/addEntryFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
         <action
             android:id="@+id/action_jobDetailFragment_to_statsFragment"
-            app:destination="@id/statsFragment" />
+            app:destination="@id/statsFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
     </fragment>
 
     <fragment
@@ -34,7 +53,8 @@
         android:label="Статистика">
         <argument
             android:name="jobId"
-            app:argType="integer" />
+            app:argType="integer"
+            android:defaultValue="-1" />
     </fragment>
 
     <fragment

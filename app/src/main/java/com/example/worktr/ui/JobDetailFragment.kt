@@ -5,10 +5,13 @@ import android.os.Bundle
 import android.view.*
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -17,16 +20,22 @@ import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.databinding.FragmentJobDetailBinding
+import com.example.worktr.ui.picker.DynamicYearSpinner
+import com.example.worktr.ui.responsive.ResponsiveUi
 import com.example.worktr.util.ExcelExporter
 import com.example.worktr.viewmodel.JobDetailViewModel
+import com.google.android.material.transition.platform.MaterialSharedAxis
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
-import java.time.DayOfWeek
-import java.time.Instant
 
 class JobDetailFragment : Fragment() {
     private var _binding: FragmentJobDetailBinding? = null
@@ -34,10 +43,14 @@ class JobDetailFragment : Fragment() {
     private val args by navArgs<JobDetailFragmentArgs>()
     private lateinit var viewModel: com.example.worktr.viewmodel.JobDetailViewModel
     private lateinit var workRepository: WorkEntryRepository
+    private lateinit var yearSpinner: DynamicYearSpinner
+    private var statsJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        enterTransition = MaterialSharedAxis(MaterialSharedAxis.X, true)
+        returnTransition = MaterialSharedAxis(MaterialSharedAxis.X, false)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -53,21 +66,25 @@ class JobDetailFragment : Fragment() {
             override fun <T : ViewModel> create(modelClass: Class<T>) =
                 JobDetailViewModel(jobRepository, args.jobId) as T
         })[JobDetailViewModel::class.java]
+        applyResponsiveLayout()
 
         viewModel.job.observe(viewLifecycleOwner) { job ->
             binding.textJobName.text = job?.name ?: ""
         }
 
-        ArrayAdapter.createFromResource(
-            requireContext(), R.array.years, android.R.layout.simple_spinner_item
-        ).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            binding.spinnerYear.adapter = it
+        val refreshStats: () -> Unit = {
+            val m = binding.spinnerMonth.selectedItemPosition + 1
+            val y = yearSpinner.getSelectedYear() ?: LocalDate.now().year
+            loadStats(m, y)
         }
-        binding.spinnerYear.setSelection(
-            resources.getStringArray(R.array.years)
-                .indexOf(LocalDate.now().year.toString())
-        )
+
+        yearSpinner = DynamicYearSpinner(
+            context = requireContext(),
+            spinner = binding.spinnerYear,
+            initialYear = LocalDate.now().year
+        ) {
+            refreshStats()
+        }
         ArrayAdapter.createFromResource(
             requireContext(), R.array.months, android.R.layout.simple_spinner_item
         ).also {
@@ -76,16 +93,6 @@ class JobDetailFragment : Fragment() {
         }
         binding.spinnerMonth.setSelection(LocalDate.now().monthValue - 1)
 
-        val refreshStats: () -> Unit = {
-            val m = binding.spinnerMonth.selectedItemPosition + 1
-            val y = binding.spinnerYear.selectedItem.toString().toInt()
-            loadStats(m, y)
-        }
-
-        binding.spinnerYear.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p: AdapterView<*>, v: View?, pos: Int, id: Long) = refreshStats()
-            override fun onNothingSelected(p: AdapterView<*>) {}
-        }
         binding.spinnerMonth.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>, v: View?, pos: Int, id: Long) = refreshStats()
             override fun onNothingSelected(p: AdapterView<*>) {}
@@ -105,17 +112,63 @@ class JobDetailFragment : Fragment() {
         }
     }
 
+    private fun applyResponsiveLayout() {
+        val profile = ResponsiveUi.profile(requireContext())
+        ResponsiveUi.applyOuterPadding(binding.jobDetailScroll, profile)
+        ResponsiveUi.applyContentPadding(binding.jobDetailContent, profile)
+        ResponsiveUi.setLinearOrientation(binding.layoutJobFilters, profile.isCompact)
+        ResponsiveUi.setLinearOrientation(binding.layoutHeroActions, profile.isCompact)
+        binding.gridPrimaryStats.columnCount = if (profile.isCompact) 1 else 2
+        binding.gridBonusStats.columnCount = if (profile.isCompact) 1 else 2
+
+        val yearParams = binding.spinnerYear.layoutParams as LinearLayout.LayoutParams
+        val monthParams = binding.spinnerMonth.layoutParams as LinearLayout.LayoutParams
+        val addParams = binding.buttonAddEntry.layoutParams as LinearLayout.LayoutParams
+        val statsParams = binding.buttonStats.layoutParams as LinearLayout.LayoutParams
+        if (profile.isCompact) {
+            yearParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            monthParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            yearParams.weight = 0f
+            monthParams.weight = 0f
+            ResponsiveUi.setStartMargin(binding.spinnerMonth, 0)
+            ResponsiveUi.setTopMargin(binding.spinnerMonth, ResponsiveUi.dp(requireContext(), 8))
+            addParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            statsParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            addParams.weight = 0f
+            statsParams.weight = 0f
+            ResponsiveUi.setStartMargin(binding.buttonStats, 0)
+            ResponsiveUi.setTopMargin(binding.buttonStats, ResponsiveUi.dp(requireContext(), 10))
+        } else {
+            yearParams.width = 0
+            monthParams.width = 0
+            yearParams.weight = 1f
+            monthParams.weight = 1f
+            ResponsiveUi.setStartMargin(binding.spinnerMonth, ResponsiveUi.dp(requireContext(), 8))
+            ResponsiveUi.setTopMargin(binding.spinnerMonth, 0)
+            addParams.width = 0
+            statsParams.width = 0
+            addParams.weight = 1f
+            statsParams.weight = 1f
+            ResponsiveUi.setStartMargin(binding.buttonStats, ResponsiveUi.dp(requireContext(), 12))
+            ResponsiveUi.setTopMargin(binding.buttonStats, 0)
+        }
+        binding.spinnerYear.layoutParams = yearParams
+        binding.spinnerMonth.layoutParams = monthParams
+        binding.buttonAddEntry.layoutParams = addParams
+        binding.buttonStats.layoutParams = statsParams
+    }
+
     private fun loadStats(month: Int, year: Int) {
         val zone = ZoneId.systemDefault()
         val ym = YearMonth.of(year, month)
         val start = ym.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
         val end = ym.atEndOfMonth().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
 
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+        statsJob?.cancel()
+        statsJob = viewLifecycleOwner.lifecycleScope.launch {
             workRepository.getEntriesForPeriod(args.jobId, start, end)
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { list ->
-                    val job = viewModel.job.value ?: return@collectLatest
-
                     var hours = 0.0
                     var morning = 0; var dayCount = 0; var night = 0
                     var baseSalary = 0.0
@@ -126,6 +179,7 @@ class JobDetailFragment : Fragment() {
                     var bonusHol = 0.0
 
                     val dates = mutableSetOf<LocalDate>()
+                    val holidayDates = mutableSetOf<LocalDate>()
                     var holidays = 0; var saturdays = 0; var sundays = 0
 
                     list.forEach { entry ->
@@ -143,23 +197,24 @@ class JobDetailFragment : Fragment() {
                             if (date.dayOfWeek == DayOfWeek.SATURDAY) saturdays++
                             if (date.dayOfWeek == DayOfWeek.SUNDAY)   sundays++
                         }
-                        if (entry.isHoliday && dates.add(date)) holidays++
+                        if (entry.isHoliday) holidayDates.add(date)
 
-                        baseSalary += h * job.hourlyRate
+                        baseSalary += h * entry.hourlyRate
 
                         if (entry.shiftType.lowercase() in listOf("нічна","night")) {
-                            bonusNight += h * job.nightBonus
+                            bonusNight += h * entry.nightBonus
                         }
                         if (date.dayOfWeek == DayOfWeek.SATURDAY) {
-                            bonusSat += h * job.saturdayBonus
+                            bonusSat += h * entry.saturdayBonus
                         }
                         if (date.dayOfWeek == DayOfWeek.SUNDAY) {
-                            bonusSun += h * job.sundayBonus
+                            bonusSun += h * entry.sundayBonus
                         }
                         if (entry.isHoliday) {
-                            bonusHol += h * job.holidayBonus
+                            bonusHol += h * entry.holidayBonus
                         }
                     }
+                    holidays = holidayDates.size
 
                     binding.textMonth.text =
                         "${resources.getStringArray(R.array.months)[month - 1]} $year"
@@ -200,14 +255,26 @@ class JobDetailFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_export -> {
-                val file: File = ExcelExporter(requireContext()).export(args.jobId)
-                val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/csv"
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val appContext = requireContext().applicationContext
+                    val file: File = withContext(Dispatchers.IO) {
+                        ExcelExporter(appContext).export(args.jobId)
+                    }
+                    if (!isAdded) return@launch
+
+                    val context = requireContext()
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/csv"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    startActivity(Intent.createChooser(intent, getString(R.string.share)))
                 }
-                startActivity(Intent.createChooser(intent, getString(R.string.share)))
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -216,6 +283,7 @@ class JobDetailFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        statsJob?.cancel()
         _binding = null
     }
 }

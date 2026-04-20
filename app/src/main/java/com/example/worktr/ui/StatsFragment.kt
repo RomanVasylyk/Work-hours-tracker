@@ -2,31 +2,61 @@ package com.example.worktr.ui
 
 import android.os.Bundle
 import android.view.*
+import android.view.ViewGroup
 import android.widget.*
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.worktr.R
 import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.Job
+import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntryRepository
+import com.example.worktr.ui.chart.PeriodMarkerView
+import com.example.worktr.ui.picker.DynamicYearSpinner
+import com.example.worktr.ui.responsive.ResponsiveUi
+import com.example.worktr.util.localDate
+import com.example.worktr.util.salaryBreakdown
+import com.example.worktr.util.workedHours
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.example.worktr.viewmodel.JobDetailViewModel
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.BarLineChartBase
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
+import com.github.mikephil.charting.formatter.ValueFormatter
+import kotlinx.coroutines.Job as CoroutineJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 import java.time.*
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.format.TextStyle
+import java.util.Locale
+import kotlin.math.roundToInt
 
 class StatsFragment : Fragment() {
-    private lateinit var viewModel: JobDetailViewModel
+    private var viewModel: JobDetailViewModel? = null
     private lateinit var repo: WorkEntryRepository
     private lateinit var chartHours: LineChart
     private lateinit var chartSalary: BarChart
+    private lateinit var hoursMarker: PeriodMarkerView
+    private lateinit var salaryMarker: PeriodMarkerView
+    private lateinit var yearSpinner: DynamicYearSpinner
     private var currentJob: Job? = null
+    private var chartsJob: CoroutineJob? = null
+    private var targetJobId: Int = -1
+    private val numberFormatter: NumberFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+        maximumFractionDigits = 2
+        minimumFractionDigits = 0
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,39 +65,58 @@ class StatsFragment : Fragment() {
     ) =
         inflater.inflate(R.layout.fragment_stats, container, false)
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enterTransition = MaterialSharedAxis(MaterialSharedAxis.X, true)
+        returnTransition = MaterialSharedAxis(MaterialSharedAxis.X, false)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val args = StatsFragmentArgs.fromBundle(requireArguments())
+        targetJobId = args.jobId
         val db = DatabaseProvider.get(requireContext())
         repo = WorkEntryRepository(db.workEntryDao())
-        val jobRepo = com.example.worktr.data.JobRepository(db.jobDao())
-        viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(c: Class<T>) =
-                JobDetailViewModel(jobRepo, args.jobId) as T
-        })[JobDetailViewModel::class.java]
+        val jobRepo = JobRepository(db.jobDao())
 
         chartHours = view.findViewById(R.id.chartHours)
         chartSalary = view.findViewById(R.id.chartSalary)
+        hoursMarker = PeriodMarkerView(requireContext(), emptyList()) {
+            getString(R.string.marker_hours_value, numberFormatter.format(it))
+        }
+        salaryMarker = PeriodMarkerView(requireContext(), emptyList()) {
+            getString(R.string.marker_salary_value, numberFormatter.format(it))
+        }
+        chartHours.marker = hoursMarker
+        chartSalary.marker = salaryMarker
+        styleChart(chartHours)
+        styleChart(chartSalary)
+        applyResponsiveLayout(view)
+        updateScopeHeader(activeJobs = 0)
         val radioYear = view.findViewById<RadioButton>(R.id.radioYear)
         val radioMonth = view.findViewById<RadioButton>(R.id.radioMonth)
         val spinnerY = view.findViewById<Spinner>(R.id.spinnerStatsYear)
         val spinnerM = view.findViewById<Spinner>(R.id.spinnerStatsMonth)
-        val totalHoursLabel = view.findViewById<TextView>(R.id.textTotalHours)
-        val avgHoursLabel = view.findViewById<TextView>(R.id.textAvgHours)
-        val totalSalaryLabel = view.findViewById<TextView>(R.id.textTotalSalary)
-        val avgSalaryLabel = view.findViewById<TextView>(R.id.textAvgSalary)
 
-        viewModel.job.observe(viewLifecycleOwner) {
-            currentJob = it
-            loadCharts()
+        if (targetJobId != -1) {
+            viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+                override fun <T : androidx.lifecycle.ViewModel> create(c: Class<T>) =
+                    JobDetailViewModel(jobRepo, targetJobId) as T
+            })[JobDetailViewModel::class.java]
+            viewModel?.job?.observe(viewLifecycleOwner) {
+                currentJob = it
+                updateScopeHeader(activeJobs = null)
+                loadCharts()
+            }
+        } else {
+            activity?.title = getString(R.string.overall_stats)
         }
 
-        ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            resources.getStringArray(R.array.years)
-        ).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerY.adapter = it
+        yearSpinner = DynamicYearSpinner(
+            context = requireContext(),
+            spinner = spinnerY,
+            initialYear = LocalDate.now().year
+        ) {
+            loadCharts()
         }
         ArrayAdapter(
             requireContext(),
@@ -78,7 +127,6 @@ class StatsFragment : Fragment() {
             spinnerM.adapter = it
         }
         val now = LocalDate.now()
-        spinnerY.setSelection(resources.getStringArray(R.array.years).indexOf(now.year.toString()))
         spinnerM.setSelection(now.monthValue - 1)
 
         fun updateMode() {
@@ -94,15 +142,18 @@ class StatsFragment : Fragment() {
 
             override fun onNothingSelected(p: AdapterView<*>) {}
         }
-        spinnerY.onItemSelectedListener = selListener
         spinnerM.onItemSelectedListener = selListener
+
+        if (targetJobId == -1) {
+            loadCharts()
+        }
     }
 
     private fun loadCharts() {
-        val job = currentJob ?: return
         val root = view ?: return
+        if (targetJobId != -1 && currentJob == null) return
         val isMonth = root.findViewById<RadioButton>(R.id.radioMonth).isChecked
-        val year = root.findViewById<Spinner>(R.id.spinnerStatsYear).selectedItem.toString().toInt()
+        val year = yearSpinner.getSelectedYear() ?: return
         val month = root.findViewById<Spinner>(R.id.spinnerStatsMonth).selectedItemPosition + 1
         val zone = ZoneId.systemDefault()
         val (start, end, periodCount) = if (!isMonth) {
@@ -117,51 +168,55 @@ class StatsFragment : Fragment() {
             Triple(s, e, ym.lengthOfMonth())
         }
 
-        lifecycleScope.launch {
-            repo.getEntriesForPeriod(job.jobId, start, end).collectLatest { list ->
+        chartsJob?.cancel()
+        chartsJob = viewLifecycleOwner.lifecycleScope.launch {
+            val entriesFlow = if (targetJobId == -1) {
+                repo.getEntriesForPeriod(start, end)
+            } else {
+                repo.getEntriesForPeriod(targetJobId, start, end)
+            }
+            entriesFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collectLatest { list ->
+                val labels = buildLabels(isMonth, periodCount)
                 val hoursEntries = mutableListOf<Entry>()
                 val salaryEntries = mutableListOf<BarEntry>()
                 val buckets = if (!isMonth) (1..12) else (1..periodCount)
+                val hoursBuckets = DoubleArray(periodCount + 1)
+                val salaryBuckets = DoubleArray(periodCount + 1)
+
+                list.forEach { entry ->
+                    val date = entry.localDate(zone)
+                    val index = if (isMonth) date.dayOfMonth else date.monthValue
+                    hoursBuckets[index] += entry.workedHours()
+                    salaryBuckets[index] += entry.salaryBreakdown(zone).total
+                }
+
                 var totalHours = 0.0
                 var totalSalary = 0.0
 
                 buckets.forEach { i ->
-                    val sumHours = list.filter { dateMatches(it.date, zone, isMonth, i) }
-                        .sumOf { it.hoursWorked - it.breakHours }
-                    val sumSalary = list.filter { dateMatches(it.date, zone, isMonth, i) }
-                        .sumOf { entry ->
-                            val h = entry.hoursWorked - entry.breakHours
-                            var s = h * job.hourlyRate
-                            if (entry.shiftType.lowercase() in listOf(
-                                    "night",
-                                    "нічна"
-                                )
-                            ) s += h * job.nightBonus
-                            val dow = Instant.ofEpochMilli(entry.date).atZone(zone).dayOfWeek
-                            if (dow == DayOfWeek.SATURDAY) s += h * job.saturdayBonus
-                            if (dow == DayOfWeek.SUNDAY) s += h * job.sundayBonus
-                            if (entry.isHoliday) s += h * job.holidayBonus
-                            s
-                        }
+                    val sumHours = hoursBuckets[i]
+                    val sumSalary = salaryBuckets[i]
                     hoursEntries.add(Entry(i.toFloat(), sumHours.toFloat()))
                     salaryEntries.add(BarEntry(i.toFloat(), sumSalary.toFloat()))
                     totalHours += sumHours
                     totalSalary += sumSalary
                 }
 
-                chartHours.data = LineData(
-                    LineDataSet(
-                        hoursEntries,
-                        getString(R.string.hours_worked_format, 0.0)
-                    )
-                )
-                chartHours.xAxis.position = XAxis.XAxisPosition.BOTTOM
+                hoursMarker.updateLabels(labels)
+                salaryMarker.updateLabels(labels)
+                chartHours.data = LineData(createHoursDataSet(hoursEntries, isMonth))
+                applyXAxis(chartHours, labels, isMonth)
                 chartHours.invalidate()
-                chartSalary.data =
-                    BarData(BarDataSet(salaryEntries, getString(R.string.salary_format, 0.0)))
+                chartHours.animateX(450)
+                chartSalary.data = BarData(createSalaryDataSet(salaryEntries, isMonth)).apply {
+                    barWidth = if (isMonth) 0.55f else 0.48f
+                }
                 chartSalary.setFitBars(true)
-                chartSalary.xAxis.position = XAxis.XAxisPosition.BOTTOM
+                applyXAxis(chartSalary, labels, isMonth)
                 chartSalary.invalidate()
+                chartSalary.animateY(450)
 
                 val totalHoursLabel = root.findViewById<TextView>(R.id.textTotalHours)
                 val avgHoursLabel = root.findViewById<TextView>(R.id.textAvgHours)
@@ -170,6 +225,9 @@ class StatsFragment : Fragment() {
 
                 totalHoursLabel.text = getString(R.string.total_hours, totalHours)
                 totalSalaryLabel.text = getString(R.string.total_salary, totalSalary)
+                updateScopeHeader(
+                    activeJobs = if (targetJobId == -1) list.map { it.jobId }.distinct().size else null
+                )
 
                 if (!isMonth) {
                     avgHoursLabel.visibility = View.VISIBLE
@@ -184,8 +242,152 @@ class StatsFragment : Fragment() {
         }
     }
 
-    private fun dateMatches(millis: Long, zone: ZoneId, isMonth: Boolean, index: Int): Boolean {
-        val dt = Instant.ofEpochMilli(millis).atZone(zone)
-        return if (isMonth) dt.dayOfMonth == index else dt.monthValue == index
+    private fun styleChart(chart: BarLineChartBase<*>) {
+        val gridColor = ContextCompat.getColor(requireContext(), R.color.chart_grid)
+        val axisTextColor = ContextCompat.getColor(requireContext(), R.color.chart_axis_text)
+        chart.description.isEnabled = false
+        chart.legend.isEnabled = false
+        chart.setNoDataText(getString(R.string.chart_no_data))
+        chart.setDrawGridBackground(false)
+        chart.setPinchZoom(false)
+        chart.setScaleEnabled(false)
+        chart.isDoubleTapToZoomEnabled = false
+        chart.setExtraOffsets(8f, 12f, 8f, 4f)
+        chart.axisRight.isEnabled = false
+        chart.axisLeft.apply {
+            axisMinimum = 0f
+            textColor = axisTextColor
+            this.gridColor = gridColor
+            setDrawAxisLine(false)
+            valueFormatter = object : ValueFormatter() {
+                override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+                    return numberFormatter.format(value)
+                }
+            }
+        }
+        chart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            textColor = axisTextColor
+            this.gridColor = gridColor
+            setDrawAxisLine(false)
+            setDrawGridLines(false)
+            granularity = 1f
+            yOffset = 6f
+        }
+    }
+
+    private fun createHoursDataSet(entries: List<Entry>, isMonth: Boolean): LineDataSet {
+        val lineColor = ContextCompat.getColor(requireContext(), R.color.chart_hours_line)
+        val holeColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSurface)
+        return LineDataSet(entries, getString(R.string.chart_hours_title)).apply {
+            color = lineColor
+            lineWidth = 3f
+            setDrawValues(false)
+            setCircleColor(lineColor)
+            circleHoleColor = holeColor
+            circleRadius = if (isMonth) 3.4f else 4.4f
+            setDrawCircleHole(true)
+            highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
+            highlightLineWidth = 1.5f
+            setDrawHorizontalHighlightIndicator(false)
+            mode = LineDataSet.Mode.HORIZONTAL_BEZIER
+            setDrawFilled(true)
+            fillDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.chart_hours_fill)
+        }
+    }
+
+    private fun createSalaryDataSet(entries: List<BarEntry>, isMonth: Boolean): BarDataSet {
+        return BarDataSet(entries, getString(R.string.chart_salary_title)).apply {
+            color = ContextCompat.getColor(requireContext(), R.color.chart_salary_bar)
+            setDrawValues(false)
+            highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
+            highLightAlpha = if (isMonth) 180 else 150
+        }
+    }
+
+    private fun applyXAxis(chart: BarLineChartBase<*>, labels: List<String>, isMonth: Boolean) {
+        chart.xAxis.apply {
+            axisMinimum = 0.5f
+            axisMaximum = labels.size + 0.5f
+            labelCount = if (isMonth) minOf(labels.size, 8) else labels.size
+            setAvoidFirstLastClipping(true)
+            valueFormatter = object : ValueFormatter() {
+                override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+                    val index = value.roundToInt() - 1
+                    return labels.getOrElse(index) { "" }
+                }
+            }
+        }
+    }
+
+    private fun buildLabels(isMonth: Boolean, periodCount: Int): List<String> {
+        return if (isMonth) {
+            (1..periodCount).map { it.toString() }
+        } else {
+            (1..12).map {
+                Month.of(it).getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                    .replaceFirstChar { ch -> ch.titlecase(Locale.getDefault()) }
+            }
+        }
+    }
+
+    private fun updateScopeHeader(activeJobs: Int?) {
+        val root = view ?: return
+        val textScope = root.findViewById<TextView>(R.id.textStatsScope)
+        val textMeta = root.findViewById<TextView>(R.id.textStatsMeta)
+        if (targetJobId == -1) {
+            textScope.text = getString(R.string.stats_scope_all)
+            textMeta.text = getString(R.string.stats_scope_all_meta, activeJobs ?: 0)
+        } else {
+            val name = currentJob?.name.orEmpty()
+            textScope.text = getString(R.string.stats_scope_job, name)
+            textMeta.text = getString(R.string.stats_scope_job_meta)
+        }
+    }
+
+    private fun applyResponsiveLayout(view: View) {
+        val profile = ResponsiveUi.profile(requireContext())
+        ResponsiveUi.applyOuterPadding(view.findViewById(R.id.statsScroll), profile)
+        ResponsiveUi.applyContentPadding(view.findViewById(R.id.statsContent), profile)
+        ResponsiveUi.updateHeight(chartHours, profile.chartHeightPx)
+        ResponsiveUi.updateHeight(chartSalary, profile.chartHeightPx)
+
+        val groupMode = view.findViewById<RadioGroup>(R.id.groupStatsMode)
+        val filters = view.findViewById<LinearLayout>(R.id.layoutStatsFilters)
+        val spinnerYear = view.findViewById<Spinner>(R.id.spinnerStatsYear)
+        val spinnerMonth = view.findViewById<Spinner>(R.id.spinnerStatsMonth)
+
+        if (profile.isCompact) {
+            groupMode.orientation = RadioGroup.VERTICAL
+            ResponsiveUi.setLinearOrientation(filters, true)
+            val yearParams = spinnerYear.layoutParams as LinearLayout.LayoutParams
+            val monthParams = spinnerMonth.layoutParams as LinearLayout.LayoutParams
+            yearParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            monthParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            yearParams.weight = 0f
+            monthParams.weight = 0f
+            spinnerYear.layoutParams = yearParams
+            spinnerMonth.layoutParams = monthParams
+            ResponsiveUi.setStartMargin(spinnerMonth, 0)
+            ResponsiveUi.setTopMargin(spinnerMonth, ResponsiveUi.dp(requireContext(), 8))
+        } else {
+            groupMode.orientation = RadioGroup.HORIZONTAL
+            ResponsiveUi.setLinearOrientation(filters, false)
+            val yearParams = spinnerYear.layoutParams as LinearLayout.LayoutParams
+            val monthParams = spinnerMonth.layoutParams as LinearLayout.LayoutParams
+            yearParams.width = 0
+            monthParams.width = 0
+            yearParams.weight = 1f
+            monthParams.weight = 1f
+            spinnerYear.layoutParams = yearParams
+            spinnerMonth.layoutParams = monthParams
+            ResponsiveUi.setStartMargin(spinnerMonth, ResponsiveUi.dp(requireContext(), 8))
+            ResponsiveUi.setTopMargin(spinnerMonth, 0)
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        chartsJob?.cancel()
     }
 }

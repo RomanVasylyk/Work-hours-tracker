@@ -1,133 +1,264 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/statsScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/background"
     android:padding="16dp"
     tools:context=".ui.StatsFragment">
 
     <LinearLayout
+        android:id="@+id/statsContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp">
-
-        <RadioGroup
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:background="?attr/colorSurface"
-            android:layout_marginBottom="8dp">
-
-            <RadioButton
-                android:id="@+id/radioYear"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Рік"
-                android:checked="true" />
-
-            <RadioButton
-                android:id="@+id/radioMonth"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:text="Місяць" />
-
-        </RadioGroup>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-
-            <Spinner
-                android:id="@+id/spinnerStatsYear"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:entries="@array/years"
-                android:backgroundTint="?attr/colorPrimary" />
-
-            <Spinner
-                android:id="@+id/spinnerStatsMonth"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:entries="@array/months"
-                android:visibility="gone"
-                android:backgroundTint="?attr/colorPrimary" />
-
-        </LinearLayout>
-
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/chartHours"
-            android:layout_width="match_parent"
-            android:layout_height="280dp"
-            android:layout_marginBottom="16dp"
-            android:background="?attr/colorSurface"
-            android:padding="8dp" />
-
-        <com.github.mikephil.charting.charts.BarChart
-            android:id="@+id/chartSalary"
-            android:layout_width="match_parent"
-            android:layout_height="280dp"
-            android:layout_marginBottom="16dp"
-            android:background="?attr/colorSurface"
-            android:padding="8dp" />
+        android:orientation="vertical">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_dashboard_panel"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="24dp">
 
                 <TextView
-                    android:id="@+id/textTotalHours"
-                    style="@style/TextAppearance.Material3.TitleMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Загалом годин: 0.0" />
+                    android:background="@drawable/bg_dashboard_badge"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/stats_title"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.LabelLarge" />
 
                 <TextView
-                    android:id="@+id/textAvgHours"
-                    style="@style/TextAppearance.Material3.BodyLarge"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/textStatsScope"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Середньо годин: 0.0" />
+                    android:layout_marginTop="18dp"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.HeadlineSmall"
+                    tools:text="Усі роботи" />
 
                 <TextView
-                    android:id="@+id/textTotalSalary"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Загальна зарплата: 0.00" />
-
-                <TextView
-                    android:id="@+id/textAvgSalary"
-                    style="@style/TextAppearance.Material3.BodyLarge"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/textStatsMeta"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Середня зарплата: 0.00" />
+                    android:textColor="#E2F1F6"
+                    style="@style/TextAppearance.Material3.BodyMedium"
+                    tools:text="Активних робіт у періоді: 4" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/stats_hint"
+                    android:textColor="#D5E9EF"
+                    style="@style/TextAppearance.Material3.BodySmall" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/bg_dashboard_action"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <RadioGroup
+                        android:id="@+id/groupStatsMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/radioYear"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="@string/stats_mode_year"
+                            android:textColor="@color/dashboard_on" />
+
+                        <RadioButton
+                            android:id="@+id/radioMonth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="24dp"
+                            android:text="@string/stats_mode_month"
+                            android:textColor="@color/dashboard_on" />
+                    </RadioGroup>
+
+                    <LinearLayout
+                        android:id="@+id/layoutStatsFilters"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <Spinner
+                            android:id="@+id/spinnerStatsYear"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <Spinner
+                            android:id="@+id/spinnerStatsMonth"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:entries="@array/months"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_surface_panel"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/chart_hours_title"
+                    style="@style/TextAppearance.Material3.TitleLarge" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/chart_hours_subtitle"
+                    android:textColor="@color/chart_axis_text"
+                    style="@style/TextAppearance.Material3.BodyMedium" />
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/chartHours"
+                    android:layout_width="match_parent"
+                    android:layout_height="280dp"
+                    android:layout_marginTop="12dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_surface_panel"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/chart_salary_title"
+                    style="@style/TextAppearance.Material3.TitleLarge" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/chart_salary_subtitle"
+                    android:textColor="@color/chart_axis_text"
+                    style="@style/TextAppearance.Material3.BodyMedium" />
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/chartSalary"
+                    android:layout_width="match_parent"
+                    android:layout_height="280dp"
+                    android:layout_marginTop="12dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/stats_summary_title"
+            style="@style/TextAppearance.Material3.TitleLarge" />
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:useDefaultMargins="true">
+
+            <TextView
+                android:id="@+id/textTotalHours"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="96dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                tools:text="Загалом годин: 180.0" />
+
+            <TextView
+                android:id="@+id/textAvgHours"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="96dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                tools:text="Середньо годин: 15.0" />
+
+            <TextView
+                android:id="@+id/textTotalSalary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="96dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                tools:text="Загальна зарплата: 2480.00" />
+
+            <TextView
+                android:id="@+id/textAvgSalary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="96dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                tools:text="Середня зарплата: 206.00" />
+        </GridLayout>
     </LinearLayout>
 </ScrollView>

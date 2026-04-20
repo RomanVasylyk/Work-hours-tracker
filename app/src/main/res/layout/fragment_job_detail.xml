@@ -2,225 +2,328 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/jobDetailScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background"
     android:fillViewport="true"
     android:padding="16dp"
     tools:context=".ui.JobDetailFragment">
 
-    <FrameLayout
+    <LinearLayout
+        android:id="@+id/jobDetailContent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                android:layout_marginBottom="24dp">
+                android:background="@drawable/bg_dashboard_panel"
+                android:orientation="vertical"
+                android:padding="24dp">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/textMonth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_dashboard_badge"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.LabelLarge"
+                    tools:text="Травень 2026" />
+
+                <TextView
+                    android:id="@+id/textJobName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_marginTop="16dp"
+                    android:maxLines="2"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.HeadlineMedium"
+                    tools:text="Основна робота" />
 
-                    <TextView
-                        android:id="@+id/textJobName"
-                        android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/textSalary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:maxLines="2"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.DisplaySmall"
+                    tools:text="Зарплата: 1260.00" />
+
+                <TextView
+                    android:id="@+id/textHours"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textColor="#E2F1F6"
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    tools:text="Відпрацьовано годин: 164.0" />
+
+                <LinearLayout
+                    android:id="@+id/layoutHeroActions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonAddEntry"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        style="@style/TextAppearance.Material3.TitleLarge"
-                        tools:text="Назва роботи" />
+                        android:layout_weight="1"
+                        android:text="@string/add_entry"
+                        android:textColor="@color/onPrimaryContainer"
+                        app:backgroundTint="@color/primaryContainer"
+                        app:cornerRadius="18dp" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonStats"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="16dp"
-                        android:gravity="center_vertical">
-
-                        <Spinner
-                            android:id="@+id/spinnerYear"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:entries="@array/years"
-                            app:popupTheme="@style/ThemeOverlay.Material3.Light" />
-
-                        <Spinner
-                            android:id="@+id/spinnerMonth"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="8dp"
-                            android:entries="@array/months"
-                            app:popupTheme="@style/ThemeOverlay.Material3.Light" />
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/textMonth"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        style="@style/TextAppearance.Material3.TitleMedium"
-                        tools:text="Травень 2025" />
-
-                    <GridLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:useDefaultMargins="true"
-                        android:alignmentMode="alignMargins"
-                        android:layout_marginTop="16dp">
-
-                        <TextView
-                            android:id="@+id/textHours"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Годин: 160" />
-
-                        <TextView
-                            android:id="@+id/textDays"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Днів: 20" />
-
-                        <TextView
-                            android:id="@+id/textMorning"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Ранкових: 5" />
-
-                        <TextView
-                            android:id="@+id/textDay"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Денних: 10" />
-
-                        <TextView
-                            android:id="@+id/textNight"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Нічних: 5" />
-
-                        <TextView
-                            android:id="@+id/textHolidays"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Святкових: 2" />
-
-                        <TextView
-                            android:id="@+id/textSaturday"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Субот: 3" />
-
-                        <TextView
-                            android:id="@+id/textSunday"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Неділь: 2" />
-
-                    </GridLayout>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="24dp"
-                        style="@style/TextAppearance.Material3.LabelLarge"
-                        android:text="Доплати" />
-
-                    <GridLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:columnCount="2"
-                        android:useDefaultMargins="true"
-                        android:alignmentMode="alignMargins"
-                        android:layout_marginTop="8dp">
-
-                        <TextView
-                            android:id="@+id/textNightBonus"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Нічні: 0.00" />
-
-                        <TextView
-                            android:id="@+id/textSaturdayBonus"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Субота: 0.00" />
-
-                        <TextView
-                            android:id="@+id/textSundayBonus"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Неділя: 0.00" />
-
-                        <TextView
-                            android:id="@+id/textHolidayBonus"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_columnWeight="1"
-                            style="@style/TextAppearance.Material3.BodyLarge"
-                            tools:text="Свята: 0.00" />
-
-                    </GridLayout>
-
-                    <TextView
-                        android:id="@+id/textSalary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="24dp"
-                        style="@style/TextAppearance.Material3.TitleMedium"
-                        tools:text="Зарплата: 0.00" />
-
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="@string/stat"
+                        android:textColor="@color/dashboard_on"
+                        app:cornerRadius="18dp"
+                        app:strokeColor="@color/dashboard_on" />
                 </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonAddEntry"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/add_entry"
-                app:cornerRadius="16dp" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonStats"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/stat"
-                app:cornerRadius="16dp"/>
-        </LinearLayout>
+                android:background="@drawable/bg_surface_panel"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-    </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Період"
+                    style="@style/TextAppearance.Material3.TitleMedium" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Перемикайте місяць і рік, щоб переглянути статистику по роботі."
+                    android:textColor="@color/chart_axis_text"
+                    style="@style/TextAppearance.Material3.BodyMedium" />
+
+                <LinearLayout
+                    android:id="@+id/layoutJobFilters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Spinner
+                        android:id="@+id/spinnerYear"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+
+                    <Spinner
+                        android:id="@+id/spinnerMonth"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:entries="@array/months"
+                        app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Зміни і дні"
+            style="@style/TextAppearance.Material3.TitleLarge" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Компактний зріз по навантаженню і типах змін."
+            android:textColor="@color/chart_axis_text"
+            style="@style/TextAppearance.Material3.BodyMedium" />
+
+        <GridLayout
+            android:id="@+id/gridPrimaryStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:useDefaultMargins="true">
+
+            <TextView
+                android:id="@+id/textDays"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                android:textColor="@color/onSurface"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Відпрацьовано днів: 20" />
+
+            <TextView
+                android:id="@+id/textMorning"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Ранкових змін: 5" />
+
+            <TextView
+                android:id="@+id/textDay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Денних змін: 9" />
+
+            <TextView
+                android:id="@+id/textNight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Нічних змін: 6" />
+
+            <TextView
+                android:id="@+id/textHolidays"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Святкових днів: 2" />
+
+            <TextView
+                android:id="@+id/textSaturday"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Субота: 3" />
+
+            <TextView
+                android:id="@+id/textSunday"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Неділя: 2" />
+        </GridLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Доплати"
+            style="@style/TextAppearance.Material3.TitleLarge" />
+
+        <GridLayout
+            android:id="@+id/gridBonusStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:useDefaultMargins="true">
+
+            <TextView
+                android:id="@+id/textNightBonus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Доплата нічні: 140.00" />
+
+            <TextView
+                android:id="@+id/textSaturdayBonus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Доплата субота: 50.00" />
+
+            <TextView
+                android:id="@+id/textSundayBonus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Доплата неділя: 60.00" />
+
+            <TextView
+                android:id="@+id/textHolidayBonus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="92dp"
+                android:padding="16dp"
+                style="@style/TextAppearance.Material3.TitleSmall"
+                tools:text="Доплата свята: 30.00" />
+        </GridLayout>
+    </LinearLayout>
 </ScrollView>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/textEntryDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/TextAppearance.Material3.TitleMedium"
+            tools:text="Дата: 2026-04-20" />
+
+        <TextView
+            android:id="@+id/textEntryShift"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            tools:text="Зміна: Денна" />
+
+        <TextView
+            android:id="@+id/textEntryHours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            tools:text="Години: 8" />
+
+        <TextView
+            android:id="@+id/textEntryBreak"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            tools:text="Перерва: 30 хв" />
+
+        <TextView
+            android:id="@+id/textEntryWorked"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            tools:text="Чисто відпрацьовано: 7.5" />
+
+        <TextView
+            android:id="@+id/textEntryDayType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            style="@style/TextAppearance.Material3.BodyLarge"
+            tools:text="День: Понеділок • Звичайний" />
+
+        <TextView
+            android:id="@+id/textEntrySalary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            style="@style/TextAppearance.Material3.TitleMedium"
+            tools:text="Зарплата за день: 112.50" />
+    </LinearLayout>
+</ScrollView>

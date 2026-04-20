@@ -1,23 +1,20 @@
 package com.example.worktr.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import com.example.worktr.data.WorkEntry
 import com.example.worktr.data.WorkEntryRepository
-import kotlinx.coroutines.launch
 
 class AddEntryViewModel(
     private val repository: WorkEntryRepository
 ) : ViewModel() {
 
-    fun getEntryForDay(jobId: Int, start: Long, end: Long) =
-        repository.getEntryForDay(jobId, start, end).asLiveData()
+    suspend fun getEntryForDay(jobId: Int, start: Long, end: Long) =
+        repository.getEntryForDay(jobId, start, end)
 
-    fun insert(entry: WorkEntry) = viewModelScope.launch { repository.insert(entry) }
+    suspend fun insert(entry: WorkEntry) = repository.insert(entry)
 
-    fun update(entry: WorkEntry) = viewModelScope.launch { repository.update(entry) }
+    suspend fun update(entry: WorkEntry) = repository.update(entry)
 
-    fun delete(entry: WorkEntry) = viewModelScope.launch { repository.delete(entry) }
+    suspend fun delete(entry: WorkEntry) = repository.delete(entry)
 
 }

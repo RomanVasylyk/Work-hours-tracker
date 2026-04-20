@@ -15,8 +15,22 @@
         <item name="colorOnTertiaryContainer">@color/onTertiaryContainer</item>
         <item name="colorError">@color/error</item>
         <item name="colorOnError">@color/onError</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="colorOnBackground">@color/onBackground</item>
+        <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/onSurface</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.WorkTracker.MaterialAlertDialog</item>
+    </style>
+
+    <style name="ThemeOverlay.WorkTracker.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.WorkTracker.RoundedDialog</item>
+    </style>
+
+    <style name="ShapeAppearance.WorkTracker.RoundedDialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
     </style>
 </resources>

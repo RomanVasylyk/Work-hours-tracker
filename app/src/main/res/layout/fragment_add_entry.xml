@@ -2,61 +2,115 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/addEntryScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background"
     android:fillViewport="true"
     android:padding="16dp"
     tools:context=".ui.AddEntryFragment">
 
     <LinearLayout
+        android:id="@+id/addEntryContent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:gravity="center"
         android:padding="16dp">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="30dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_dashboard_panel"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="24dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/select_date"
+                    android:background="@drawable/bg_dashboard_badge"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/add_entry"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.LabelLarge" />
+
+                <TextView
+                    android:id="@+id/textSelectedDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:maxLines="2"
+                    android:textColor="@color/dashboard_on"
+                    style="@style/TextAppearance.Material3.HeadlineMedium"
+                    tools:text="2026-04-20" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Оберіть дату, потім налаштуйте години, перерву і тип зміни."
+                    android:textColor="#E2F1F6"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buttonSelectDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/select_date"
+                    android:textColor="@color/onPrimaryContainer"
+                    app:backgroundTint="@color/primaryContainer"
+                    app:cornerRadius="18dp"
                     app:icon="@drawable/ic_calendar"
-                    app:iconGravity="textStart"
-                    app:cornerRadius="12dp"
-                    android:text="@string/select_date" />
+                    app:iconGravity="textStart" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_surface_panel"
+                android:orientation="vertical"
+                android:padding="20dp">
 
                 <TextView
-                    android:id="@+id/textSelectedDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    tools:text="2025-05-04" />
+                    android:text="Параметри зміни"
+                    style="@style/TextAppearance.Material3.TitleLarge" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Усі значення зберігаються як snapshot на момент запису."
+                    android:textColor="@color/chart_axis_text"
+                    style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:hintEnabled="true"
+                    android:layout_marginTop="18dp"
                     android:hint="@string/worked_hours">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -66,18 +120,36 @@
                         android:inputType="numberDecimal" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/break_picker_label"
+                    style="@style/TextAppearance.Material3.BodyMedium" />
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:hint="@string/break_hours">
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/inputBreak"
-                        android:layout_width="match_parent"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonPickBreak"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:text="@string/break_picker_change"
+                        app:cornerRadius="16dp" />
+
+                    <TextView
+                        android:id="@+id/textBreakValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/break_picker_zero"
+                        style="@style/TextAppearance.Material3.TitleMedium" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -90,6 +162,7 @@
                     android:id="@+id/spinnerShift"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:entries="@array/shift_types"
                     app:popupTheme="@style/ThemeOverlay.Material3.Light" />
 
@@ -107,17 +180,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/save"
-            app:cornerRadius="16dp" />
+            app:cornerRadius="18dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonDeleteEntry"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:text="@string/delete_entry"
-            app:cornerRadius="16dp"
-            android:layout_marginTop="8dp"
             android:visibility="gone"
-            app:buttonStyle="@style/Widget.Material3.Button.OutlinedButton"/>
-
+            app:cornerRadius="18dp" />
     </LinearLayout>
 </ScrollView>

@@ -19,10 +19,15 @@ interface WorkEntryDao {
     @Delete
     suspend fun delete(entry: WorkEntry)
 
+    @Query("DELETE FROM work_entries WHERE jobId = :jobId AND date IN (:dates)")
+    suspend fun deleteEntriesForDates(jobId: Int, dates: List<Long>)
+
+    @Query("SELECT * FROM work_entries WHERE date BETWEEN :start AND :end ORDER BY date")
+    fun getAllEntriesForPeriod(start: Long, end: Long): Flow<List<WorkEntry>>
+
     @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end ORDER BY date")
     fun getEntriesForPeriod(jobId: Int, start: Long, end: Long): Flow<List<WorkEntry>>
 
-    @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end LIMIT 1")
-    fun getEntryForDay(jobId: Int, start: Long, end: Long): Flow<WorkEntry?>
+    @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end ORDER BY entryId DESC LIMIT 1")
+    suspend fun getEntryForDay(jobId: Int, start: Long, end: Long): WorkEntry?
 }
-
