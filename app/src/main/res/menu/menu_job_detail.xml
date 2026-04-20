@@ -7,5 +7,9 @@
         android:icon="@drawable/ic_share"
         android:title="@string/export"
         app:showAsAction="ifRoom|withText" />
+    <item
+        android:id="@+id/action_import"
+        android:title="@string/import_csv"
+        app:showAsAction="never" />
 
 </menu>
