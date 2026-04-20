@@ -86,16 +86,25 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <Spinner
-                        android:id="@+id/spinnerYear"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutCalendarYearField"
+                        style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:spinnerMode="dropdown" />
+                        android:hint="@string/stats_mode_year">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/inputCalendarYear"
+                            style="@style/Widget.WorkTracker.DropdownInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonToday"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        style="@style/Widget.WorkTracker.Button.Outlined"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
@@ -263,6 +272,8 @@
             android:id="@+id/buttonBulkAdd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp"
             android:text="@string/add"
             android:visibility="gone" />
     </LinearLayout>

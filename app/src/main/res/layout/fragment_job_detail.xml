@@ -83,25 +83,25 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonAddEntry"
+                        style="@style/Widget.WorkTracker.Button.Tonal"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/add_entry"
-                        android:textColor="@color/onPrimaryContainer"
-                        app:backgroundTint="@color/primaryContainer"
-                        app:cornerRadius="18dp" />
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="@string/job_detail_add_entry" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonStats"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        style="@style/Widget.WorkTracker.Button.Outlined"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
+                        android:gravity="center"
                         android:text="@string/stat"
-                        android:textColor="@color/dashboard_on"
-                        app:cornerRadius="18dp"
-                        app:strokeColor="@color/dashboard_on" />
+                        android:textColor="@color/primary"
+                        app:strokeColor="@color/primary" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -144,21 +144,38 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <Spinner
-                        android:id="@+id/spinnerYear"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutYearField"
+                        style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+                        android:hint="@string/stats_mode_year">
 
-                    <Spinner
-                        android:id="@+id/spinnerMonth"
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/inputYear"
+                            style="@style/Widget.WorkTracker.DropdownInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutMonthField"
+                        style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="8dp"
-                        android:entries="@array/months"
-                        app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+                        android:hint="@string/stats_mode_month">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/inputMonth"
+                            style="@style/Widget.WorkTracker.DropdownInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

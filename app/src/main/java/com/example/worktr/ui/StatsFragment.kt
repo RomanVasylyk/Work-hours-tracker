@@ -3,7 +3,8 @@ package com.example.worktr.ui
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -16,11 +17,14 @@ import com.example.worktr.data.Job
 import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.ui.chart.PeriodMarkerView
+import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.picker.DynamicYearSpinner
 import com.example.worktr.ui.responsive.ResponsiveUi
 import com.example.worktr.util.localDate
 import com.example.worktr.util.salaryBreakdown
 import com.example.worktr.util.workedHours
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.example.worktr.viewmodel.JobDetailViewModel
@@ -50,6 +54,7 @@ class StatsFragment : Fragment() {
     private lateinit var hoursMarker: PeriodMarkerView
     private lateinit var salaryMarker: PeriodMarkerView
     private lateinit var yearSpinner: DynamicYearSpinner
+    private lateinit var monthLabels: List<String>
     private var currentJob: Job? = null
     private var chartsJob: CoroutineJob? = null
     private var targetJobId: Int = -1
@@ -92,10 +97,12 @@ class StatsFragment : Fragment() {
         styleChart(chartSalary)
         applyResponsiveLayout(view)
         updateScopeHeader(activeJobs = 0)
-        val radioYear = view.findViewById<RadioButton>(R.id.radioYear)
-        val radioMonth = view.findViewById<RadioButton>(R.id.radioMonth)
-        val spinnerY = view.findViewById<Spinner>(R.id.spinnerStatsYear)
-        val spinnerM = view.findViewById<Spinner>(R.id.spinnerStatsMonth)
+        val modeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
+        val buttonYear = view.findViewById<MaterialButton>(R.id.buttonModeYear)
+        val inputY = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsYear)
+        val inputM = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsMonth)
+        val layoutM = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layoutStatsMonthField)
+        modeGroup.check(R.id.buttonModeYear)
 
         if (targetJobId != -1) {
             viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
@@ -113,36 +120,27 @@ class StatsFragment : Fragment() {
 
         yearSpinner = DynamicYearSpinner(
             context = requireContext(),
-            spinner = spinnerY,
+            input = inputY,
             initialYear = LocalDate.now().year
         ) {
             loadCharts()
         }
-        ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            resources.getStringArray(R.array.months)
-        ).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerM.adapter = it
-        }
+        monthLabels = resources.getStringArray(R.array.months).toList()
+        inputM.setAdapter(DropdownUi.adapter(requireContext(), monthLabels))
         val now = LocalDate.now()
-        spinnerM.setSelection(now.monthValue - 1)
+        inputM.setText(monthLabels[now.monthValue - 1], false)
+        DropdownUi.attach(inputM) {
+            monthLabels.indexOf(inputM.text?.toString().orEmpty()).takeIf { it >= 0 }
+        }
 
         fun updateMode() {
-            spinnerM.visibility = if (radioYear.isChecked) View.GONE else View.VISIBLE
+            layoutM.visibility = if (buttonYear.isChecked) View.GONE else View.VISIBLE
             loadCharts()
         }
-        radioYear.setOnCheckedChangeListener { _, _ -> updateMode() }
-        radioMonth.setOnCheckedChangeListener { _, _ -> updateMode() }
-
-        val selListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p: AdapterView<*>, v: View?, pos: Int, id: Long) =
-                loadCharts()
-
-            override fun onNothingSelected(p: AdapterView<*>) {}
+        modeGroup.addOnButtonCheckedListener { _, _, isChecked ->
+            if (isChecked) updateMode()
         }
-        spinnerM.onItemSelectedListener = selListener
+        inputM.setOnItemClickListener { _, _, _, _ -> loadCharts() }
 
         if (targetJobId == -1) {
             loadCharts()
@@ -152,9 +150,16 @@ class StatsFragment : Fragment() {
     private fun loadCharts() {
         val root = view ?: return
         if (targetJobId != -1 && currentJob == null) return
-        val isMonth = root.findViewById<RadioButton>(R.id.radioMonth).isChecked
+        val isMonth = root.findViewById<MaterialButton>(R.id.buttonModeMonth).isChecked
         val year = yearSpinner.getSelectedYear() ?: return
-        val month = root.findViewById<Spinner>(R.id.spinnerStatsMonth).selectedItemPosition + 1
+        val month = monthLabels.indexOf(
+            root.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsMonth)
+                .text
+                ?.toString()
+                .orEmpty()
+        ).let { index ->
+            if (index >= 0) index + 1 else LocalDate.now().monthValue
+        }
         val zone = ZoneId.systemDefault()
         val (start, end, periodCount) = if (!isMonth) {
             val s = LocalDate.of(year, 1, 1).atStartOfDay(zone).toInstant().toEpochMilli()
@@ -352,37 +357,55 @@ class StatsFragment : Fragment() {
         ResponsiveUi.updateHeight(chartHours, profile.chartHeightPx)
         ResponsiveUi.updateHeight(chartSalary, profile.chartHeightPx)
 
-        val groupMode = view.findViewById<RadioGroup>(R.id.groupStatsMode)
+        val groupMode = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
         val filters = view.findViewById<LinearLayout>(R.id.layoutStatsFilters)
-        val spinnerYear = view.findViewById<Spinner>(R.id.spinnerStatsYear)
-        val spinnerMonth = view.findViewById<Spinner>(R.id.spinnerStatsMonth)
+        val buttonYear = view.findViewById<MaterialButton>(R.id.buttonModeYear)
+        val buttonMonth = view.findViewById<MaterialButton>(R.id.buttonModeMonth)
+        val yearField = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layoutStatsYearField)
+        val monthField = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layoutStatsMonthField)
+        val yearButtonParams = buttonYear.layoutParams as LinearLayout.LayoutParams
+        val monthButtonParams = buttonMonth.layoutParams as LinearLayout.LayoutParams
 
         if (profile.isCompact) {
-            groupMode.orientation = RadioGroup.VERTICAL
+            groupMode.orientation = LinearLayout.VERTICAL
             ResponsiveUi.setLinearOrientation(filters, true)
-            val yearParams = spinnerYear.layoutParams as LinearLayout.LayoutParams
-            val monthParams = spinnerMonth.layoutParams as LinearLayout.LayoutParams
+            yearButtonParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            monthButtonParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            yearButtonParams.weight = 0f
+            monthButtonParams.weight = 0f
+            buttonYear.layoutParams = yearButtonParams
+            buttonMonth.layoutParams = monthButtonParams
+            ResponsiveUi.setTopMargin(buttonMonth, ResponsiveUi.dp(requireContext(), 8))
+            val yearParams = yearField.layoutParams as LinearLayout.LayoutParams
+            val monthParams = monthField.layoutParams as LinearLayout.LayoutParams
             yearParams.width = ViewGroup.LayoutParams.MATCH_PARENT
             monthParams.width = ViewGroup.LayoutParams.MATCH_PARENT
             yearParams.weight = 0f
             monthParams.weight = 0f
-            spinnerYear.layoutParams = yearParams
-            spinnerMonth.layoutParams = monthParams
-            ResponsiveUi.setStartMargin(spinnerMonth, 0)
-            ResponsiveUi.setTopMargin(spinnerMonth, ResponsiveUi.dp(requireContext(), 8))
+            yearField.layoutParams = yearParams
+            monthField.layoutParams = monthParams
+            ResponsiveUi.setStartMargin(monthField, 0)
+            ResponsiveUi.setTopMargin(monthField, ResponsiveUi.dp(requireContext(), 8))
         } else {
-            groupMode.orientation = RadioGroup.HORIZONTAL
+            groupMode.orientation = LinearLayout.HORIZONTAL
             ResponsiveUi.setLinearOrientation(filters, false)
-            val yearParams = spinnerYear.layoutParams as LinearLayout.LayoutParams
-            val monthParams = spinnerMonth.layoutParams as LinearLayout.LayoutParams
+            yearButtonParams.width = 0
+            monthButtonParams.width = 0
+            yearButtonParams.weight = 1f
+            monthButtonParams.weight = 1f
+            buttonYear.layoutParams = yearButtonParams
+            buttonMonth.layoutParams = monthButtonParams
+            ResponsiveUi.setTopMargin(buttonMonth, 0)
+            val yearParams = yearField.layoutParams as LinearLayout.LayoutParams
+            val monthParams = monthField.layoutParams as LinearLayout.LayoutParams
             yearParams.width = 0
             monthParams.width = 0
             yearParams.weight = 1f
             monthParams.weight = 1f
-            spinnerYear.layoutParams = yearParams
-            spinnerMonth.layoutParams = monthParams
-            ResponsiveUi.setStartMargin(spinnerMonth, ResponsiveUi.dp(requireContext(), 8))
-            ResponsiveUi.setTopMargin(spinnerMonth, 0)
+            yearField.layoutParams = yearParams
+            monthField.layoutParams = monthParams
+            ResponsiveUi.setStartMargin(monthField, ResponsiveUi.dp(requireContext(), 8))
+            ResponsiveUi.setTopMargin(monthField, 0)
         }
     }
 

@@ -65,13 +65,11 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buttonSelectDate"
+                    style="@style/Widget.WorkTracker.Button.Tonal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
                     android:text="@string/select_date"
-                    android:textColor="@color/onPrimaryContainer"
-                    app:backgroundTint="@color/primaryContainer"
-                    app:cornerRadius="18dp"
                     app:icon="@drawable/ic_calendar"
                     app:iconGravity="textStart" />
             </LinearLayout>
@@ -108,6 +106,7 @@
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.WorkTracker.TextInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
@@ -115,6 +114,7 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/inputHours"
+                        style="@style/Widget.WorkTracker.TextInputEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="numberDecimal" />
@@ -136,11 +136,10 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonPickBreak"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        style="@style/Widget.WorkTracker.Button.Outlined"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/break_picker_change"
-                        app:cornerRadius="16dp" />
+                        android:text="@string/break_picker_change" />
 
                     <TextView
                         android:id="@+id/textBreakValue"
@@ -151,27 +150,68 @@
                         style="@style/TextAppearance.Material3.TitleMedium" />
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/shift_type"
-                    style="@style/TextAppearance.Material3.BodyMedium" />
-
-                <Spinner
-                    android:id="@+id/spinnerShift"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutShiftType"
+                    style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:entries="@array/shift_types"
-                    app:popupTheme="@style/ThemeOverlay.Material3.Light" />
+                    android:layout_marginTop="18dp"
+                    android:hint="@string/shift_type">
 
-                <com.google.android.material.checkbox.MaterialCheckBox
-                    android:id="@+id/checkHoliday"
-                    android:layout_width="wrap_content"
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/inputShiftType"
+                        style="@style/Widget.WorkTracker.DropdownInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="@string/holiday" />
+                    app:cardBackgroundColor="@color/toggle_panel"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/toggle_panel_stroke"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/holiday"
+                                style="@style/TextAppearance.Material3.TitleSmall" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/holiday_toggle_hint"
+                                android:textColor="@color/chart_axis_text"
+                                style="@style/TextAppearance.Material3.BodySmall" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/checkHoliday"
+                            style="@style/Widget.WorkTracker.Switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -184,12 +224,11 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonDeleteEntry"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.WorkTracker.Button.Outlined"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/delete_entry"
-            android:visibility="gone"
-            app:cornerRadius="18dp" />
+            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>

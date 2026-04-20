@@ -21,6 +21,7 @@ import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntry
 import com.example.worktr.data.WorkEntryRepository
+import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.picker.DynamicYearSpinner
 import com.example.worktr.ui.picker.DurationPicker
 import com.google.android.material.button.MaterialButton
@@ -97,10 +98,10 @@ class CalendarDialogFragment : DialogFragment() {
         applyWindowInsets(view)
 
         // Year spinner setup
-        val spinnerYear = view.findViewById<Spinner>(R.id.spinnerYear)
+        val inputYear = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputCalendarYear)
         yearSpinner = DynamicYearSpinner(
             context = requireContext(),
-            spinner = spinnerYear,
+            input = inputYear,
             initialYear = currentMonth.year
         ) { selectedYear ->
             currentMonth = YearMonth.of(selectedYear, currentMonth.month)
@@ -215,11 +216,17 @@ class CalendarDialogFragment : DialogFragment() {
         val inputH = dlgView.findViewById<EditText>(R.id.inputHours)
         val breakButton = dlgView.findViewById<MaterialButton>(R.id.buttonPickBreak)
         val breakValue = dlgView.findViewById<TextView>(R.id.textBreakValue)
-        val spin = dlgView.findViewById<Spinner>(R.id.spinnerShift)
-        val chk = dlgView.findViewById<CheckBox>(R.id.checkHoliday)
+        val shiftInput = dlgView.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputBulkShiftType)
+        val chk = dlgView.findViewById<CompoundButton>(R.id.checkHoliday)
         val save = dlgView.findViewById<MaterialButton>(R.id.buttonSaveBulk)
         var selectedBreakHours = 0.0
+        val shiftTypes = resources.getStringArray(R.array.shift_types).toList()
         val dialog = MaterialAlertDialogBuilder(requireContext()).setView(dlgView).create()
+        shiftInput.setAdapter(DropdownUi.adapter(requireContext(), shiftTypes))
+        shiftInput.setText(shiftTypes.firstOrNull().orEmpty(), false)
+        DropdownUi.attach(shiftInput) {
+            shiftTypes.indexOf(shiftInput.text?.toString().orEmpty()).takeIf { it >= 0 }
+        }
         fun updateBreakValue() {
             breakValue.text = DurationPicker.format(requireContext(), selectedBreakHours)
         }
@@ -239,7 +246,7 @@ class CalendarDialogFragment : DialogFragment() {
         save.setOnClickListener {
             val h = inputH.text.toString().toDoubleOrNull() ?: 0.0
             val b = selectedBreakHours
-            val sft = spin.selectedItem.toString()
+            val sft = shiftInput.text?.toString().orEmpty()
             val hol = chk.isChecked
             requireActivity().lifecycleScope.launch(Dispatchers.IO) {
                 val job = jobRepository.getJobById(jobId) ?: return@launch
@@ -482,6 +489,7 @@ class CalendarDialogFragment : DialogFragment() {
         val onPrimary = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorOnPrimary)
         val error = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorError)
         val onError = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorOnError)
+        val scroll = view?.findViewById<ScrollView>(R.id.calendarScroll)
         if (selectedDates.isEmpty()) {
             selectionState.text = getString(R.string.calendar_hint)
             bulkButton.visibility = View.GONE
@@ -501,6 +509,9 @@ class CalendarDialogFragment : DialogFragment() {
                 }
             }
             bulkButton.visibility = View.VISIBLE
+            scroll?.post {
+                scroll.fullScroll(View.FOCUS_DOWN)
+            }
         }
     }
 

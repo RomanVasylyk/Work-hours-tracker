@@ -21,6 +21,7 @@
         <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/onSurface</item>
+        <item name="materialButtonStyle">@style/Widget.WorkTracker.Button</item>
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.WorkTracker.MaterialAlertDialog</item>
     </style>
 </resources>

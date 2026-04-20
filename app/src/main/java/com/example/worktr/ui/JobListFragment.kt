@@ -6,9 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.RadioButton
-import android.widget.Spinner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.core.content.FileProvider
@@ -21,12 +18,14 @@ import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.Job
 import com.example.worktr.data.JobRepository
 import com.example.worktr.databinding.FragmentJobListBinding
+import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.responsive.ResponsiveUi
 import com.example.worktr.util.CsvImporter
 import com.example.worktr.util.CsvImportSummary
 import com.example.worktr.util.ExcelExporter
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.transition.platform.MaterialFadeThrough
 import com.google.android.material.textfield.TextInputEditText
@@ -204,33 +203,43 @@ class JobListFragment : Fragment() {
         }
 
         val view = layoutInflater.inflate(R.layout.dialog_import_target, null)
-        val autoRadio = view.findViewById<RadioButton>(R.id.radioImportAuto)
-        val existingRadio = view.findViewById<RadioButton>(R.id.radioImportExisting)
-        val spinner = view.findViewById<Spinner>(R.id.spinnerImportJob)
+        val modeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.groupImportMode)
+        val existingButton = view.findViewById<MaterialButton>(R.id.buttonImportExisting)
+        val inputJobLayout = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layoutImportJobField)
+        val inputJob = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputImportJob)
         val confirmButton = view.findViewById<MaterialButton>(R.id.buttonImportConfirm)
+        modeGroup.check(R.id.buttonImportAuto)
 
         val jobNames = currentJobs.map { it.name }
-        spinner.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            jobNames
-        ).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        inputJob.setAdapter(DropdownUi.adapter(requireContext(), jobNames))
+        inputJob.setText(jobNames.firstOrNull().orEmpty(), false)
+        DropdownUi.attach(inputJob) {
+            jobNames.indexOf(inputJob.text?.toString().orEmpty()).takeIf { it >= 0 }
         }
 
         fun updateMode() {
-            spinner.visibility = if (existingRadio.isChecked) View.VISIBLE else View.GONE
+            inputJobLayout.visibility = if (existingButton.isChecked) View.VISIBLE else View.GONE
+            if (!existingButton.isChecked) {
+                inputJobLayout.error = null
+            }
         }
-        autoRadio.setOnCheckedChangeListener { _, _ -> updateMode() }
-        existingRadio.setOnCheckedChangeListener { _, _ -> updateMode() }
+        modeGroup.addOnButtonCheckedListener { _, _, isChecked ->
+            if (isChecked) updateMode()
+        }
         updateMode()
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setView(view)
             .create()
         confirmButton.setOnClickListener {
-            val targetJobId = if (existingRadio.isChecked) {
-                currentJobs.getOrNull(spinner.selectedItemPosition)?.jobId
+            val targetJobId = if (existingButton.isChecked) {
+                val selectedJob = currentJobs.firstOrNull { it.name == inputJob.text?.toString().orEmpty() }
+                if (selectedJob == null) {
+                    inputJobLayout.error = getString(R.string.import_dialog_pick_job)
+                    return@setOnClickListener
+                }
+                inputJobLayout.error = null
+                selectedJob.jobId
             } else {
                 null
             }

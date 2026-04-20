@@ -16,6 +16,7 @@ import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntry
 import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.databinding.FragmentAddEntryBinding
+import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.picker.DurationPicker
 import com.example.worktr.ui.responsive.ResponsiveUi
 import com.example.worktr.viewmodel.AddEntryViewModel
@@ -55,6 +56,7 @@ class AddEntryFragment : Fragment() {
                 AddEntryViewModel(repo) as T
         })[AddEntryViewModel::class.java]
         applyResponsiveLayout()
+        setupShiftDropdown()
 
         setFragmentResultListener("calendar_date") { _, b ->
             selectedMillis = b.getLong("date")
@@ -99,18 +101,20 @@ class AddEntryFragment : Fragment() {
     }
 
     private fun bindEntry(entry: WorkEntry?) {
+        val shiftTypes = resources.getStringArray(R.array.shift_types)
         currentEntry = entry
         if (entry != null) {
             binding.inputHours.setText(entry.hoursWorked.toString())
             selectedBreakHours = entry.breakHours
-            val idx = resources.getStringArray(R.array.shift_types).indexOf(entry.shiftType)
-            if (idx >= 0) binding.spinnerShift.setSelection(idx)
+            val selectedShift = shiftTypes.find { it.equals(entry.shiftType, ignoreCase = true) }
+                ?: shiftTypes.firstOrNull().orEmpty()
+            binding.inputShiftType.setText(selectedShift, false)
             binding.checkHoliday.isChecked = entry.isHoliday
             binding.buttonDeleteEntry.visibility = View.VISIBLE
         } else {
             binding.inputHours.text = null
             selectedBreakHours = 0.0
-            binding.spinnerShift.setSelection(0)
+            binding.inputShiftType.setText(shiftTypes.firstOrNull().orEmpty(), false)
             binding.checkHoliday.isChecked = false
             binding.buttonDeleteEntry.visibility = View.GONE
         }
@@ -121,7 +125,7 @@ class AddEntryFragment : Fragment() {
         val millis = selectedMillis ?: return
         val hours = binding.inputHours.text.toString().toDoubleOrNull() ?: 0.0
         val br = selectedBreakHours
-        val shift = binding.spinnerShift.selectedItem.toString()
+        val shift = binding.inputShiftType.text?.toString().orEmpty()
         val hol = binding.checkHoliday.isChecked
         viewLifecycleOwner.lifecycleScope.launch {
             val base = currentEntry ?: jobRepository.getJobById(args.jobId)?.let { job ->
@@ -165,6 +169,17 @@ class AddEntryFragment : Fragment() {
 
     private fun updateBreakSummary() {
         binding.textBreakValue.text = DurationPicker.format(requireContext(), selectedBreakHours)
+    }
+
+    private fun setupShiftDropdown() {
+        val shiftTypes = resources.getStringArray(R.array.shift_types).toList()
+        binding.inputShiftType.setAdapter(DropdownUi.adapter(requireContext(), shiftTypes))
+        DropdownUi.attach(binding.inputShiftType) {
+            shiftTypes.indexOf(binding.inputShiftType.text?.toString().orEmpty()).takeIf { it >= 0 }
+        }
+        if (binding.inputShiftType.text.isNullOrBlank()) {
+            binding.inputShiftType.setText(shiftTypes.firstOrNull().orEmpty(), false)
+        }
     }
 
     private fun deleteEntry() {

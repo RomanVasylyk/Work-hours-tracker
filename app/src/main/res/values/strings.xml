@@ -3,6 +3,7 @@
     <string name="app_name">Трекер робочого часу</string>
     <string name="add_job">Додати роботу</string>
     <string name="add_entry">Додати/Редагувати запис</string>
+    <string name="job_detail_add_entry">Додати запис</string>
     <string name="hours_worked_month">Відпрацьовано годин за місяць: %1$d</string>
     <string name="days_worked_month">Відпрацьовано днів за місяць: %1$d</string>
     <string name="hours_worked_format">Відпрацьовано годин: %1$.1f</string>
@@ -12,6 +13,7 @@
     <string name="break_hours">Години перерви</string>
     <string name="shift_type">Тип зміни</string>
     <string name="holiday">Святковий день</string>
+    <string name="holiday_toggle_hint">Увімкніть, якщо зміна припадає на офіційне свято.</string>
     <string name="save">Зберегти</string>
     <string name="share">Поділитися</string>
     <string name="export">Експорт</string>
@@ -22,6 +24,7 @@
     <string name="import_dialog_auto">Автоматично по CSV</string>
     <string name="import_dialog_existing">У вибрану наявну роботу</string>
     <string name="import_dialog_pick_job">Оберіть роботу для імпорту</string>
+    <string name="import_csv">Імпорт CSV</string>
     <string name="overall_stats">Загальна статистика</string>
     <string name="jobs_overview_title">Усі роботи під контролем</string>
     <string name="jobs_overview_subtitle">Швидкий доступ до загальної аналітики, експорту та редагування ставок.</string>

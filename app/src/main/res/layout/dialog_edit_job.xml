@@ -32,27 +32,31 @@
             style="@style/TextAppearance.Material3.TitleMedium" />
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:layout_marginTop="12dp"
+            android:hint="@string/edit_job">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editJobName"
+                style="@style/Widget.WorkTracker.TextInputEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/edit_job" />
+                android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="10dp"
+            android:hint="@string/hourly_rate">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editHourly"
+                style="@style/Widget.WorkTracker.TextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hourly_rate"
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -64,54 +68,62 @@
             style="@style/TextAppearance.Material3.TitleMedium" />
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:layout_marginTop="12dp"
+            android:hint="@string/night_bonus">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editNight"
+                style="@style/Widget.WorkTracker.TextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/night_bonus"
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="10dp"
+            android:hint="@string/sat_bonus">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editSat"
+                style="@style/Widget.WorkTracker.TextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/sat_bonus"
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="10dp"
+            android:hint="@string/sun_bonus">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editSun"
+                style="@style/Widget.WorkTracker.TextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/sun_bonus"
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="10dp"
+            android:hint="@string/hol_bonus">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editHol"
+                style="@style/Widget.WorkTracker.TextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hol_bonus"
                 android:inputType="numberDecimal" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -120,16 +132,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="@string/save"
-            app:cornerRadius="18dp" />
+            android:text="@string/save" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonDelete"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.WorkTracker.Button.Outlined"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/delete_job"
-            app:cornerRadius="18dp" />
+            android:text="@string/delete_job" />
     </LinearLayout>
 </ScrollView>

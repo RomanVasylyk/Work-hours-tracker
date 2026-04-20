@@ -76,28 +76,38 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <RadioGroup
+                    <com.google.android.material.button.MaterialButtonToggleGroup
                         android:id="@+id/groupStatsMode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
 
-                        <RadioButton
-                            android:id="@+id/radioYear"
-                            android:layout_width="wrap_content"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/buttonModeYear"
+                            style="@style/Widget.WorkTracker.SegmentedButton"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:checked="true"
+                            android:layout_weight="1"
+                            android:checkable="true"
                             android:text="@string/stats_mode_year"
-                            android:textColor="@color/dashboard_on" />
+                            android:textColor="@color/segmented_dashboard_text"
+                            app:backgroundTint="@color/segmented_dashboard_fill"
+                            app:strokeColor="@color/segmented_dashboard_stroke" />
 
-                        <RadioButton
-                            android:id="@+id/radioMonth"
-                            android:layout_width="wrap_content"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/buttonModeMonth"
+                            style="@style/Widget.WorkTracker.SegmentedButton"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="24dp"
+                            android:layout_weight="1"
+                            android:checkable="true"
                             android:text="@string/stats_mode_month"
-                            android:textColor="@color/dashboard_on" />
-                    </RadioGroup>
+                            android:textColor="@color/segmented_dashboard_text"
+                            app:backgroundTint="@color/segmented_dashboard_fill"
+                            app:strokeColor="@color/segmented_dashboard_stroke" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
 
                     <LinearLayout
                         android:id="@+id/layoutStatsFilters"
@@ -107,20 +117,39 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <Spinner
-                            android:id="@+id/spinnerStatsYear"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutStatsYearField"
+                            style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1" />
+                            android:layout_weight="1"
+                            android:hint="@string/stats_mode_year">
 
-                        <Spinner
-                            android:id="@+id/spinnerStatsMonth"
+                            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                android:id="@+id/inputStatsYear"
+                                style="@style/Widget.WorkTracker.DropdownInput"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="none" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutStatsMonthField"
+                            style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="8dp"
-                            android:entries="@array/months"
-                            android:visibility="gone" />
+                            android:hint="@string/stats_mode_month"
+                            android:visibility="gone">
+
+                            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                android:id="@+id/inputStatsMonth"
+                                style="@style/Widget.WorkTracker.DropdownInput"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="none" />
+                        </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>

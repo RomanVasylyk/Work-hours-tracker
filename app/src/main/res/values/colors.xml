@@ -48,4 +48,10 @@
     <color name="chart_marker_bg">#1F2937</color>
     <color name="chart_marker_text">#F8FAFC</color>
     <color name="stats_panel">#F4F6F2</color>
+    <color name="field_surface">#F4EEE6</color>
+    <color name="field_surface_alt">#EFE8DF</color>
+    <color name="field_hint">#746B62</color>
+    <color name="field_text">#1F1B16</color>
+    <color name="toggle_panel">#F5EFE7</color>
+    <color name="toggle_panel_stroke">#D7D0C6</color>
 </resources>

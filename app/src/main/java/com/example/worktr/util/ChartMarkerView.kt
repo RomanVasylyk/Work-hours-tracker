@@ -17,8 +17,8 @@ class ChartMarkerView(
     private val decimals: Int
 ) : MarkerView(context, layoutResource) {
 
-    private val tvTitle: TextView = findViewById(R.id.tvTitle)
-    private val tvValue: TextView = findViewById(R.id.tvValue)
+    private val tvTitle: TextView = findViewById(R.id.textMarkerTitle)
+    private val tvValue: TextView = findViewById(R.id.textMarkerValue)
 
     private val df = DecimalFormat(
         when (decimals) {
