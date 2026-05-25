@@ -11,5 +11,9 @@
         android:id="@+id/action_import"
         android:title="@string/import_csv"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_invoice"
+        android:title="@string/create_invoice"
+        app:showAsAction="never" />
 
 </menu>

@@ -15,8 +15,10 @@
     <string name="holiday">Святковий день</string>
     <string name="holiday_toggle_hint">Увімкніть, якщо зміна припадає на офіційне свято.</string>
     <string name="save">Зберегти</string>
+    <string name="cancel">Скасувати</string>
     <string name="share">Поділитися</string>
     <string name="export">Експорт</string>
+    <string name="create_invoice">Створити фактуру</string>
     <string name="export_all_data">Експортувати всі дані</string>
     <string name="import_data">Імпорт CSV</string>
     <string name="import_dialog_title">Куди імпортувати CSV</string>
@@ -132,6 +134,36 @@
     <string name="export_success_all">Створено CSV для всіх робіт.</string>
     <string name="import_success_summary">Імпортовано %1$d записів. Нових робіт: %2$d, знайдено існуючих: %3$d.</string>
     <string name="import_failed">Не вдалося імпортувати CSV.</string>
+    <string name="invoice_dialog_title">Створення фактури</string>
+    <string name="invoice_summary">Період: %1$s %2$d. Години і ставка беруться з записів цього місяця.</string>
+    <string name="invoice_number">Номер фактури</string>
+    <string name="invoice_supplier_section">Dodávateľ</string>
+    <string name="invoice_customer_section">Odberateľ</string>
+    <string name="invoice_service_section">Položka faktúry</string>
+    <string name="invoice_company_person">Spoločnosť / osoba</string>
+    <string name="invoice_street">Ulica</string>
+    <string name="invoice_city">Mesto</string>
+    <string name="invoice_zip">PSČ</string>
+    <string name="invoice_country">Štát</string>
+    <string name="invoice_ico">IČO</string>
+    <string name="invoice_dic">DIČ</string>
+    <string name="invoice_icdph">IČDPH</string>
+    <string name="invoice_iban">IBAN для QR оплати</string>
+    <string name="invoice_bic">BIC / SWIFT (необов’язково)</string>
+    <string name="invoice_description">Опис послуги</string>
+    <string name="invoice_extra_item_enable">Додати Doprava</string>
+    <string name="invoice_extra_item_name">Назва додаткової позиції</string>
+    <string name="invoice_extra_quantity">Кількість</string>
+    <string name="invoice_extra_unit">MJ</string>
+    <string name="invoice_extra_price">Cena za MJ</string>
+    <string name="invoice_currency">Валюта</string>
+    <string name="invoice_note">Примітка, IBAN, умови оплати</string>
+    <string name="invoice_create_pdf">Створити PDF</string>
+    <string name="invoice_required_fields">Заповніть номер фактури, ваші дані, IBAN і дані клієнта.</string>
+    <string name="invoice_bic_missing">Для цього IBAN не вдалося автоматично визначити BIC/SWIFT. Впишіть BIC вручну.</string>
+    <string name="invoice_no_entries">За вибраний місяць немає записів для фактури.</string>
+    <string name="invoice_share_title">Поділитися фактурою</string>
+    <string name="invoice_created">Фактуру створено.</string>
 
     <string-array name="months">
         <item>Січень</item>

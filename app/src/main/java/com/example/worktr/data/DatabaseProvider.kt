@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Job::class, WorkEntry::class], version = 3, exportSchema = false)
+@Database(entities = [Job::class, WorkEntry::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun workEntryDao(): WorkEntryDao
@@ -53,6 +53,12 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // No schema changes; keep v3-to-v4 installs compatible with current builds.
+        }
+    }
+
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
@@ -65,6 +71,7 @@ object DatabaseProvider {
             )
                 .addMigrations(MIGRATION_1_2)
                 .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_3_4)
                 .build()
                 .also { INSTANCE = it }
         }

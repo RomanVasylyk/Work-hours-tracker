@@ -6,13 +6,19 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <LinearLayout
-        android:id="@+id/jobListContent"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/jobListScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp"
+        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:id="@+id/jobListContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardOverview"
@@ -220,12 +226,13 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerJobs"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"
             android:paddingBottom="72dp"
             tools:listitem="@layout/item_job" />
-    </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddJob"

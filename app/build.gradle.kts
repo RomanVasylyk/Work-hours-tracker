@@ -42,6 +42,9 @@ android {
 
 dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("io.github.janhalasa:pay-by-square-java:1.0.0") {
+        exclude(group = "com.google.zxing", module = "javase")
+    }
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
