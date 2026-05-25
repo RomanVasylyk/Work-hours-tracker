@@ -30,6 +30,12 @@
     <string name="overall_stats">Загальна статистика</string>
     <string name="jobs_overview_title">Усі роботи під контролем</string>
     <string name="jobs_overview_subtitle">Швидкий доступ до загальної аналітики, експорту та редагування ставок.</string>
+    <string name="current_month_title">Цей місяць</string>
+    <string name="current_month_hours_value">Години\n%1$s</string>
+    <string name="current_month_salary_value">Зарплата\n%1$s €</string>
+    <string name="current_month_invoice_hint">Фактуру створюйте з екрана конкретної роботи.</string>
+    <string name="current_month_invoice_ready">Є записи за місяць. Фактуру створюйте з потрібної роботи.</string>
+    <string name="current_month_invoice_empty">За цей місяць ще немає записів.</string>
     <string name="jobs_overview_count">Активних робіт: %1$d</string>
     <string name="jobs_overview_empty">Поки немає жодної роботи. Додайте першу, щоб почати облік.</string>
     <string name="jobs_overview_empty_badge">Немає робіт</string>
@@ -39,6 +45,12 @@
     <string name="quick_action_import_subtitle">Завантажити CSV у програму</string>
     <string name="quick_action_export_title">Експорт</string>
     <string name="quick_action_export_subtitle">Поділитися всіма записами</string>
+    <string name="quick_action_invoices_title">Фактури</string>
+    <string name="quick_action_invoices_subtitle">Архів PDF</string>
+    <string name="quick_action_backup_title">Backup</string>
+    <string name="quick_action_backup_subtitle">Зберегти або відновити</string>
+    <string name="quick_action_invoice_settings_title">Профіль</string>
+    <string name="quick_action_invoice_settings_subtitle">Дані для фактур</string>
     <string name="jobs_section_title">Ваші роботи</string>
     <string name="jobs_section_subtitle">Кожна картка веде в деталі, календар і графіки.</string>
     <string name="jobs_empty_state">Додайте першу роботу, щоб почати вести години і зарплату.</string>
@@ -48,6 +60,7 @@
     <string name="job_dialog_rate_title">Базова ставка</string>
     <string name="job_dialog_bonus_title">Надбавки</string>
     <string name="job_rate_badge">%1$s / год</string>
+    <string name="job_month_summary">Tento mesiac: %1$s hod · %2$s €</string>
     <string name="job_bonuses_summary">Ніч: %1$s  •  Сб: %2$s  •  Нд: %3$s  •  Свято: %4$s</string>
     <string name="job_item_hint">Натисніть для деталей. Довге натискання відкриває редагування.</string>
     <string name="morning_shifts_format">Ранкових змін: %1$d</string>
@@ -66,6 +79,9 @@
     <string name="sun_bonus">Надбавка неділя</string>
     <string name="hol_bonus">Надбавка свято</string>
     <string name="salary_format">Зарплата: %1$.2f</string>
+    <string name="job_detail_salary_value">%1$s €</string>
+    <string name="job_detail_hours_value">%1$s hod</string>
+    <string name="job_detail_meta">%1$d dní · %2$s €/hod</string>
     <string name="night_bonus_total">Доплата нічні: %1$.2f</string>
     <string name="saturday_bonus_total">Доплата субота: %1$.2f</string>
     <string name="sunday_bonus_total">Доплата неділя: %1$.2f</string>
@@ -136,6 +152,9 @@
     <string name="import_failed">Не вдалося імпортувати CSV.</string>
     <string name="invoice_dialog_title">Створення фактури</string>
     <string name="invoice_summary">Період: %1$s %2$d. Години і ставка беруться з записів цього місяця.</string>
+    <string name="invoice_preview_title">Перевірка фактури</string>
+    <string name="invoice_preview_summary">%1$s %2$d · %3$s hod · %4$s/hod\nSpolu %5$s</string>
+    <string name="invoice_preview_edit">Редагувати</string>
     <string name="invoice_number">Номер фактури</string>
     <string name="invoice_supplier_section">Dodávateľ</string>
     <string name="invoice_customer_section">Odberateľ</string>
@@ -152,6 +171,11 @@
     <string name="invoice_bic">BIC / SWIFT (необов’язково)</string>
     <string name="invoice_description">Опис послуги</string>
     <string name="invoice_extra_item_enable">Додати Doprava</string>
+    <string name="invoice_settings_title">Налаштування фактури</string>
+    <string name="invoice_settings_subtitle">Ці дані підставляються автоматично перед створенням PDF.</string>
+    <string name="invoice_default_customer_section">Типовий odberateľ</string>
+    <string name="invoice_extra_template_section">Шаблон Doprava</string>
+    <string name="invoice_settings_saved">Налаштування фактури збережено.</string>
     <string name="invoice_extra_item_name">Назва додаткової позиції</string>
     <string name="invoice_extra_quantity">Кількість</string>
     <string name="invoice_extra_unit">MJ</string>
@@ -164,6 +188,28 @@
     <string name="invoice_no_entries">За вибраний місяць немає записів для фактури.</string>
     <string name="invoice_share_title">Поділитися фактурою</string>
     <string name="invoice_created">Фактуру створено.</string>
+    <string name="invoice_archive_title">Архів фактур</string>
+    <string name="invoice_archive_subtitle">Збережені PDF-фактури з номером, клієнтом, місяцем і сумою.</string>
+    <string name="invoice_archive_empty">Ще немає збережених фактур.</string>
+    <string name="invoice_archive_number">Faktúra %1$s</string>
+    <string name="invoice_archive_meta">%1$s %2$d · %3$s %4$s · створено %5$s</string>
+    <string name="invoice_open">Відкрити</string>
+    <string name="invoice_recreate">Заново</string>
+    <string name="invoice_recreated">Фактуру створено заново.</string>
+    <string name="invoice_file_missing">PDF-файл фактури не знайдено. Спробуйте створити заново.</string>
+    <string name="invoice_open_failed">Не вдалося відкрити PDF.</string>
+    <string name="invoice_job_missing">Роботу для цієї фактури не знайдено.</string>
+    <string name="backup_title">Backup і відновлення</string>
+    <string name="backup_export">Створити backup-файл</string>
+    <string name="backup_restore">Відновити з backup-файлу</string>
+    <string name="backup_export_success">Backup створено. Робіт: %1$d, записів: %2$d, фактур: %3$d.</string>
+    <string name="backup_restore_success">Backup відновлено. Робіт: %1$d, записів: %2$d, фактур: %3$d.</string>
+    <string name="backup_export_failed">Не вдалося створити backup.</string>
+    <string name="backup_restore_failed">Не вдалося відновити backup.</string>
+    <string name="backup_restore_confirm_title">Відновити backup?</string>
+    <string name="backup_restore_confirm_message">Поточні роботи, записи і архів фактур буде замінено даними з backup-файлу.</string>
+    <string name="backup_restore_confirm">Відновити</string>
+    <string name="backup_reminder">Давно не створювався backup. Краще зберегти копію даних.</string>
 
     <string-array name="months">
         <item>Січень</item>

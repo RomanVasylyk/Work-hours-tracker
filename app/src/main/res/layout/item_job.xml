@@ -8,7 +8,7 @@
     android:clickable="true"
     android:focusable="true"
     app:cardBackgroundColor="@color/job_card_surface"
-    app:cardCornerRadius="26dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeColor="@color/job_card_stroke"
     app:strokeWidth="1dp">
@@ -17,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="18dp">
+        android:padding="14dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -66,10 +66,10 @@
             android:id="@+id/textJobBonuses"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:textColor="@color/onSurface"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/job_hint_text"
             style="@style/TextAppearance.Material3.BodyMedium"
-            tools:text="Ніч: 2  •  Сб: 1.5  •  Нд: 2.5  •  Свято: 3" />
+            tools:text="Tento mesiac: 150 hod · 1500,00 €" />
 
         <TextView
             android:id="@+id/textJobCaption"
@@ -78,6 +78,7 @@
             android:layout_marginTop="10dp"
             android:text="@string/job_item_hint"
             android:textColor="@color/job_hint_text"
+            android:visibility="gone"
             style="@style/TextAppearance.Material3.BodySmall" />
 
     </LinearLayout>

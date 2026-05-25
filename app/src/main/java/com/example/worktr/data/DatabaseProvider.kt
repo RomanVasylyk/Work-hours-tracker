@@ -7,10 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Job::class, WorkEntry::class], version = 4, exportSchema = false)
+@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun workEntryDao(): WorkEntryDao
+    abstract fun invoiceDao(): InvoiceDao
 }
 
 object DatabaseProvider {
@@ -59,6 +60,33 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS invoices (
+                    invoiceId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    invoiceNumber TEXT NOT NULL,
+                    jobId INTEGER NOT NULL,
+                    jobName TEXT NOT NULL,
+                    customerName TEXT NOT NULL,
+                    periodYear INTEGER NOT NULL,
+                    periodMonth INTEGER NOT NULL,
+                    totalAmount REAL NOT NULL,
+                    currency TEXT NOT NULL,
+                    issueDate TEXT NOT NULL,
+                    createdAtMillis INTEGER NOT NULL,
+                    fileName TEXT NOT NULL,
+                    inputJson TEXT NOT NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_invoices_invoiceNumber ON invoices(invoiceNumber)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_invoices_jobId ON invoices(jobId)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_invoices_periodYear_periodMonth ON invoices(periodYear, periodMonth)")
+        }
+    }
+
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
@@ -72,6 +100,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_1_2)
                 .addMigrations(MIGRATION_2_3)
                 .addMigrations(MIGRATION_3_4)
+                .addMigrations(MIGRATION_4_5)
                 .build()
                 .also { INSTANCE = it }
         }

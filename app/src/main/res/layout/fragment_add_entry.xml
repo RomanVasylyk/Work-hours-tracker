@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="30dp"
+            app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
@@ -61,6 +61,7 @@
                     android:layout_marginTop="8dp"
                     android:text="Оберіть дату, потім налаштуйте години, перерву і тип зміни."
                     android:textColor="#E2F1F6"
+                    android:visibility="gone"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.button.MaterialButton
@@ -79,7 +80,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="18dp"
-            app:cardCornerRadius="28dp"
+            app:cardCornerRadius="18dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/job_card_stroke"
             app:strokeWidth="1dp">
@@ -103,6 +104,7 @@
                     android:layout_marginTop="4dp"
                     android:text="Усі значення зберігаються як snapshot на момент запису."
                     android:textColor="@color/chart_axis_text"
+                    android:visibility="gone"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -171,7 +173,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     app:cardBackgroundColor="@color/toggle_panel"
-                    app:cardCornerRadius="22dp"
+                    app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/toggle_panel_stroke"
                     app:strokeWidth="1dp">

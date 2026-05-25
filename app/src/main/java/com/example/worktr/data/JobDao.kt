@@ -13,6 +13,9 @@ interface JobDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(job: Job): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(jobs: List<Job>)
+
     @Update
     suspend fun update(job: Job)
 
@@ -30,4 +33,7 @@ interface JobDao {
 
     @Query("SELECT * FROM jobs WHERE name = :name LIMIT 1")
     suspend fun getJobByName(name: String): Job?
+
+    @Query("DELETE FROM jobs")
+    suspend fun deleteAll()
 }

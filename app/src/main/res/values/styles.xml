@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Widget.WorkTracker.Button" parent="Widget.Material3.Button">
-        <item name="cornerRadius">20dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="android:minHeight">54dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
@@ -11,7 +11,7 @@
     </style>
 
     <style name="Widget.WorkTracker.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="cornerRadius">20dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="android:minHeight">54dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
@@ -22,7 +22,7 @@
     </style>
 
     <style name="Widget.WorkTracker.Button.Tonal" parent="Widget.Material3.Button.TonalButton">
-        <item name="cornerRadius">20dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="android:minHeight">52dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
@@ -69,7 +69,7 @@
     </style>
 
     <style name="Widget.WorkTracker.SegmentedButton" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="cornerRadius">18dp</item>
+        <item name="cornerRadius">14dp</item>
         <item name="android:minHeight">48dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
@@ -78,6 +78,6 @@
 
     <style name="ShapeAppearanceOverlay.WorkTracker.Field" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">20dp</item>
+        <item name="cornerSize">14dp</item>
     </style>
 </resources>

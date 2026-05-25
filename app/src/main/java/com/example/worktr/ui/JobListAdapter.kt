@@ -17,6 +17,12 @@ class JobListAdapter(
     private val onClick: (Job) -> Unit,
     private val onLongClick: (Job) -> Unit
 ) : ListAdapter<Job, JobListAdapter.JobViewHolder>(JobDiff) {
+    private var monthlySummaries: Map<Int, JobMonthSummary> = emptyMap()
+
+    fun setMonthlySummaries(summaries: Map<Int, JobMonthSummary>) {
+        monthlySummaries = summaries
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -25,7 +31,8 @@ class JobListAdapter(
     }
 
     override fun onBindViewHolder(holder: JobViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val job = getItem(position)
+        holder.bind(job, monthlySummaries[job.jobId])
     }
 
     inner class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -38,21 +45,28 @@ class JobListAdapter(
             maximumFractionDigits = 2
             minimumFractionDigits = 0
         }
+        private val hoursFormatter = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+            maximumFractionDigits = 1
+            minimumFractionDigits = 0
+        }
+        private val moneyFormatter = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+            maximumFractionDigits = 2
+            minimumFractionDigits = 2
+        }
 
-        fun bind(job: Job) {
+        fun bind(job: Job, monthSummary: JobMonthSummary?) {
+            val summary = monthSummary ?: JobMonthSummary()
             nameText.text = job.name
             rateText.text = itemView.context.getString(
                 R.string.job_rate_badge,
                 numberFormatter.format(job.hourlyRate)
             )
             bonusesText.text = itemView.context.getString(
-                R.string.job_bonuses_summary,
-                numberFormatter.format(job.nightBonus),
-                numberFormatter.format(job.saturdayBonus),
-                numberFormatter.format(job.sundayBonus),
-                numberFormatter.format(job.holidayBonus)
+                R.string.job_month_summary,
+                hoursFormatter.format(summary.hours),
+                moneyFormatter.format(summary.salary)
             )
-            captionText.text = itemView.context.getString(R.string.job_item_hint)
+            captionText.visibility = View.GONE
             nextIcon.contentDescription = job.name
             itemView.setOnClickListener { onClick(job) }
             itemView.setOnLongClickListener {
@@ -67,3 +81,8 @@ class JobListAdapter(
         override fun areContentsTheSame(oldItem: Job, newItem: Job) = oldItem == newItem
     }
 }
+
+data class JobMonthSummary(
+    val hours: Double = 0.0,
+    val salary: Double = 0.0
+)

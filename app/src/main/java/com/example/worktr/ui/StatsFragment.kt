@@ -58,6 +58,7 @@ class StatsFragment : Fragment() {
     private var currentJob: Job? = null
     private var chartsJob: CoroutineJob? = null
     private var targetJobId: Int = -1
+    private var currentMode: StatsMode = StatsMode.YEAR
     private val numberFormatter: NumberFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
         maximumFractionDigits = 2
         minimumFractionDigits = 0
@@ -98,11 +99,8 @@ class StatsFragment : Fragment() {
         applyResponsiveLayout(view)
         updateScopeHeader(activeJobs = 0)
         val modeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
-        val buttonYear = view.findViewById<MaterialButton>(R.id.buttonModeYear)
         val inputY = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsYear)
         val inputM = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsMonth)
-        val layoutM = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layoutStatsMonthField)
-        modeGroup.check(R.id.buttonModeYear)
 
         if (targetJobId != -1) {
             viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
@@ -133,24 +131,23 @@ class StatsFragment : Fragment() {
             monthLabels.indexOf(inputM.text?.toString().orEmpty()).takeIf { it >= 0 }
         }
 
-        fun updateMode() {
-            layoutM.visibility = if (buttonYear.isChecked) View.GONE else View.VISIBLE
-            loadCharts()
-        }
-        modeGroup.addOnButtonCheckedListener { _, _, isChecked ->
-            if (isChecked) updateMode()
+        modeGroup.check(R.id.buttonModeYear)
+        modeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val mode = if (checkedId == R.id.buttonModeMonth) StatsMode.MONTH else StatsMode.YEAR
+            setStatsMode(mode)
         }
         inputM.setOnItemClickListener { _, _, _, _ -> loadCharts() }
+        setStatsMode(StatsMode.YEAR, reload = false)
 
-        if (targetJobId == -1) {
-            loadCharts()
-        }
+        loadCharts()
     }
 
     private fun loadCharts() {
         val root = view ?: return
+        if (!::yearSpinner.isInitialized || !::monthLabels.isInitialized) return
         if (targetJobId != -1 && currentJob == null) return
-        val isMonth = root.findViewById<MaterialButton>(R.id.buttonModeMonth).isChecked
+        val isMonth = currentMode == StatsMode.MONTH
         val year = yearSpinner.getSelectedYear() ?: return
         val month = monthLabels.indexOf(
             root.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsMonth)
@@ -211,8 +208,12 @@ class StatsFragment : Fragment() {
 
                 hoursMarker.updateLabels(labels)
                 salaryMarker.updateLabels(labels)
+                chartHours.highlightValues(null)
+                chartSalary.highlightValues(null)
                 chartHours.data = LineData(createHoursDataSet(hoursEntries, isMonth))
                 applyXAxis(chartHours, labels, isMonth)
+                chartHours.fitScreen()
+                chartHours.notifyDataSetChanged()
                 chartHours.invalidate()
                 chartHours.animateX(450)
                 chartSalary.data = BarData(createSalaryDataSet(salaryEntries, isMonth)).apply {
@@ -220,6 +221,8 @@ class StatsFragment : Fragment() {
                 }
                 chartSalary.setFitBars(true)
                 applyXAxis(chartSalary, labels, isMonth)
+                chartSalary.fitScreen()
+                chartSalary.notifyDataSetChanged()
                 chartSalary.invalidate()
                 chartSalary.animateY(450)
 
@@ -244,6 +247,21 @@ class StatsFragment : Fragment() {
                     avgSalaryLabel.visibility = View.GONE
                 }
             }
+        }
+    }
+
+    private fun setStatsMode(mode: StatsMode, reload: Boolean = true) {
+        val root = view ?: return
+        currentMode = mode
+        val modeGroup = root.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
+        val targetButtonId = if (mode == StatsMode.MONTH) R.id.buttonModeMonth else R.id.buttonModeYear
+        if (modeGroup.checkedButtonId != targetButtonId) {
+            modeGroup.check(targetButtonId)
+        }
+        root.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.layoutStatsMonthField)
+            .visibility = if (mode == StatsMode.MONTH) View.VISIBLE else View.GONE
+        if (reload) {
+            loadCharts()
         }
     }
 
@@ -412,5 +430,10 @@ class StatsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         chartsJob?.cancel()
+    }
+
+    private enum class StatsMode {
+        YEAR,
+        MONTH
     }
 }

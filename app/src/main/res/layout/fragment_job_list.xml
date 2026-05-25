@@ -25,51 +25,95 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="28dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_dashboard_panel"
+                android:background="@drawable/bg_surface_panel"
                 android:orientation="vertical"
-                android:padding="22dp">
+                android:padding="16dp">
 
                 <TextView
                     android:id="@+id/textJobsOverview"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_dashboard_badge"
+                    android:background="@drawable/bg_job_chip"
                     android:paddingStart="12dp"
                     android:paddingTop="6dp"
                     android:paddingEnd="12dp"
                     android:paddingBottom="6dp"
-                    android:textColor="@color/dashboard_on"
+                    android:textColor="@color/primary"
                     style="@style/TextAppearance.Material3.LabelLarge"
                     tools:text="Активних робіт: 4" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="@string/jobs_overview_title"
-                    android:textColor="@color/dashboard_on"
-                    style="@style/TextAppearance.Material3.HeadlineSmall" />
+                    android:layout_marginTop="12dp"
+                    android:text="@string/current_month_title"
+                    android:textColor="@color/onSurface"
+                    style="@style/TextAppearance.Material3.TitleLarge" />
 
                 <TextView
+                    android:id="@+id/textCurrentMonth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/chart_axis_text"
+                    style="@style/TextAppearance.Material3.BodyMedium"
+                    tools:text="Травень 2026" />
+
+                <LinearLayout
+                    android:id="@+id/currentMonthStatsRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textCurrentHours"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_stat_tile"
+                        android:minHeight="64dp"
+                        android:padding="12dp"
+                        android:textColor="@color/onSurface"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        tools:text="Години\n150,0" />
+
+                    <TextView
+                        android:id="@+id/textCurrentSalary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_stat_tile_bonus"
+                        android:minHeight="64dp"
+                        android:padding="12dp"
+                        android:textColor="@color/onSurface"
+                        style="@style/TextAppearance.Material3.TitleMedium"
+                        tools:text="Зарплата\n1500,00" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/textInvoiceReadiness"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/jobs_overview_subtitle"
-                    android:textColor="#EAF4F8"
+                    android:text="@string/current_month_invoice_hint"
+                    android:textColor="@color/chart_axis_text"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <LinearLayout
                     android:id="@+id/quickActionRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="12dp"
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
@@ -88,7 +132,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_dashboard_action"
-                            android:minHeight="112dp"
+                            android:minHeight="52dp"
                             android:orientation="vertical"
                             android:padding="16dp">
 
@@ -96,7 +140,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/quick_action_stats_title"
-                                android:textColor="@color/dashboard_on"
+                                android:textColor="@color/primary"
                                 style="@style/TextAppearance.Material3.TitleSmall" />
 
                             <TextView
@@ -105,6 +149,7 @@
                                 android:layout_marginTop="8dp"
                                 android:text="@string/quick_action_stats_subtitle"
                                 android:textColor="#DDECF3"
+                                android:visibility="gone"
                                 style="@style/TextAppearance.Material3.BodySmall" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -126,7 +171,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_dashboard_action"
-                            android:minHeight="112dp"
+                            android:minHeight="52dp"
                             android:orientation="vertical"
                             android:padding="16dp">
 
@@ -134,7 +179,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/quick_action_import_title"
-                                android:textColor="@color/dashboard_on"
+                                android:textColor="@color/primary"
                                 style="@style/TextAppearance.Material3.TitleSmall" />
 
                             <TextView
@@ -143,6 +188,7 @@
                                 android:layout_marginTop="8dp"
                                 android:text="@string/quick_action_import_subtitle"
                                 android:textColor="#DDECF3"
+                                android:visibility="gone"
                                 style="@style/TextAppearance.Material3.BodySmall" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -164,7 +210,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_dashboard_action"
-                            android:minHeight="112dp"
+                            android:minHeight="52dp"
                             android:orientation="vertical"
                             android:padding="16dp">
 
@@ -172,7 +218,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/quick_action_export_title"
-                                android:textColor="@color/dashboard_on"
+                                android:textColor="@color/primary"
                                 style="@style/TextAppearance.Material3.TitleSmall" />
 
                             <TextView
@@ -181,6 +227,124 @@
                                 android:layout_marginTop="8dp"
                                 android:text="@string/quick_action_export_subtitle"
                                 android:textColor="#DDECF3"
+                                android:visibility="gone"
+                                style="@style/TextAppearance.Material3.BodySmall" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardInvoiceArchive"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        app:cardBackgroundColor="@android:color/transparent"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_dashboard_action"
+                            android:minHeight="52dp"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/quick_action_invoices_title"
+                                android:textColor="@color/primary"
+                                style="@style/TextAppearance.Material3.TitleSmall" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/quick_action_invoices_subtitle"
+                                android:textColor="#DDECF3"
+                                android:visibility="gone"
+                                style="@style/TextAppearance.Material3.BodySmall" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardBackupData"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        app:cardBackgroundColor="@android:color/transparent"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_dashboard_action"
+                            android:minHeight="52dp"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/quick_action_backup_title"
+                                android:textColor="@color/primary"
+                                style="@style/TextAppearance.Material3.TitleSmall" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/quick_action_backup_subtitle"
+                                android:textColor="#DDECF3"
+                                android:visibility="gone"
+                                style="@style/TextAppearance.Material3.BodySmall" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardInvoiceSettings"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        app:cardBackgroundColor="@android:color/transparent"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_dashboard_action"
+                            android:minHeight="52dp"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/quick_action_invoice_settings_title"
+                                android:textColor="@color/primary"
+                                style="@style/TextAppearance.Material3.TitleSmall" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/quick_action_invoice_settings_subtitle"
+                                android:textColor="#DDECF3"
+                                android:visibility="gone"
                                 style="@style/TextAppearance.Material3.BodySmall" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -208,6 +372,7 @@
                 android:layout_marginTop="4dp"
                 android:text="@string/jobs_section_subtitle"
                 android:textColor="@color/chart_axis_text"
+                android:visibility="gone"
                 style="@style/TextAppearance.Material3.BodyMedium" />
         </LinearLayout>
 

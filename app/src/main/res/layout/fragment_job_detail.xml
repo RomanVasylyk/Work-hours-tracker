@@ -21,27 +21,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="30dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_dashboard_panel"
+                android:background="@drawable/bg_surface_panel"
                 android:orientation="vertical"
-                android:padding="24dp">
+                android:padding="16dp">
 
                 <TextView
                     android:id="@+id/textMonth"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_dashboard_badge"
+                    android:background="@drawable/bg_job_chip"
                     android:paddingStart="12dp"
                     android:paddingTop="6dp"
                     android:paddingEnd="12dp"
                     android:paddingBottom="6dp"
-                    android:textColor="@color/dashboard_on"
+                    android:textColor="@color/primary"
                     style="@style/TextAppearance.Material3.LabelLarge"
                     tools:text="Травень 2026" />
 
@@ -49,36 +50,45 @@
                     android:id="@+id/textJobName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="10dp"
                     android:maxLines="2"
-                    android:textColor="@color/dashboard_on"
-                    style="@style/TextAppearance.Material3.HeadlineMedium"
+                    android:textColor="@color/onSurface"
+                    style="@style/TextAppearance.Material3.TitleLarge"
                     tools:text="Основна робота" />
 
                 <TextView
                     android:id="@+id/textSalary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="12dp"
                     android:maxLines="2"
-                    android:textColor="@color/dashboard_on"
-                    style="@style/TextAppearance.Material3.DisplaySmall"
-                    tools:text="Зарплата: 1260.00" />
+                    android:textColor="@color/secondary"
+                    style="@style/TextAppearance.Material3.HeadlineSmall"
+                    tools:text="1500,00 €" />
 
                 <TextView
                     android:id="@+id/textHours"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:textColor="#E2F1F6"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/onSurface"
                     style="@style/TextAppearance.Material3.TitleMedium"
-                    tools:text="Відпрацьовано годин: 164.0" />
+                    tools:text="150 hod" />
+
+                <TextView
+                    android:id="@+id/textHeroMeta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/chart_axis_text"
+                    style="@style/TextAppearance.Material3.BodyMedium"
+                    tools:text="20 dní · 10,00 €/hod" />
 
                 <LinearLayout
                     android:id="@+id/layoutHeroActions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="14dp"
                     android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
@@ -102,6 +112,17 @@
                         android:text="@string/stat"
                         android:textColor="@color/primary"
                         app:strokeColor="@color/primary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonInvoice"
+                        style="@style/Widget.WorkTracker.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="@string/create_invoice" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -110,7 +131,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="18dp"
-            app:cardCornerRadius="28dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/job_card_stroke"
             app:strokeWidth="1dp">
@@ -134,6 +155,7 @@
                     android:layout_marginTop="4dp"
                     android:text="Перемикайте місяць і рік, щоб переглянути статистику по роботі."
                     android:textColor="@color/chart_axis_text"
+                    android:visibility="gone"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <LinearLayout
@@ -192,6 +214,7 @@
             android:layout_marginTop="4dp"
             android:text="Компактний зріз по навантаженню і типах змін."
             android:textColor="@color/chart_axis_text"
+            android:visibility="gone"
             style="@style/TextAppearance.Material3.BodyMedium" />
 
         <GridLayout

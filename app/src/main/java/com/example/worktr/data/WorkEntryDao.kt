@@ -13,6 +13,9 @@ interface WorkEntryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entry: WorkEntry)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entries: List<WorkEntry>)
+
     @Update
     suspend fun update(entry: WorkEntry)
 
@@ -30,4 +33,10 @@ interface WorkEntryDao {
 
     @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end ORDER BY entryId DESC LIMIT 1")
     suspend fun getEntryForDay(jobId: Int, start: Long, end: Long): WorkEntry?
+
+    @Query("SELECT * FROM work_entries ORDER BY date")
+    suspend fun getAllEntriesList(): List<WorkEntry>
+
+    @Query("DELETE FROM work_entries")
+    suspend fun deleteAll()
 }
