@@ -42,6 +42,20 @@
             android:textColor="@color/job_hint_text"
             tools:text="Apríl 2026 · 1500,00 EUR · 1.5.2026" />
 
+        <TextView
+            android:id="@+id/textInvoiceStatus"
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_job_chip"
+            android:paddingStart="12dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="6dp"
+            android:textColor="@color/primary"
+            tools:text="Створена" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

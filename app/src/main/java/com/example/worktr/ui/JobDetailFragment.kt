@@ -24,6 +24,7 @@ import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.data.Job as WorkJob
 import com.example.worktr.databinding.DialogInvoiceBinding
 import com.example.worktr.databinding.FragmentJobDetailBinding
+import com.example.worktr.databinding.ItemInvoiceExtraPositionBinding
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.picker.DynamicYearSpinner
 import com.example.worktr.ui.responsive.ResponsiveUi
@@ -34,6 +35,9 @@ import com.example.worktr.util.InvoiceFiles
 import com.example.worktr.util.InvoiceInput
 import com.example.worktr.util.InvoiceInputJson
 import com.example.worktr.util.InvoicePdfGenerator
+import com.example.worktr.util.InvoiceRules
+import com.example.worktr.util.PaymentValidation
+import com.example.worktr.util.PaymentValidationResult
 import com.example.worktr.util.workedHours
 import com.example.worktr.viewmodel.JobDetailViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -369,12 +373,16 @@ class JobDetailFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    workRepository.getEntriesForPeriod(job.jobId, start, end).first()
+                    val entries = workRepository.getEntriesForPeriod(job.jobId, start, end).first()
+                    val existingInvoice = DatabaseProvider.get(requireContext().applicationContext)
+                        .invoiceDao()
+                        .getInvoiceByNumber(defaultInvoiceNumber(period))
+                    entries to existingInvoice
                 }
             }
             if (!isAdded) return@launch
 
-            result.onSuccess { entries ->
+            result.onSuccess { (entries, existingInvoice) ->
                 if (entries.isEmpty()) {
                     Snackbar.make(binding.root, R.string.invoice_no_entries, Snackbar.LENGTH_LONG).show()
                     return@onSuccess
@@ -384,14 +392,32 @@ class JobDetailFragment : Fragment() {
                 val hours = entries.sumOf { it.workedHours() }
                 val total = entries.sumOf { it.workedHours() * it.hourlyRate }
                 val unitPrice = if (hours > 0.0) total / hours else 0.0
+                val paymentValidation = PaymentValidation.validatePayment(draft.iban, draft.bic)
+                val checklist = listOf(
+                    ChecklistItem(getString(R.string.invoice_checklist_iban), paymentValidation !is PaymentValidationResult.InvalidIban),
+                    ChecklistItem(getString(R.string.invoice_checklist_bic), paymentValidation is PaymentValidationResult.Valid),
+                    ChecklistItem(getString(R.string.invoice_checklist_client), draft.customer.name.isNotBlank()),
+                    ChecklistItem(getString(R.string.invoice_checklist_hours), hours > 0.0),
+                    ChecklistItem(getString(R.string.invoice_checklist_rate), unitPrice > 0.0),
+                    ChecklistItem(getString(R.string.invoice_checklist_number), existingInvoice == null)
+                )
+                val checklistText = checklist.joinToString("\n") { item ->
+                    getString(
+                        if (item.ok) R.string.invoice_checklist_ok else R.string.invoice_checklist_bad,
+                        item.label
+                    )
+                }
+                val canCreate = checklist.all { it.ok }
                 val summary = getString(
                     R.string.invoice_preview_summary,
+                    draft.invoiceNumber,
                     slovakMonthLabel(period),
                     period.year,
+                    draft.customer.name,
                     formatInvoiceQuantity(hours),
                     formatInvoiceAmount(unitPrice, draft.currency),
                     formatInvoiceAmount(total, draft.currency)
-                )
+                ) + "\n\n$checklistText"
 
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle(R.string.invoice_preview_title)
@@ -399,7 +425,11 @@ class JobDetailFragment : Fragment() {
                     .setNegativeButton(R.string.cancel, null)
                     .setNeutralButton(R.string.invoice_preview_edit) { _, _ -> showInvoiceDialog() }
                     .setPositiveButton(R.string.invoice_create_pdf) { _, _ ->
-                        createInvoiceFromDraft(job, period, draft, binding.root)
+                        if (canCreate) {
+                            createInvoiceFromDraft(job, period, draft, binding.root)
+                        } else {
+                            Snackbar.make(binding.root, R.string.invoice_checklist_fix, Snackbar.LENGTH_LONG).show()
+                        }
                     }
                     .show()
             }.onFailure {
@@ -447,13 +477,16 @@ class JobDetailFragment : Fragment() {
         invoiceBinding.editCustomerIco.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_ICO, DEFAULT_CLIENT_ICO))
         invoiceBinding.editCustomerDic.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_DIC, DEFAULT_CLIENT_DIC))
         invoiceBinding.editCustomerIcdph.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_ICDPH, DEFAULT_CLIENT_ICDPH))
-        invoiceBinding.editDescription.setText(defaultInvoiceDescription(period))
+        invoiceBinding.editDescription.setText(invoiceDescriptionFromPreferences(job, period))
         invoiceBinding.editExtraName.setText(prefs.getString(PREF_EXTRA_NAME, DEFAULT_EXTRA_NAME))
         invoiceBinding.editExtraQuantity.setText(prefs.getString(PREF_EXTRA_QUANTITY, DEFAULT_EXTRA_QUANTITY))
         invoiceBinding.editExtraUnit.setText(prefs.getString(PREF_EXTRA_UNIT, DEFAULT_EXTRA_UNIT))
         invoiceBinding.editExtraPrice.setText(prefs.getString(PREF_EXTRA_PRICE, DEFAULT_EXTRA_PRICE))
         invoiceBinding.checkExtraItem.setOnCheckedChangeListener { _, isChecked ->
             invoiceBinding.layoutExtraItem.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+        invoiceBinding.buttonAddExtraItem.setOnClickListener {
+            addExtraItemRow(invoiceBinding.layoutExtraItemsContainer)
         }
         invoiceBinding.layoutExtraItem.visibility = View.GONE
         invoiceBinding.editCurrency.setText(prefs.getString(PREF_CURRENCY, "EUR"))
@@ -494,22 +527,34 @@ class JobDetailFragment : Fragment() {
             Snackbar.make(feedbackView, R.string.invoice_required_fields, Snackbar.LENGTH_LONG).show()
             return
         }
-        if (draft.bic.isBlank()) {
-            Snackbar.make(feedbackView, R.string.invoice_bic_missing, Snackbar.LENGTH_LONG).show()
-            return
+        val validPayment = when (val paymentValidation = PaymentValidation.validatePayment(draft.iban, draft.bic)) {
+            PaymentValidationResult.InvalidIban -> {
+                Snackbar.make(feedbackView, R.string.invoice_iban_invalid, Snackbar.LENGTH_LONG).show()
+                return
+            }
+            PaymentValidationResult.MissingBic -> {
+                Snackbar.make(feedbackView, R.string.invoice_bic_missing, Snackbar.LENGTH_LONG).show()
+                return
+            }
+            PaymentValidationResult.InvalidBic -> {
+                Snackbar.make(feedbackView, R.string.invoice_bic_invalid, Snackbar.LENGTH_LONG).show()
+                return
+            }
+            is PaymentValidationResult.Valid -> paymentValidation
         }
 
         val issueDate = LocalDate.now()
         val input = InvoiceInput(
             invoiceNumber = draft.invoiceNumber,
-            supplier = draft.supplier.toSupplierLines(draft.iban),
+            supplier = draft.supplier.toSupplierLines(validPayment.iban),
             customer = draft.customer.toCustomerLines(),
             note = "",
             description = draft.description,
             extraItem = draft.extraItem,
+            extraItems = draft.extraItems,
             currency = draft.currency,
-            iban = draft.iban,
-            bic = draft.bic,
+            iban = validPayment.iban,
+            bic = validPayment.bic,
             variableSymbol = variableSymbol(draft.invoiceNumber),
             issueDate = issueDate,
             dueDate = issueDate.plusDays(15)
@@ -536,7 +581,7 @@ class JobDetailFragment : Fragment() {
                     val archiveFile = InvoiceFiles.persist(appContext, generatedFile)
                     val totalAmount = entries.sumOf { entry ->
                         entry.workedHours() * entry.hourlyRate
-                    } + (draft.extraItem?.total ?: 0.0)
+                    } + draft.extraItems.sumOf { it.total }
                     DatabaseProvider.get(appContext).invoiceDao().insert(
                         InvoiceRecord(
                             invoiceNumber = draft.invoiceNumber,
@@ -562,7 +607,7 @@ class JobDetailFragment : Fragment() {
                 saveInvoicePreferences(job.jobId, period, draft)
                 onSuccessBeforeShare()
                 Snackbar.make(binding.root, R.string.invoice_created, Snackbar.LENGTH_SHORT).show()
-                shareInvoice(file)
+                showInvoiceCreatedActions(file)
             }.onFailure {
                 Snackbar.make(
                     feedbackView,
@@ -614,6 +659,11 @@ class JobDetailFragment : Fragment() {
         } else {
             null
         }
+        val extraItems = if (invoiceBinding.checkExtraItem.isChecked) {
+            listOfNotNull(extraItem) + readExtraItemRows(invoiceBinding.layoutExtraItemsContainer)
+        } else {
+            emptyList()
+        }
         return InvoiceDraft(
             invoiceNumber = invoiceNumber,
             supplier = supplier,
@@ -623,6 +673,7 @@ class JobDetailFragment : Fragment() {
             currency = invoiceBinding.editCurrency.text?.toString()?.trim()?.uppercase(Locale.ROOT).orEmpty().ifBlank { "EUR" },
             description = invoiceBinding.editDescription.text?.toString()?.trim().orEmpty(),
             extraItem = extraItem,
+            extraItems = extraItems,
             extraName = extraName,
             extraQuantity = extraQuantity,
             extraUnit = extraUnit,
@@ -662,8 +713,9 @@ class JobDetailFragment : Fragment() {
                 info = ""
             ),
             currency = prefs.getString(PREF_CURRENCY, "EUR").orEmpty().ifBlank { "EUR" },
-            description = defaultInvoiceDescription(period),
+            description = invoiceDescriptionFromPreferences(job, period),
             extraItem = null,
+            extraItems = emptyList(),
             extraName = prefs.getString(PREF_EXTRA_NAME, DEFAULT_EXTRA_NAME).orEmpty(),
             extraQuantity = prefs.getString(PREF_EXTRA_QUANTITY, DEFAULT_EXTRA_QUANTITY).orEmpty(),
             extraUnit = prefs.getString(PREF_EXTRA_UNIT, DEFAULT_EXTRA_UNIT).orEmpty(),
@@ -709,25 +761,22 @@ class JobDetailFragment : Fragment() {
     private fun selectedYear(): Int = yearSpinner.getSelectedYear() ?: LocalDate.now().year
 
     private fun selectedInvoicePeriod(): YearMonth {
-        val lastClosedMonth = YearMonth.from(LocalDate.now()).minusMonths(1)
         val selected = YearMonth.of(selectedYear(), selectedMonth())
-        return if (selected > lastClosedMonth) lastClosedMonth else selected
+        return InvoiceRules.selectedInvoicePeriod(LocalDate.now(), selected)
     }
 
     private fun defaultInvoiceNumber(period: YearMonth): String =
-        "${period.year}${period.monthValue.toString().padStart(2, '0')}${(currentInvoiceSequence(period) + 1).toString().padStart(2, '0')}"
+        InvoiceRules.defaultInvoiceNumber(period, currentInvoiceSequence(period))
 
     private fun currentInvoiceSequence(period: YearMonth): Int =
         requireContext().getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
             .getInt(sequencePrefKey(period), 0)
 
     private fun sequencePrefKey(period: YearMonth): String =
-        "invoice_sequence_${period.year}${period.monthValue.toString().padStart(2, '0')}"
+        InvoiceRules.sequencePrefKey(period)
 
     private fun sequenceFromInvoiceNumber(period: YearMonth, invoiceNumber: String): Int {
-        val prefix = "${period.year}${period.monthValue.toString().padStart(2, '0')}"
-        val digits = invoiceNumber.filter { it.isDigit() }
-        return digits.removePrefix(prefix).toIntOrNull() ?: (currentInvoiceSequence(period) + 1)
+        return InvoiceRules.sequenceFromInvoiceNumber(period, invoiceNumber, currentInvoiceSequence(period))
     }
 
     private fun slovakMonthName(period: YearMonth): String =
@@ -737,7 +786,18 @@ class JobDetailFragment : Fragment() {
         slovakMonthName(period).replaceFirstChar { it.uppercase(Locale("sk", "SK")) }
 
     private fun defaultInvoiceDescription(period: YearMonth): String =
-        "Fakturujem Vám za vykonanú prácu – kontrolu kvality v mesiaci ${slovakMonthName(period)}"
+        serviceDescription(InvoiceRules.DEFAULT_SERVICE_TEMPLATE, period)
+
+    private fun invoiceDescriptionFromPreferences(job: WorkJob, period: YearMonth): String {
+        val prefs = requireContext().getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
+        val template = prefs.getString(clientPref(job.jobId, PREF_CLIENT_DESCRIPTION), DEFAULT_SERVICE_TEMPLATE)
+            ?: DEFAULT_SERVICE_TEMPLATE
+        return serviceDescription(template, period)
+    }
+
+    private fun serviceDescription(template: String, period: YearMonth): String {
+        return InvoiceRules.serviceDescription(template, slovakMonthName(period))
+    }
 
     private fun formatInvoiceQuantity(value: Double): String =
         if (value % 1.0 == 0.0) value.toInt().toString() else formatInvoiceNumber(value)
@@ -752,15 +812,13 @@ class JobDetailFragment : Fragment() {
         }.format(value)
 
     private fun normalizeBankValue(value: String): String =
-        value.replace(Regex("\\s+"), "").uppercase(Locale.ROOT)
+        PaymentValidation.normalizeBankValue(value)
 
     private fun variableSymbol(invoiceNumber: String): String =
         invoiceNumber.filter { it.isDigit() }.take(10).ifBlank { "0" }
 
     private fun inferSlovakBic(iban: String): String? {
-        val normalized = normalizeBankValue(iban)
-        if (!normalized.startsWith("SK") || normalized.length < 8) return null
-        return SLOVAK_BIC_BY_BANK_CODE[normalized.substring(4, 8)]
+        return PaymentValidation.inferSlovakBic(iban)
     }
 
     private fun clientPref(jobId: Int, key: String): String = "${PREF_CLIENT_PREFIX}_${jobId}_$key"
@@ -788,6 +846,26 @@ class JobDetailFragment : Fragment() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         startActivity(Intent.createChooser(intent, getString(R.string.invoice_share_title)))
+    }
+
+    private fun showInvoiceCreatedActions(file: File) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.invoice_created)
+            .setMessage(R.string.invoice_created_actions)
+            .setNegativeButton(R.string.invoice_open) { _, _ -> openInvoiceFile(file) }
+            .setPositiveButton(R.string.share) { _, _ -> shareInvoice(file) }
+            .show()
+    }
+
+    private fun openInvoiceFile(file: File) {
+        val context = requireContext()
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        runCatching { startActivity(intent) }
+            .onFailure { Snackbar.make(binding.root, R.string.invoice_open_failed, Snackbar.LENGTH_LONG).show() }
     }
 
     private fun launchImportPicker() {
@@ -842,6 +920,44 @@ class JobDetailFragment : Fragment() {
     private fun String.toInvoiceDouble(defaultValue: Double): Double =
         replace(',', '.').toDoubleOrNull() ?: defaultValue
 
+    private fun addExtraItemRow(container: LinearLayout, item: InvoiceExtraItem? = null) {
+        val rowBinding = ItemInvoiceExtraPositionBinding.inflate(layoutInflater, container, false)
+        rowBinding.editExtraRowName.setText(item?.name.orEmpty())
+        rowBinding.editExtraRowQuantity.setText(item?.quantity?.toString().orEmpty())
+        rowBinding.editExtraRowUnit.setText(item?.unit.orEmpty())
+        rowBinding.editExtraRowPrice.setText(item?.unitPrice?.toString().orEmpty())
+        rowBinding.buttonRemoveExtraRow.setOnClickListener {
+            container.removeView(rowBinding.root)
+        }
+        container.addView(rowBinding.root)
+    }
+
+    private fun readExtraItemRows(container: LinearLayout): List<InvoiceExtraItem> =
+        (0 until container.childCount)
+            .mapNotNull { index ->
+                val row = container.getChildAt(index)
+                val name = row.findViewById<TextInputEditText>(R.id.editExtraRowName)
+                    ?.value()
+                    .orEmpty()
+                if (name.isBlank()) return@mapNotNull null
+                InvoiceExtraItem(
+                    name = name,
+                    quantity = row.findViewById<TextInputEditText>(R.id.editExtraRowQuantity)
+                        ?.value()
+                        .orEmpty()
+                        .ifBlank { "0" }
+                        .toInvoiceDouble(0.0),
+                    unit = row.findViewById<TextInputEditText>(R.id.editExtraRowUnit)
+                        ?.value()
+                        .orEmpty(),
+                    unitPrice = row.findViewById<TextInputEditText>(R.id.editExtraRowPrice)
+                        ?.value()
+                        .orEmpty()
+                        .ifBlank { "0" }
+                        .toInvoiceDouble(0.0)
+                )
+            }
+
     private data class InvoiceParty(
         val name: String,
         val street: String,
@@ -890,10 +1006,16 @@ class JobDetailFragment : Fragment() {
         val currency: String,
         val description: String,
         val extraItem: InvoiceExtraItem?,
+        val extraItems: List<InvoiceExtraItem>,
         val extraName: String,
         val extraQuantity: String,
         val extraUnit: String,
         val extraPrice: String
+    )
+
+    private data class ChecklistItem(
+        val label: String,
+        val ok: Boolean
     )
 
     private companion object {
@@ -916,6 +1038,7 @@ class JobDetailFragment : Fragment() {
         const val PREF_CLIENT_DIC = "dic"
         const val PREF_CLIENT_ICDPH = "icdph"
         const val PREF_CLIENT_INFO = "info"
+        const val PREF_CLIENT_DESCRIPTION = "description_template"
         const val PREF_EXTRA_NAME = "extra_name"
         const val PREF_EXTRA_QUANTITY = "extra_quantity"
         const val PREF_EXTRA_UNIT = "extra_unit"
@@ -938,37 +1061,12 @@ class JobDetailFragment : Fragment() {
         const val DEFAULT_CLIENT_ICDPH = "SK2120000000"
         const val DEFAULT_CLIENT_INFO =
             "Ukážkový text pre údaje odberateľa."
+        const val DEFAULT_SERVICE_TEMPLATE =
+            InvoiceRules.DEFAULT_SERVICE_TEMPLATE
 
         const val DEFAULT_EXTRA_NAME = "Doprava"
         const val DEFAULT_EXTRA_QUANTITY = "1"
         const val DEFAULT_EXTRA_UNIT = ""
         const val DEFAULT_EXTRA_PRICE = "10"
-
-        val SLOVAK_BIC_BY_BANK_CODE = mapOf(
-            "0200" to "SUBASKBX",
-            "0720" to "NBSBSKBX",
-            "0900" to "GIBASKBX",
-            "1100" to "TATRSKBX",
-            "1111" to "UNCRSKBX",
-            "3000" to "SLZBSKBA",
-            "3100" to "LUBASKBX",
-            "5200" to "OTPVSKBX",
-            "5600" to "KOMASK2X",
-            "5900" to "PRVASKBA",
-            "6500" to "POBNSKBA",
-            "7300" to "INGBSKBX",
-            "7500" to "CEKOSKBX",
-            "7930" to "WUSTSKBA",
-            "8050" to "COBASKBX",
-            "8120" to "BSLOSK22",
-            "8130" to "CITISKBA",
-            "8170" to "KBSPSKBX",
-            "8180" to "SPSRSKBA",
-            "8330" to "FIOZSKBA",
-            "8360" to "BREXSKBX",
-            "8400" to "BFKKSKBB",
-            "8420" to "BFKKSKBB",
-            "9950" to "TPAYSKBX"
-        )
     }
 }

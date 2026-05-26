@@ -29,6 +29,20 @@
             app:exitAnim="@anim/nav_exit"
             app:popEnterAnim="@anim/nav_pop_enter"
             app:popExitAnim="@anim/nav_pop_exit" />
+        <action
+            android:id="@+id/action_jobListFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
+        <action
+            android:id="@+id/action_jobListFragment_to_monthOverviewFragment"
+            app:destination="@id/monthOverviewFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
     </fragment>
 
     <fragment
@@ -68,6 +82,29 @@
         android:id="@+id/invoiceArchiveFragment"
         android:name="com.example.worktr.ui.InvoiceArchiveFragment"
         android:label="@string/invoice_archive_title" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.worktr.ui.SettingsFragment"
+        android:label="@string/settings_title">
+        <action
+            android:id="@+id/action_settingsFragment_to_clientsFragment"
+            app:destination="@id/clientsFragment"
+            app:enterAnim="@anim/nav_enter"
+            app:exitAnim="@anim/nav_exit"
+            app:popEnterAnim="@anim/nav_pop_enter"
+            app:popExitAnim="@anim/nav_pop_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/clientsFragment"
+        android:name="com.example.worktr.ui.ClientsFragment"
+        android:label="@string/clients_title" />
+
+    <fragment
+        android:id="@+id/monthOverviewFragment"
+        android:name="com.example.worktr.ui.MonthOverviewFragment"
+        android:label="@string/current_month_title" />
 
     <fragment
         android:id="@+id/addEntryFragment"

@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.worktr.R
 import com.example.worktr.data.InvoiceRecord
 import com.example.worktr.databinding.ItemInvoiceRecordBinding
+import com.example.worktr.util.InvoiceStatus
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -18,7 +19,9 @@ class InvoiceArchiveAdapter(
     private val monthLabels: List<String>,
     private val onOpen: (InvoiceRecord) -> Unit,
     private val onShare: (InvoiceRecord) -> Unit,
-    private val onRecreate: (InvoiceRecord) -> Unit
+    private val onRecreate: (InvoiceRecord) -> Unit,
+    private val onStatus: (InvoiceRecord) -> Unit,
+    private val onLongPress: (InvoiceRecord) -> Unit
 ) : ListAdapter<InvoiceRecord, InvoiceArchiveAdapter.InvoiceViewHolder>(Diff) {
 
     private val locale = Locale("sk", "SK")
@@ -56,11 +59,25 @@ class InvoiceArchiveAdapter(
                 invoice.currency,
                 createdDate.format(dateFormatter)
             )
+            binding.textInvoiceStatus.text = invoice.statusLabel(context)
+            binding.textInvoiceStatus.setOnClickListener { onStatus(invoice) }
             binding.buttonOpenInvoice.setOnClickListener { onOpen(invoice) }
             binding.buttonShareInvoice.setOnClickListener { onShare(invoice) }
             binding.buttonRecreateInvoice.setOnClickListener { onRecreate(invoice) }
+            binding.root.setOnLongClickListener {
+                onLongPress(invoice)
+                true
+            }
         }
     }
+
+    private fun InvoiceRecord.statusLabel(context: android.content.Context): String =
+        when (InvoiceStatus.fromValue(status)) {
+            InvoiceStatus.CREATED -> context.getString(R.string.invoice_status_created)
+            InvoiceStatus.SENT -> context.getString(R.string.invoice_status_sent)
+            InvoiceStatus.PAID -> context.getString(R.string.invoice_status_paid)
+            InvoiceStatus.OVERDUE -> context.getString(R.string.invoice_status_overdue)
+        }
 
     private object Diff : DiffUtil.ItemCallback<InvoiceRecord>() {
         override fun areItemsTheSame(oldItem: InvoiceRecord, newItem: InvoiceRecord): Boolean =

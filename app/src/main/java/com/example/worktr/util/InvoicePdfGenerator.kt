@@ -14,11 +14,6 @@ import com.google.zxing.common.BitMatrix
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import com.example.worktr.data.Job
 import com.example.worktr.data.WorkEntry
-import io.github.janhalasa.paybysquare.model.BankAccount
-import io.github.janhalasa.paybysquare.model.PayBySquareDocument
-import io.github.janhalasa.paybysquare.model.Payment
-import io.github.janhalasa.paybysquare.service.PayBySquareEncoder
-import io.github.janhalasa.paybysquare.service.PayBySquareSerializer
 import java.io.File
 import java.io.FileOutputStream
 import java.math.BigDecimal
@@ -38,6 +33,7 @@ data class InvoiceInput(
     val note: String,
     val description: String,
     val extraItem: InvoiceExtraItem?,
+    val extraItems: List<InvoiceExtraItem> = emptyList(),
     val currency: String,
     val iban: String,
     val bic: String,
@@ -68,12 +64,13 @@ class InvoicePdfGenerator(private val context: Context) {
 
     fun generate(job: Job, entries: List<WorkEntry>, period: YearMonth, input: InvoiceInput): File {
         val totals = calculateTotals(entries)
-        val invoiceTotal = totals.total + (input.extraItem?.total ?: 0.0)
-        val payBySquareCode = createPayBySquareCode(input, totals)
+        val invoiceExtraItems = input.allExtraItems()
+        val invoiceTotal = totals.total + invoiceExtraItems.sumOf { it.total }
+        val payBySquareCode = createPayBySquareCode(input, invoiceTotal)
         val document = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, 1).create()
         val page = document.startPage(pageInfo)
-        drawInvoice(page.canvas, job, period, input, totals, invoiceTotal, payBySquareCode)
+        drawInvoice(page.canvas, job, period, input, totals, invoiceExtraItems, invoiceTotal, payBySquareCode)
         document.finishPage(page)
 
         val safeNumber = input.invoiceNumber
@@ -114,6 +111,7 @@ class InvoicePdfGenerator(private val context: Context) {
         period: YearMonth,
         input: InvoiceInput,
         totals: InvoiceTotals,
+        extraItems: List<InvoiceExtraItem>,
         invoiceTotal: Double,
         payBySquareCode: String
     ) {
@@ -208,10 +206,10 @@ class InvoicePdfGenerator(private val context: Context) {
         val priceRight = unitRight + 69f
         val headerBottom = tableTop + 15f
         val rowBottom = headerBottom + 15f
-        val extraItem = input.extraItem
-        val extraBottom = if (extraItem != null) rowBottom + 15f else rowBottom
+        val extraBottom = rowBottom + extraItems.size * 15f
         val totalBottom = extraBottom + 15f
-        listOf(tableTop, headerBottom, rowBottom, extraBottom, totalBottom).distinct().forEach { y ->
+        (listOf(tableTop, headerBottom, rowBottom, extraBottom, totalBottom) +
+            extraItems.indices.map { rowBottom + (it + 1) * 15f }).distinct().forEach { y ->
             canvas.drawLine(tableLeft, y, tableRight, y, thin)
         }
         listOf(tableLeft, descRight, qtyRight, unitRight, priceRight, tableRight).forEach { x ->
@@ -238,12 +236,13 @@ class InvoicePdfGenerator(private val context: Context) {
         canvas.drawText("hod", (qtyRight + unitRight) / 2f, headerBottom + 10.8f, unitPaint)
         canvas.drawText(formatNumber(unitPrice(totals)), priceRight - 10f, headerBottom + 10.8f, rightPaint)
         canvas.drawText(formatNumber(totals.total), tableRight - 20f, headerBottom + 10.8f, rightPaint)
-        if (extraItem != null) {
-            canvas.drawText(extraItem.name, tableLeft + 4f, rowBottom + 10.8f, itemPaint)
-            canvas.drawText(formatQuantity(extraItem.quantity), qtyRight - 24f, rowBottom + 10.8f, rightPaint)
-            canvas.drawText(extraItem.unit, (qtyRight + unitRight) / 2f, rowBottom + 10.8f, unitPaint)
-            canvas.drawText(formatNumber(extraItem.unitPrice), priceRight - 10f, rowBottom + 10.8f, rightPaint)
-            canvas.drawText(formatNumber(extraItem.total), tableRight - 20f, rowBottom + 10.8f, rightPaint)
+        extraItems.forEachIndexed { index, extraItem ->
+            val baseline = rowBottom + index * 15f + 10.8f
+            canvas.drawText(extraItem.name, tableLeft + 4f, baseline, itemPaint)
+            canvas.drawText(formatQuantity(extraItem.quantity), qtyRight - 24f, baseline, rightPaint)
+            canvas.drawText(extraItem.unit, (qtyRight + unitRight) / 2f, baseline, unitPaint)
+            canvas.drawText(formatNumber(extraItem.unitPrice), priceRight - 10f, baseline, rightPaint)
+            canvas.drawText(formatNumber(extraItem.total), tableRight - 20f, baseline, rightPaint)
         }
         canvas.drawText("Spolu:", priceRight - 3f, extraBottom + 10.8f, rightPaint)
         canvas.drawText(formatNumber(invoiceTotal), tableRight - 20f, extraBottom + 10.8f, rightPaint)
@@ -437,27 +436,22 @@ class InvoicePdfGenerator(private val context: Context) {
         }
     }
 
-    private fun createPayBySquareCode(input: InvoiceInput, totals: InvoiceTotals): String {
-        val invoiceTotal = totals.total + (input.extraItem?.total ?: 0.0)
+    private fun createPayBySquareCode(input: InvoiceInput, invoiceTotal: Double): String {
         val supplierLines = input.supplier.lines().filter { it.isNotBlank() }
-        val document = PayBySquareDocument().apply {
-            invoiceId = input.invoiceNumber
-            beneficiaryName = supplierLines.firstOrNull().orEmpty()
-            beneficiaryAddress1 = supplierLines.drop(1).take(2).joinToString(", ")
-            beneficiaryAddress2 = supplierLines.drop(3).take(2).joinToString(", ")
-        }
-        val payment = Payment().apply {
-            amount = BigDecimal.valueOf(invoiceTotal).setScale(2, RoundingMode.HALF_UP)
-            currencyCode = input.currency.ifBlank { Payment.CURRENCY_EUR }
-            paymentDueDate = input.dueDate
-            variableSymbol = input.variableSymbol
-            paymentNote = "Faktura ${input.invoiceNumber}"
-            addBankAccount(BankAccount(input.iban, input.bic))
-        }
-        document.addPayment(payment)
-        val serialized = PayBySquareSerializer().serialize(document)
-        return PayBySquareEncoder().encode(serialized)
+        return PaymentValidation.createPayBySquareCode(
+            invoiceNumber = input.invoiceNumber,
+            supplierLines = supplierLines,
+            amount = invoiceTotal,
+            currency = input.currency,
+            iban = input.iban,
+            bic = input.bic,
+            variableSymbol = input.variableSymbol,
+            dueDate = input.dueDate
+        )
     }
+
+    private fun InvoiceInput.allExtraItems(): List<InvoiceExtraItem> =
+        extraItems.ifEmpty { listOfNotNull(extraItem) }
 
     private fun drawBarcode(canvas: Canvas, value: String, x: Float, y: Float, width: Float, height: Float) {
         val matrix = MultiFormatWriter().encode(value.ifBlank { "0" }, BarcodeFormat.CODE_128, width.toInt(), height.toInt())

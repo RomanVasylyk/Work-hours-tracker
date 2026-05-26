@@ -27,11 +27,19 @@
     </style>
 
     <style name="ThemeOverlay.WorkTracker.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/onSurface</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.WorkTracker.DialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.WorkTracker.DialogBody</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.WorkTracker.DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.WorkTracker.DialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.WorkTracker.DialogButton</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.WorkTracker.RoundedDialog</item>
     </style>
 
     <style name="ShapeAppearance.WorkTracker.RoundedDialog" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">28dp</item>
+        <item name="cornerSize">18dp</item>
     </style>
 </resources>

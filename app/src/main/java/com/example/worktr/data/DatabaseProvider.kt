@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class], version = 5, exportSchema = false)
+@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun workEntryDao(): WorkEntryDao
@@ -87,6 +87,12 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE invoices ADD COLUMN status TEXT NOT NULL DEFAULT 'created'")
+        }
+    }
+
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
@@ -101,6 +107,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_2_3)
                 .addMigrations(MIGRATION_3_4)
                 .addMigrations(MIGRATION_4_5)
+                .addMigrations(MIGRATION_5_6)
                 .build()
                 .also { INSTANCE = it }
         }

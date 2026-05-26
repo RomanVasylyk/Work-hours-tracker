@@ -80,4 +80,21 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">14dp</item>
     </style>
+
+    <style name="TextAppearance.WorkTracker.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textColor">@color/onSurface</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="TextAppearance.WorkTracker.DialogBody" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/job_hint_text</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="Widget.WorkTracker.DialogButton" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="iconTint">@color/primary</item>
+    </style>
 </resources>

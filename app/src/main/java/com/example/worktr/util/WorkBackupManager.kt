@@ -42,10 +42,7 @@ class WorkBackupManager(
     }
 
     suspend fun restoreFrom(uri: Uri): BackupSummary {
-        val text = context.contentResolver.openInputStream(uri)?.use { input ->
-            input.readBytes().toString(Charsets.UTF_8)
-        } ?: error("Cannot read backup file.")
-        val json = JSONObject(text)
+        val json = readBackupJson(uri)
         val jobs = jobsFromJson(json.optJSONArray("jobs") ?: JSONArray())
         val entries = entriesFromJson(json.optJSONArray("workEntries") ?: JSONArray())
         val invoices = invoicesFromJson(json.optJSONArray("invoices") ?: JSONArray())
@@ -62,6 +59,22 @@ class WorkBackupManager(
         restorePreferences(INVOICE_PREFS, json.optJSONObject("invoicePrefs") ?: JSONObject())
 
         return BackupSummary(jobs.size, entries.size, invoices.size)
+    }
+
+    suspend fun previewFrom(uri: Uri): BackupSummary {
+        val json = readBackupJson(uri)
+        return BackupSummary(
+            jobs = json.optJSONArray("jobs")?.length() ?: 0,
+            entries = json.optJSONArray("workEntries")?.length() ?: 0,
+            invoices = json.optJSONArray("invoices")?.length() ?: 0
+        )
+    }
+
+    private fun readBackupJson(uri: Uri): JSONObject {
+        val text = context.contentResolver.openInputStream(uri)?.use { input ->
+            input.readBytes().toString(Charsets.UTF_8)
+        } ?: error("Cannot read backup file.")
+        return JSONObject(text)
     }
 
     private fun jobsToJson(jobs: List<Job>): JSONArray =
@@ -120,6 +133,7 @@ class WorkBackupManager(
                         .put("createdAtMillis", invoice.createdAtMillis)
                         .put("fileName", invoice.fileName)
                         .put("inputJson", invoice.inputJson)
+                        .put("status", invoice.status)
                         .put(
                             "pdfBase64",
                             if (pdfFile.exists()) {
@@ -181,7 +195,8 @@ class WorkBackupManager(
                 issueDate = json.optString("issueDate"),
                 createdAtMillis = json.optLong("createdAtMillis"),
                 fileName = json.optString("fileName"),
-                inputJson = json.optString("inputJson")
+                inputJson = json.optString("inputJson"),
+                status = json.optString("status", "created")
             )
         }
 

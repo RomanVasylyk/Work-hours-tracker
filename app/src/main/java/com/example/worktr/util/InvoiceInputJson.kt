@@ -12,6 +12,7 @@ object InvoiceInputJson {
             .put("note", input.note)
             .put("description", input.description)
             .put("extraItem", input.extraItem?.let(::extraItemToJson))
+            .put("extraItems", extraItemsToJson(input.allExtraItems()))
             .put("currency", input.currency)
             .put("iban", input.iban)
             .put("bic", input.bic)
@@ -29,6 +30,7 @@ object InvoiceInputJson {
             note = json.optString("note"),
             description = json.optString("description"),
             extraItem = json.optJSONObject("extraItem")?.let(::extraItemFromJson),
+            extraItems = json.optJSONArray("extraItems")?.let(::extraItemsFromJson).orEmpty(),
             currency = json.optString("currency", "EUR"),
             iban = json.optString("iban"),
             bic = json.optString("bic"),
@@ -45,6 +47,14 @@ object InvoiceInputJson {
             .put("unit", item.unit)
             .put("unitPrice", item.unitPrice)
 
+    private fun extraItemsToJson(items: List<InvoiceExtraItem>) =
+        org.json.JSONArray().apply {
+            items.forEach { put(extraItemToJson(it)) }
+        }
+
+    private fun extraItemsFromJson(array: org.json.JSONArray): List<InvoiceExtraItem> =
+        (0 until array.length()).map { index -> extraItemFromJson(array.getJSONObject(index)) }
+
     private fun extraItemFromJson(json: JSONObject): InvoiceExtraItem =
         InvoiceExtraItem(
             name = json.optString("name"),
@@ -52,4 +62,7 @@ object InvoiceInputJson {
             unit = json.optString("unit"),
             unitPrice = json.optDouble("unitPrice", 0.0)
         )
+
+    private fun InvoiceInput.allExtraItems(): List<InvoiceExtraItem> =
+        extraItems.ifEmpty { listOfNotNull(extraItem) }
 }

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/monthScroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:fillViewport="true"
+    android:padding="16dp"
+    tools:context=".ui.MonthOverviewFragment">
+
+    <LinearLayout
+        android:id="@+id/monthContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/textMonthTitle"
+            style="@style/TextAppearance.Material3.HeadlineSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Травень 2026" />
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:useDefaultMargins="true">
+
+            <TextView
+                android:id="@+id/textMonthHours"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="86dp"
+                android:padding="16dp"
+                tools:text="Години\n150 hod" />
+
+            <TextView
+                android:id="@+id/textMonthSalary"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="86dp"
+                android:padding="16dp"
+                tools:text="Зарплата\n1 500,00 €" />
+
+            <TextView
+                android:id="@+id/textMonthDays"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile"
+                android:minHeight="86dp"
+                android:padding="16dp"
+                tools:text="Дні\n20" />
+
+            <TextView
+                android:id="@+id/textMonthInvoices"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:background="@drawable/bg_stat_tile_bonus"
+                android:minHeight="86dp"
+                android:padding="16dp"
+                tools:text="Фактури\n1" />
+        </GridLayout>
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/month_jobs_title" />
+
+        <TextView
+            android:id="@+id/textMonthJobs"
+            style="@style/TextAppearance.Material3.BodyMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/onSurface"
+            tools:text="LOKALPRO · 150 hod · 1 500,00 €" />
+
+        <TextView
+            style="@style/TextAppearance.Material3.TitleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/month_invoices_title" />
+
+        <TextView
+            android:id="@+id/textMonthInvoiceList"
+            style="@style/TextAppearance.Material3.BodyMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/onSurface"
+            tools:text="20260401 · Demo klient · 1 500,00 €" />
+    </LinearLayout>
+</ScrollView>

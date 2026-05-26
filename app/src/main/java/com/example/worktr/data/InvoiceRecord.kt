@@ -1,5 +1,6 @@
 package com.example.worktr.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -25,5 +26,6 @@ data class InvoiceRecord(
     val issueDate: String,
     val createdAtMillis: Long,
     val fileName: String,
-    val inputJson: String
+    val inputJson: String,
+    @ColumnInfo(defaultValue = "created") val status: String = "created"
 )

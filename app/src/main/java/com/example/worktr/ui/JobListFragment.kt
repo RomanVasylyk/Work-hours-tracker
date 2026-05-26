@@ -4,12 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.TextUtils
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.core.content.FileProvider
@@ -27,6 +30,7 @@ import com.example.worktr.databinding.DialogInvoiceSettingsBinding
 import com.example.worktr.databinding.FragmentJobListBinding
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.responsive.ResponsiveUi
+import com.example.worktr.util.AutoBackupManager
 import com.example.worktr.util.CsvImporter
 import com.example.worktr.util.CsvImportSummary
 import com.example.worktr.util.ExcelExporter
@@ -36,6 +40,7 @@ import com.example.worktr.util.workedHours
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.transition.platform.MaterialFadeThrough
 import com.google.android.material.textfield.TextInputEditText
@@ -118,6 +123,9 @@ class JobListFragment : Fragment() {
         }
 
         binding.fabAddJob.setOnClickListener { showAddJobDialog() }
+        binding.cardOverview.setOnClickListener {
+            findNavController().navigate(R.id.action_jobListFragment_to_monthOverviewFragment)
+        }
         binding.cardOverallStats.setOnClickListener {
             findNavController().navigate(
                 R.id.action_jobListFragment_to_statsFragment,
@@ -130,7 +138,10 @@ class JobListFragment : Fragment() {
             findNavController().navigate(R.id.action_jobListFragment_to_invoiceArchiveFragment)
         }
         binding.cardBackupData.setOnClickListener { showBackupDialog() }
-        binding.cardInvoiceSettings.setOnClickListener { showInvoiceSettingsDialog() }
+        binding.cardInvoiceSettings.setOnClickListener {
+            findNavController().navigate(R.id.action_jobListFragment_to_settingsFragment)
+        }
+        runAutoBackupIfDue(db)
         showBackupReminderIfNeeded()
         loadCurrentMonthSummary(db)
     }
@@ -143,6 +154,28 @@ class JobListFragment : Fragment() {
         binding.quickActionRow.removeView(binding.cardInvoiceSettings)
         val backupIndex = binding.quickActionRow.indexOfChild(binding.cardBackupData)
         binding.quickActionRow.addView(binding.cardInvoiceSettings, backupIndex)
+        normalizeQuickActionCards()
+    }
+
+    private fun normalizeQuickActionCards() {
+        val height = ResponsiveUi.dp(requireContext(), 58)
+        listOf(
+            binding.cardOverallStats,
+            binding.cardImportData,
+            binding.cardExportAll,
+            binding.cardInvoiceArchive,
+            binding.cardInvoiceSettings,
+            binding.cardBackupData
+        ).forEach { card ->
+            card.minimumHeight = height
+            val content = card.getChildAt(0)
+            content.minimumHeight = height
+            content.layoutParams = content.layoutParams.apply {
+                this.height = height
+            }
+            (content as? android.widget.LinearLayout)?.gravity = Gravity.CENTER
+            card.applyOneLineLabels()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -440,12 +473,29 @@ class JobListFragment : Fragment() {
     }
 
     private fun confirmRestoreBackup(uri: Uri) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.backup_restore_confirm_title)
-            .setMessage(R.string.backup_restore_confirm_message)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.backup_restore_confirm) { _, _ -> restoreBackup(uri) }
-            .show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                val appContext = requireContext().applicationContext
+                withContext(Dispatchers.IO) {
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).previewFrom(uri)
+                }
+            }
+            if (!isAdded) return@launch
+            result.onSuccess { summary ->
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.backup_restore_confirm_title)
+                    .setMessage(getString(R.string.backup_restore_preview, summary.jobs, summary.entries, summary.invoices))
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.backup_restore_confirm) { _, _ -> restoreBackup(uri) }
+                    .show()
+            }.onFailure {
+                Snackbar.make(
+                    binding.root,
+                    it.message ?: getString(R.string.backup_restore_failed),
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun restoreBackup(uri: Uri) {
@@ -469,6 +519,23 @@ class JobListFragment : Fragment() {
                     it.message ?: getString(R.string.backup_restore_failed),
                     Snackbar.LENGTH_LONG
                 ).show()
+            }
+        }
+    }
+
+    private fun runAutoBackupIfDue(db: com.example.worktr.data.AppDatabase) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                val appContext = requireContext().applicationContext
+                withContext(Dispatchers.IO) {
+                    AutoBackupManager.runIfDue(appContext, db)
+                }
+            }
+            if (!isAdded) return@launch
+            result.onSuccess { created ->
+                if (created) {
+                    Snackbar.make(binding.root, R.string.auto_backup_success, Snackbar.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -557,6 +624,26 @@ class JobListFragment : Fragment() {
             ),
             Snackbar.LENGTH_LONG
         ).show()
+    }
+
+    private fun MaterialCardView.applyOneLineLabels() {
+        fun visit(view: View) {
+            if (view is TextView) {
+                view.maxLines = 1
+                view.ellipsize = TextUtils.TruncateAt.END
+                view.gravity = Gravity.CENTER
+                view.textAlignment = View.TEXT_ALIGNMENT_CENTER
+                view.layoutParams = view.layoutParams.apply {
+                    width = ViewGroup.LayoutParams.MATCH_PARENT
+                }
+            }
+            if (view is ViewGroup) {
+                for (index in 0 until view.childCount) {
+                    visit(view.getChildAt(index))
+                }
+            }
+        }
+        visit(this)
     }
 
     private fun applyResponsiveLayout() {

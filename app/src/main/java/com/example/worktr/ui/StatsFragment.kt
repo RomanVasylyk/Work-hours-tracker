@@ -35,9 +35,11 @@ import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.ValueFormatter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job as CoroutineJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.time.*
 import java.time.DayOfWeek
@@ -96,6 +98,7 @@ class StatsFragment : Fragment() {
         chartSalary.marker = salaryMarker
         styleChart(chartHours)
         styleChart(chartSalary)
+        chartSalary.legend.isEnabled = true
         applyResponsiveLayout(view)
         updateScopeHeader(activeJobs = 0)
         val modeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
@@ -183,9 +186,11 @@ class StatsFragment : Fragment() {
                 val labels = buildLabels(isMonth, periodCount)
                 val hoursEntries = mutableListOf<Entry>()
                 val salaryEntries = mutableListOf<BarEntry>()
+                val invoiceEntries = mutableListOf<BarEntry>()
                 val buckets = if (!isMonth) (1..12) else (1..periodCount)
                 val hoursBuckets = DoubleArray(periodCount + 1)
                 val salaryBuckets = DoubleArray(periodCount + 1)
+                val invoiceBuckets = DoubleArray(periodCount + 1)
 
                 list.forEach { entry ->
                     val date = entry.localDate(zone)
@@ -193,6 +198,33 @@ class StatsFragment : Fragment() {
                     hoursBuckets[index] += entry.workedHours()
                     salaryBuckets[index] += entry.salaryBreakdown(zone).total
                 }
+                val invoices = withContext(Dispatchers.IO) {
+                    DatabaseProvider.get(requireContext().applicationContext)
+                        .invoiceDao()
+                        .getAllInvoicesList()
+                }
+                invoices
+                    .asSequence()
+                    .filter { invoice -> targetJobId == -1 || invoice.jobId == targetJobId }
+                    .forEach { invoice ->
+                        if (!isMonth) {
+                            if (invoice.periodYear == year && invoice.periodMonth in 1..12) {
+                                invoiceBuckets[invoice.periodMonth] += invoice.totalAmount
+                            }
+                        } else if (invoice.periodYear == year && invoice.periodMonth == month) {
+                            val issueDate = runCatching { LocalDate.parse(invoice.issueDate) }.getOrNull()
+                            val index = if (
+                                issueDate != null &&
+                                issueDate.year == year &&
+                                issueDate.monthValue == month
+                            ) {
+                                issueDate.dayOfMonth
+                            } else {
+                                periodCount
+                            }
+                            invoiceBuckets[index] += invoice.totalAmount
+                        }
+                    }
 
                 var totalHours = 0.0
                 var totalSalary = 0.0
@@ -201,7 +233,8 @@ class StatsFragment : Fragment() {
                     val sumHours = hoursBuckets[i]
                     val sumSalary = salaryBuckets[i]
                     hoursEntries.add(Entry(i.toFloat(), sumHours.toFloat()))
-                    salaryEntries.add(BarEntry(i.toFloat(), sumSalary.toFloat()))
+                    salaryEntries.add(BarEntry(i.toFloat() - 0.18f, sumSalary.toFloat()))
+                    invoiceEntries.add(BarEntry(i.toFloat() + 0.18f, invoiceBuckets[i].toFloat()))
                     totalHours += sumHours
                     totalSalary += sumSalary
                 }
@@ -216,8 +249,11 @@ class StatsFragment : Fragment() {
                 chartHours.notifyDataSetChanged()
                 chartHours.invalidate()
                 chartHours.animateX(450)
-                chartSalary.data = BarData(createSalaryDataSet(salaryEntries, isMonth)).apply {
-                    barWidth = if (isMonth) 0.55f else 0.48f
+                chartSalary.data = BarData(
+                    createSalaryDataSet(salaryEntries, isMonth),
+                    createInvoiceDataSet(invoiceEntries, isMonth)
+                ).apply {
+                    barWidth = if (isMonth) 0.28f else 0.28f
                 }
                 chartSalary.setFitBars(true)
                 applyXAxis(chartSalary, labels, isMonth)
@@ -320,7 +356,7 @@ class StatsFragment : Fragment() {
     }
 
     private fun createSalaryDataSet(entries: List<BarEntry>, isMonth: Boolean): BarDataSet {
-        return BarDataSet(entries, getString(R.string.chart_salary_title)).apply {
+        return BarDataSet(entries, getString(R.string.chart_salary_earned)).apply {
             color = ContextCompat.getColor(requireContext(), R.color.chart_salary_bar)
             setDrawValues(false)
             highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
@@ -328,11 +364,22 @@ class StatsFragment : Fragment() {
         }
     }
 
+    private fun createInvoiceDataSet(entries: List<BarEntry>, isMonth: Boolean): BarDataSet {
+        return BarDataSet(entries, getString(R.string.chart_salary_invoiced)).apply {
+            color = ContextCompat.getColor(requireContext(), R.color.chart_invoice_bar)
+            setDrawValues(false)
+            highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
+            highLightAlpha = if (isMonth) 180 else 150
+        }
+    }
+
     private fun applyXAxis(chart: BarLineChartBase<*>, labels: List<String>, isMonth: Boolean) {
+        chart.setExtraOffsets(8f, 12f, 8f, if (isMonth) 4f else 18f)
         chart.xAxis.apply {
             axisMinimum = 0.5f
             axisMaximum = labels.size + 0.5f
             labelCount = if (isMonth) minOf(labels.size, 8) else labels.size
+            labelRotationAngle = if (isMonth) 0f else -40f
             setAvoidFirstLastClipping(true)
             valueFormatter = object : ValueFormatter() {
                 override fun getAxisLabel(value: Float, axis: AxisBase?): String {
