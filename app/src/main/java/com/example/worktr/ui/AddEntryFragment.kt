@@ -122,9 +122,25 @@ class AddEntryFragment : Fragment() {
     }
 
     private fun saveEntry() {
-        val millis = selectedMillis ?: return
-        val hours = binding.inputHours.text.toString().toDoubleOrNull() ?: 0.0
+        val millis = selectedMillis ?: run {
+            com.google.android.material.snackbar.Snackbar.make(
+                binding.root,
+                R.string.select_date,
+                com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+            ).show()
+            return
+        }
+        binding.inputHours.error = null
+        val hours = binding.inputHours.text.toString().replace(',', '.').toDoubleOrNull()
+        if (hours == null || hours <= 0.0) {
+            binding.inputHours.error = getString(R.string.validation_positive_number)
+            return
+        }
         val br = selectedBreakHours
+        if (br > hours) {
+            binding.inputHours.error = getString(R.string.validation_break_too_large)
+            return
+        }
         val shift = binding.inputShiftType.text?.toString().orEmpty()
         val hol = binding.checkHoliday.isChecked
         viewLifecycleOwner.lifecycleScope.launch {

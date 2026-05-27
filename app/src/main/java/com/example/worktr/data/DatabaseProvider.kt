@@ -7,11 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class], version = 6, exportSchema = false)
+@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class, Client::class], version = 7, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun workEntryDao(): WorkEntryDao
     abstract fun invoiceDao(): InvoiceDao
+    abstract fun clientDao(): ClientDao
 }
 
 object DatabaseProvider {
@@ -93,6 +94,30 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS clients (
+                    clientId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    jobId INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    street TEXT NOT NULL,
+                    city TEXT NOT NULL,
+                    zip TEXT NOT NULL,
+                    country TEXT NOT NULL,
+                    ico TEXT NOT NULL,
+                    dic TEXT NOT NULL,
+                    icdph TEXT NOT NULL,
+                    serviceTemplate TEXT NOT NULL,
+                    FOREIGN KEY(jobId) REFERENCES jobs(jobId) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_clients_jobId ON clients(jobId)")
+        }
+    }
+
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
@@ -108,6 +133,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_3_4)
                 .addMigrations(MIGRATION_4_5)
                 .addMigrations(MIGRATION_5_6)
+                .addMigrations(MIGRATION_6_7)
                 .build()
                 .also { INSTANCE = it }
         }

@@ -11,11 +11,13 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.worktr.R
+import com.example.worktr.data.Client
 import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.Job
 import com.example.worktr.databinding.DialogClientSettingsBinding
 import com.example.worktr.databinding.FragmentClientsBinding
 import com.example.worktr.ui.responsive.ResponsiveUi
+import com.example.worktr.util.ClientDefaults
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -46,13 +48,20 @@ class ClientsFragment : Fragment() {
         val db = DatabaseProvider.get(requireContext())
         val prefs = requireContext().getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
         viewLifecycleOwner.lifecycleScope.launch {
-            combine(db.jobDao().getAllJobs(), db.invoiceDao().getAllInvoices()) { jobs, invoices ->
+            combine(
+                db.jobDao().getAllJobs(),
+                db.clientDao().getAllClients(),
+                db.invoiceDao().getAllInvoices()
+            ) { jobs, clients, invoices ->
+                val clientsByJob = clients.associateBy { it.jobId }
                 val latestInvoices = invoices.groupBy { it.jobId }
                     .mapValues { (_, values) -> values.maxByOrNull { it.createdAtMillis } }
                 jobs.map { job ->
+                    val client = clientsByJob[job.jobId] ?: clientFromPreferences(prefs, job.jobId)
                     ClientUiModel(
                         job = job,
-                        customerName = clientPrefValue(prefs, job.jobId, PREF_CLIENT_NAME, DEFAULT_CLIENT_NAME),
+                        client = client,
+                        customerName = client.name,
                         lastInvoice = latestInvoices[job.jobId]
                     )
                 }
@@ -71,19 +80,17 @@ class ClientsFragment : Fragment() {
         val dialogBinding = DialogClientSettingsBinding.inflate(layoutInflater)
         val job = model.job
 
-        dialogBinding.editCustomerName.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_NAME, DEFAULT_CLIENT_NAME))
-        dialogBinding.editCustomerStreet.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_STREET, DEFAULT_CLIENT_STREET))
-        dialogBinding.editCustomerCity.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_CITY, DEFAULT_CLIENT_CITY))
-        dialogBinding.editCustomerZip.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_ZIP, DEFAULT_CLIENT_ZIP))
-        dialogBinding.editCustomerCountry.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_COUNTRY, DEFAULT_COUNTRY))
-        dialogBinding.editCustomerIco.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_ICO, DEFAULT_CLIENT_ICO))
-        dialogBinding.editCustomerDic.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_DIC, DEFAULT_CLIENT_DIC))
-        dialogBinding.editCustomerIcdph.setText(clientPrefValue(prefs, job.jobId, PREF_CLIENT_ICDPH, DEFAULT_CLIENT_ICDPH))
+        val client = model.client
+        dialogBinding.editCustomerName.setText(client.name)
+        dialogBinding.editCustomerStreet.setText(client.street)
+        dialogBinding.editCustomerCity.setText(client.city)
+        dialogBinding.editCustomerZip.setText(client.zip)
+        dialogBinding.editCustomerCountry.setText(client.country)
+        dialogBinding.editCustomerIco.setText(client.ico)
+        dialogBinding.editCustomerDic.setText(client.dic)
+        dialogBinding.editCustomerIcdph.setText(client.icdph)
         dialogBinding.editHourly.setText(job.hourlyRate.toString())
-        dialogBinding.editServiceTemplate.setText(
-            prefs.getString(clientPref(job.jobId, PREF_CLIENT_DESCRIPTION), DEFAULT_SERVICE_TEMPLATE)
-                ?: DEFAULT_SERVICE_TEMPLATE
-        )
+        dialogBinding.editServiceTemplate.setText(client.serviceTemplate)
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setView(dialogBinding.root)
@@ -91,33 +98,48 @@ class ClientsFragment : Fragment() {
 
         dialogBinding.buttonCancelClient.setOnClickListener { dialog.dismiss() }
         dialogBinding.buttonSaveClient.setOnClickListener {
-            saveClient(job, dialogBinding, dialog)
+            saveClient(model, dialogBinding, dialog)
         }
         dialog.show()
     }
 
     private fun saveClient(
-        job: Job,
+        model: ClientUiModel,
         dialogBinding: DialogClientSettingsBinding,
         dialog: android.app.Dialog
     ) {
+        val job = model.job
         val hourlyRate = dialogBinding.editHourly.value().toInvoiceDouble(job.hourlyRate)
+        val client = (model.client.takeIf { it.clientId != 0L } ?: ClientDefaults.forJob(job.jobId)).copy(
+            jobId = job.jobId,
+            name = dialogBinding.editCustomerName.value().ifBlank { ClientDefaults.NAME },
+            street = dialogBinding.editCustomerStreet.value(),
+            city = dialogBinding.editCustomerCity.value(),
+            zip = dialogBinding.editCustomerZip.value(),
+            country = dialogBinding.editCustomerCountry.value().ifBlank { ClientDefaults.COUNTRY },
+            ico = dialogBinding.editCustomerIco.value(),
+            dic = dialogBinding.editCustomerDic.value(),
+            icdph = dialogBinding.editCustomerIcdph.value(),
+            serviceTemplate = dialogBinding.editServiceTemplate.value().ifBlank { ClientDefaults.SERVICE_TEMPLATE }
+        )
         requireContext().getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE).edit()
-            .putString(clientPref(job.jobId, PREF_CLIENT_NAME), dialogBinding.editCustomerName.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_STREET), dialogBinding.editCustomerStreet.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_CITY), dialogBinding.editCustomerCity.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_ZIP), dialogBinding.editCustomerZip.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_COUNTRY), dialogBinding.editCustomerCountry.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_ICO), dialogBinding.editCustomerIco.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_DIC), dialogBinding.editCustomerDic.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_ICDPH), dialogBinding.editCustomerIcdph.value())
-            .putString(clientPref(job.jobId, PREF_CLIENT_DESCRIPTION), dialogBinding.editServiceTemplate.value().ifBlank { DEFAULT_SERVICE_TEMPLATE })
+            .putString(clientPref(job.jobId, PREF_CLIENT_NAME), client.name)
+            .putString(clientPref(job.jobId, PREF_CLIENT_STREET), client.street)
+            .putString(clientPref(job.jobId, PREF_CLIENT_CITY), client.city)
+            .putString(clientPref(job.jobId, PREF_CLIENT_ZIP), client.zip)
+            .putString(clientPref(job.jobId, PREF_CLIENT_COUNTRY), client.country)
+            .putString(clientPref(job.jobId, PREF_CLIENT_ICO), client.ico)
+            .putString(clientPref(job.jobId, PREF_CLIENT_DIC), client.dic)
+            .putString(clientPref(job.jobId, PREF_CLIENT_ICDPH), client.icdph)
+            .putString(clientPref(job.jobId, PREF_CLIENT_DESCRIPTION), client.serviceTemplate)
             .apply()
 
         val appContext = requireContext().applicationContext
         viewLifecycleOwner.lifecycleScope.launch {
             withContext(Dispatchers.IO) {
-                DatabaseProvider.get(appContext).jobDao().update(job.copy(hourlyRate = hourlyRate))
+                val db = DatabaseProvider.get(appContext)
+                db.clientDao().insert(client)
+                db.jobDao().update(job.copy(hourlyRate = hourlyRate))
             }
             if (!isAdded) return@launch
             dialog.dismiss()
@@ -142,6 +164,20 @@ class ClientsFragment : Fragment() {
             ?: prefs.getString(key, defaultValue)
             ?: defaultValue
 
+    private fun clientFromPreferences(prefs: android.content.SharedPreferences, jobId: Int): Client =
+        Client(
+            jobId = jobId,
+            name = clientPrefValue(prefs, jobId, PREF_CLIENT_NAME, ClientDefaults.NAME),
+            street = clientPrefValue(prefs, jobId, PREF_CLIENT_STREET, ClientDefaults.STREET),
+            city = clientPrefValue(prefs, jobId, PREF_CLIENT_CITY, ClientDefaults.CITY),
+            zip = clientPrefValue(prefs, jobId, PREF_CLIENT_ZIP, ClientDefaults.ZIP),
+            country = clientPrefValue(prefs, jobId, PREF_CLIENT_COUNTRY, ClientDefaults.COUNTRY),
+            ico = clientPrefValue(prefs, jobId, PREF_CLIENT_ICO, ClientDefaults.ICO),
+            dic = clientPrefValue(prefs, jobId, PREF_CLIENT_DIC, ClientDefaults.DIC),
+            icdph = clientPrefValue(prefs, jobId, PREF_CLIENT_ICDPH, ClientDefaults.ICDPH),
+            serviceTemplate = clientPrefValue(prefs, jobId, PREF_CLIENT_DESCRIPTION, ClientDefaults.SERVICE_TEMPLATE)
+        )
+
     private fun TextInputEditText.value(): String = text?.toString()?.trim().orEmpty()
 
     private fun String.toInvoiceDouble(defaultValue: Double): Double =
@@ -160,15 +196,5 @@ class ClientsFragment : Fragment() {
         const val PREF_CLIENT_ICDPH = "icdph"
         const val PREF_CLIENT_DESCRIPTION = "description_template"
 
-        const val DEFAULT_CLIENT_NAME = "Demo klient s.r.o."
-        const val DEFAULT_CLIENT_STREET = "Obchodná 24"
-        const val DEFAULT_CLIENT_CITY = "Bratislava"
-        const val DEFAULT_CLIENT_ZIP = "81106"
-        const val DEFAULT_CLIENT_ICO = "87654321"
-        const val DEFAULT_CLIENT_DIC = "2120000000"
-        const val DEFAULT_CLIENT_ICDPH = "SK2120000000"
-        const val DEFAULT_COUNTRY = "Slovensko"
-        const val DEFAULT_SERVICE_TEMPLATE =
-            "Fakturujem Vám za vykonanú prácu – kontrolu kvality v mesiaci {month}"
     }
 }

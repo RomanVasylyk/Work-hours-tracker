@@ -81,20 +81,68 @@ class InvoiceRulesTest {
         assertEquals(10.0, totals.unitPrice, 0.0001)
     }
 
+    @Test
+    fun bonusExtraItemsContainOnlyAdditionalIncome() {
+        val zone = ZoneId.of("Europe/Bratislava")
+        val entries = listOf(
+            entry(
+                LocalDate.of(2026, 4, 11),
+                hours = 8.0,
+                breakHours = 0.0,
+                hourlyRate = 10.0,
+                zone = zone,
+                shiftType = "нічна",
+                nightBonus = 1.5,
+                saturdayBonus = 2.0
+            ),
+            entry(
+                LocalDate.of(2026, 4, 12),
+                hours = 6.0,
+                breakHours = 0.0,
+                hourlyRate = 10.0,
+                zone = zone,
+                sundayBonus = 3.0,
+                holidayBonus = 4.0,
+                isHoliday = true
+            )
+        )
+
+        val extras = InvoiceRules.bonusExtraItems(entries, "uk", zone)
+        val totals = InvoiceRules.calculateTotals(entries, extras)
+
+        assertEquals(4, extras.size)
+        assertTrue(extras.any { it.name == "Доплата нічна" && it.total == 12.0 })
+        assertTrue(extras.any { it.name == "Доплата субота" && it.total == 16.0 })
+        assertTrue(extras.any { it.name == "Доплата неділя" && it.total == 18.0 })
+        assertTrue(extras.any { it.name == "Доплата свято" && it.total == 24.0 })
+        assertEquals(140.0, totals.servicesTotal, 0.0001)
+        assertEquals(210.0, totals.total, 0.0001)
+    }
+
     private fun entry(
         date: LocalDate,
         hours: Double,
         breakHours: Double,
         hourlyRate: Double,
-        zone: ZoneId
+        zone: ZoneId,
+        shiftType: String = "day",
+        nightBonus: Double = 0.0,
+        saturdayBonus: Double = 0.0,
+        sundayBonus: Double = 0.0,
+        holidayBonus: Double = 0.0,
+        isHoliday: Boolean = false
     ): WorkEntry =
         WorkEntry(
             jobId = 1,
             date = date.atStartOfDay(zone).toInstant().toEpochMilli(),
             hoursWorked = hours,
             breakHours = breakHours,
-            shiftType = "day",
-            isHoliday = false,
-            hourlyRate = hourlyRate
+            shiftType = shiftType,
+            isHoliday = isHoliday,
+            hourlyRate = hourlyRate,
+            nightBonus = nightBonus,
+            saturdayBonus = saturdayBonus,
+            sundayBonus = sundayBonus,
+            holidayBonus = holidayBonus
         )
 }

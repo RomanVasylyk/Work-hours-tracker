@@ -244,8 +244,17 @@ class CalendarDialogFragment : DialogFragment() {
         breakValue.setOnClickListener { breakButton.performClick() }
         updateBreakValue()
         save.setOnClickListener {
-            val h = inputH.text.toString().toDoubleOrNull() ?: 0.0
+            inputH.error = null
+            val h = inputH.text.toString().replace(',', '.').toDoubleOrNull()
+            if (h == null || h <= 0.0) {
+                inputH.error = getString(R.string.validation_positive_number)
+                return@setOnClickListener
+            }
             val b = selectedBreakHours
+            if (b > h) {
+                inputH.error = getString(R.string.validation_break_too_large)
+                return@setOnClickListener
+            }
             val sft = shiftInput.text?.toString().orEmpty()
             val hol = chk.isChecked
             requireActivity().lifecycleScope.launch(Dispatchers.IO) {

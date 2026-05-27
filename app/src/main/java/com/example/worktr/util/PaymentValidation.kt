@@ -1,14 +1,11 @@
 package com.example.worktr.util
 
-import io.github.janhalasa.paybysquare.model.BankAccount
-import io.github.janhalasa.paybysquare.model.PayBySquareDocument
-import io.github.janhalasa.paybysquare.model.Payment
 import io.github.janhalasa.paybysquare.service.PayBySquareEncoder
-import io.github.janhalasa.paybysquare.service.PayBySquareSerializer
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object PaymentValidation {
@@ -70,24 +67,67 @@ object PaymentValidation {
         val paymentValidation = validatePayment(iban, bic)
         require(paymentValidation is PaymentValidationResult.Valid) { "Invalid payment data" }
 
-        val document = PayBySquareDocument().apply {
-            invoiceId = invoiceNumber
-            beneficiaryName = supplierLines.firstOrNull().orEmpty()
-            beneficiaryAddress1 = supplierLines.drop(1).take(2).joinToString(", ")
-            beneficiaryAddress2 = supplierLines.drop(3).take(2).joinToString(", ")
-        }
-        val payment = Payment().apply {
-            this.amount = BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP)
-            currencyCode = currency.ifBlank { Payment.CURRENCY_EUR }
-            paymentDueDate = dueDate
-            this.variableSymbol = variableSymbol
-            paymentNote = "Faktura $invoiceNumber"
-            addBankAccount(BankAccount(paymentValidation.iban, paymentValidation.bic))
-        }
-        document.addPayment(payment)
-        val serialized = PayBySquareSerializer().serialize(document)
+        val serialized = serializePayBySquarePayload(
+            invoiceNumber = invoiceNumber,
+            supplierLines = supplierLines,
+            amount = BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP),
+            currency = currency,
+            iban = paymentValidation.iban,
+            bic = paymentValidation.bic,
+            variableSymbol = variableSymbol,
+            dueDate = dueDate
+        )
         return PayBySquareEncoder().encode(serialized)
     }
+
+    internal fun serializePayBySquarePayload(
+        invoiceNumber: String,
+        supplierLines: List<String>,
+        amount: BigDecimal,
+        currency: String,
+        iban: String,
+        bic: String,
+        variableSymbol: String,
+        dueDate: LocalDate
+    ): String = buildString {
+        appendField(invoiceNumber)
+        appendField("1")
+        appendField("1")
+        appendField(formatPayBySquareAmount(amount))
+        appendField(normalizeCurrency(currency))
+        appendField(dueDate.format(DateTimeFormatter.BASIC_ISO_DATE))
+        appendField(normalizeVariableSymbol(variableSymbol))
+        appendField("")
+        appendField("")
+        appendField("")
+        appendField("Faktura $invoiceNumber")
+        appendField("1")
+        appendField(normalizeBankValue(iban))
+        appendField(normalizeBankValue(bic))
+        appendField("0")
+        appendField("0")
+        appendField(supplierLines.firstOrNull().orEmpty())
+        appendField(supplierLines.drop(1).take(2).joinToString(", "))
+        appendField(supplierLines.drop(3).take(2).joinToString(", "))
+    }
+
+    private fun StringBuilder.appendField(value: String) {
+        append(value)
+        append('\t')
+    }
+
+    private fun normalizeCurrency(value: String): String {
+        val currency = value.trim().uppercase(Locale.ROOT)
+        return if (Regex("^[A-Z]{3}$").matches(currency)) currency else "EUR"
+    }
+
+    private fun normalizeVariableSymbol(value: String): String =
+        value.filter { it.isDigit() }.take(10)
+
+    private fun formatPayBySquareAmount(value: BigDecimal): String =
+        value.setScale(2, RoundingMode.HALF_UP)
+            .stripTrailingZeros()
+            .toPlainString()
 
     val SLOVAK_BIC_BY_BANK_CODE = mapOf(
         "0200" to "SUBASKBX",

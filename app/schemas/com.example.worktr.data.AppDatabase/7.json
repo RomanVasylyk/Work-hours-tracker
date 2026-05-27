@@ -1,0 +1,419 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 7,
+    "identityHash": "63f1bce3561c21c25024bb5e8d67ee03",
+    "entities": [
+      {
+        "tableName": "jobs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`jobId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `hourlyRate` REAL NOT NULL, `nightBonus` REAL NOT NULL, `saturdayBonus` REAL NOT NULL, `sundayBonus` REAL NOT NULL, `holidayBonus` REAL NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "jobId",
+            "columnName": "jobId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hourlyRate",
+            "columnName": "hourlyRate",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nightBonus",
+            "columnName": "nightBonus",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saturdayBonus",
+            "columnName": "saturdayBonus",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sundayBonus",
+            "columnName": "sundayBonus",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holidayBonus",
+            "columnName": "holidayBonus",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "jobId"
+          ]
+        }
+      },
+      {
+        "tableName": "work_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`entryId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `jobId` INTEGER NOT NULL, `date` INTEGER NOT NULL, `hoursWorked` REAL NOT NULL, `breakHours` REAL NOT NULL, `shiftType` TEXT NOT NULL, `isHoliday` INTEGER NOT NULL, `hourlyRate` REAL NOT NULL DEFAULT 0.0, `nightBonus` REAL NOT NULL DEFAULT 0.0, `saturdayBonus` REAL NOT NULL DEFAULT 0.0, `sundayBonus` REAL NOT NULL DEFAULT 0.0, `holidayBonus` REAL NOT NULL DEFAULT 0.0, FOREIGN KEY(`jobId`) REFERENCES `jobs`(`jobId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "entryId",
+            "columnName": "entryId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jobId",
+            "columnName": "jobId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hoursWorked",
+            "columnName": "hoursWorked",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "breakHours",
+            "columnName": "breakHours",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shiftType",
+            "columnName": "shiftType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isHoliday",
+            "columnName": "isHoliday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hourlyRate",
+            "columnName": "hourlyRate",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0.0"
+          },
+          {
+            "fieldPath": "nightBonus",
+            "columnName": "nightBonus",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0.0"
+          },
+          {
+            "fieldPath": "saturdayBonus",
+            "columnName": "saturdayBonus",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0.0"
+          },
+          {
+            "fieldPath": "sundayBonus",
+            "columnName": "sundayBonus",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0.0"
+          },
+          {
+            "fieldPath": "holidayBonus",
+            "columnName": "holidayBonus",
+            "affinity": "REAL",
+            "notNull": true,
+            "defaultValue": "0.0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "entryId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_work_entries_jobId",
+            "unique": false,
+            "columnNames": [
+              "jobId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_work_entries_jobId` ON `${TABLE_NAME}` (`jobId`)"
+          },
+          {
+            "name": "index_work_entries_jobId_date",
+            "unique": true,
+            "columnNames": [
+              "jobId",
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_work_entries_jobId_date` ON `${TABLE_NAME}` (`jobId`, `date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "jobs",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "jobId"
+            ],
+            "referencedColumns": [
+              "jobId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "invoices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`invoiceId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `invoiceNumber` TEXT NOT NULL, `jobId` INTEGER NOT NULL, `jobName` TEXT NOT NULL, `customerName` TEXT NOT NULL, `periodYear` INTEGER NOT NULL, `periodMonth` INTEGER NOT NULL, `totalAmount` REAL NOT NULL, `currency` TEXT NOT NULL, `issueDate` TEXT NOT NULL, `createdAtMillis` INTEGER NOT NULL, `fileName` TEXT NOT NULL, `inputJson` TEXT NOT NULL, `status` TEXT NOT NULL DEFAULT 'created')",
+        "fields": [
+          {
+            "fieldPath": "invoiceId",
+            "columnName": "invoiceId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "invoiceNumber",
+            "columnName": "invoiceNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jobId",
+            "columnName": "jobId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jobName",
+            "columnName": "jobName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "customerName",
+            "columnName": "customerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "periodYear",
+            "columnName": "periodYear",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "periodMonth",
+            "columnName": "periodMonth",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalAmount",
+            "columnName": "totalAmount",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currency",
+            "columnName": "currency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "issueDate",
+            "columnName": "issueDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "createdAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileName",
+            "columnName": "fileName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inputJson",
+            "columnName": "inputJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'created'"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "invoiceId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_invoices_invoiceNumber",
+            "unique": true,
+            "columnNames": [
+              "invoiceNumber"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_invoices_invoiceNumber` ON `${TABLE_NAME}` (`invoiceNumber`)"
+          },
+          {
+            "name": "index_invoices_jobId",
+            "unique": false,
+            "columnNames": [
+              "jobId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_invoices_jobId` ON `${TABLE_NAME}` (`jobId`)"
+          },
+          {
+            "name": "index_invoices_periodYear_periodMonth",
+            "unique": false,
+            "columnNames": [
+              "periodYear",
+              "periodMonth"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_invoices_periodYear_periodMonth` ON `${TABLE_NAME}` (`periodYear`, `periodMonth`)"
+          }
+        ]
+      },
+      {
+        "tableName": "clients",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`clientId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `jobId` INTEGER NOT NULL, `name` TEXT NOT NULL, `street` TEXT NOT NULL, `city` TEXT NOT NULL, `zip` TEXT NOT NULL, `country` TEXT NOT NULL, `ico` TEXT NOT NULL, `dic` TEXT NOT NULL, `icdph` TEXT NOT NULL, `serviceTemplate` TEXT NOT NULL, FOREIGN KEY(`jobId`) REFERENCES `jobs`(`jobId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "clientId",
+            "columnName": "clientId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "jobId",
+            "columnName": "jobId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "street",
+            "columnName": "street",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zip",
+            "columnName": "zip",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "country",
+            "columnName": "country",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ico",
+            "columnName": "ico",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dic",
+            "columnName": "dic",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "icdph",
+            "columnName": "icdph",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceTemplate",
+            "columnName": "serviceTemplate",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "clientId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_clients_jobId",
+            "unique": true,
+            "columnNames": [
+              "jobId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_clients_jobId` ON `${TABLE_NAME}` (`jobId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "jobs",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "jobId"
+            ],
+            "referencedColumns": [
+              "jobId"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '63f1bce3561c21c25024bb5e8d67ee03')"
+    ]
+  }
+}

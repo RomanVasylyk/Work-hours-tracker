@@ -28,6 +28,7 @@ import com.example.worktr.util.InvoiceExtraItem
 import com.example.worktr.util.InvoiceInput
 import com.example.worktr.util.InvoiceInputJson
 import com.example.worktr.util.InvoicePdfGenerator
+import com.example.worktr.util.InvoiceRules
 import com.example.worktr.util.InvoiceStatus
 import com.example.worktr.util.workedHours
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -86,7 +87,7 @@ class InvoiceArchiveFragment : Fragment() {
             onShare = ::shareInvoice,
             onRecreate = ::showRecreateOptions,
             onStatus = ::showStatusDialog,
-            onLongPress = ::confirmDeleteInvoice
+            onDelete = ::confirmDeleteInvoice
         )
         binding.recyclerInvoices.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerInvoices.adapter = adapter
@@ -332,9 +333,7 @@ class InvoiceArchiveFragment : Fragment() {
                     val input = inputOverride ?: InvoiceInputJson.decode(invoice.inputJson)
                     val generatedFile = InvoicePdfGenerator(appContext).generate(job, entries, period, input)
                     val archiveFile = InvoiceFiles.persist(appContext, generatedFile)
-                    val totalAmount = entries.sumOf { entry ->
-                        entry.workedHours() * entry.hourlyRate
-                    } + input.allExtraItems().sumOf { it.total }
+                    val totalAmount = InvoiceRules.calculateTotals(entries, input.allExtraItems()).total
                     db.invoiceDao().update(
                         invoice.copy(
                             jobName = job.name,

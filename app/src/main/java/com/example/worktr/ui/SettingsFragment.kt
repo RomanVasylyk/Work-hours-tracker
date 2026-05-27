@@ -9,6 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -17,6 +19,10 @@ import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.responsive.ResponsiveUi
 import com.example.worktr.util.AutoBackupManager
+import com.example.worktr.util.AutoBackupPasswordStore
+import com.example.worktr.util.AppLanguage
+import com.example.worktr.util.InvoiceLanguage
+import com.example.worktr.util.LanguagePreferences
 import com.example.worktr.util.WorkBackupManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -30,6 +36,9 @@ import java.time.LocalDate
 import java.util.Locale
 
 class SettingsFragment : Fragment() {
+    private var pendingBackupPassword: String? = null
+    private var pendingAutoBackupPassword: String? = null
+
     private val backupExportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri: Uri? ->
@@ -50,6 +59,7 @@ class SettingsFragment : Fragment() {
         ResponsiveUi.applyOuterPadding(view.findViewById(R.id.settingsScroll), profile)
         ResponsiveUi.applyContentPadding(view.findViewById(R.id.settingsContent), profile)
         loadSettings(view)
+        setupLanguagePickers(view)
         setupAutoBackup(view)
 
         view.findViewById<MaterialButton>(R.id.buttonSaveSettings).setOnClickListener {
@@ -59,13 +69,19 @@ class SettingsFragment : Fragment() {
             findNavController().navigate(R.id.action_settingsFragment_to_clientsFragment)
         }
         view.findViewById<MaterialButton>(R.id.buttonExportBackup).setOnClickListener {
-            backupExportLauncher.launch("worktr-backup-${LocalDate.now()}.json")
+            BackupPasswordDialog.show(requireContext(), layoutInflater, confirmPassword = true) { password ->
+                pendingBackupPassword = password
+                backupExportLauncher.launch("worktr-backup-${LocalDate.now()}.json")
+            }
         }
         view.findViewById<MaterialButton>(R.id.buttonRestoreBackup).setOnClickListener {
             backupRestoreLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
         }
         view.findViewById<MaterialButton>(R.id.buttonChooseAutoBackupFolder).setOnClickListener {
-            autoBackupFolderLauncher.launch(null)
+            BackupPasswordDialog.show(requireContext(), layoutInflater, confirmPassword = true) { password ->
+                pendingAutoBackupPassword = password
+                autoBackupFolderLauncher.launch(null)
+            }
         }
     }
 
@@ -80,7 +96,6 @@ class SettingsFragment : Fragment() {
         view.input(R.id.editIban).setText(prefs.getString(PREF_IBAN, ""))
         view.input(R.id.editBic).setText(prefs.getString(PREF_BIC, ""))
         view.input(R.id.editCurrency).setText(prefs.getString(PREF_CURRENCY, "EUR"))
-        view.input(R.id.editPdfLanguage).setText(prefs.getString(PREF_PDF_LANGUAGE, "sk"))
         view.input(R.id.editExtraName).setText(prefs.getString(PREF_EXTRA_NAME, DEFAULT_EXTRA_NAME))
         view.input(R.id.editExtraQuantity).setText(prefs.getString(PREF_EXTRA_QUANTITY, DEFAULT_EXTRA_QUANTITY))
         view.input(R.id.editExtraUnit).setText(prefs.getString(PREF_EXTRA_UNIT, DEFAULT_EXTRA_UNIT))
@@ -98,7 +113,12 @@ class SettingsFragment : Fragment() {
             .putString(PREF_IBAN, view.input(R.id.editIban).value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT))
             .putString(PREF_BIC, view.input(R.id.editBic).value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT))
             .putString(PREF_CURRENCY, view.input(R.id.editCurrency).value().uppercase(Locale.ROOT).ifBlank { "EUR" })
-            .putString(PREF_PDF_LANGUAGE, view.input(R.id.editPdfLanguage).value().lowercase(Locale.ROOT).ifBlank { "sk" })
+            .putString(
+                PREF_PDF_LANGUAGE,
+                InvoiceLanguage.fromLabel(
+                    view.findViewById<MaterialAutoCompleteTextView>(R.id.inputPdfLanguage).text?.toString().orEmpty()
+                ).code
+            )
             .putString(PREF_EXTRA_NAME, view.input(R.id.editExtraName).value().ifBlank { DEFAULT_EXTRA_NAME })
             .putString(PREF_EXTRA_QUANTITY, view.input(R.id.editExtraQuantity).value().ifBlank { DEFAULT_EXTRA_QUANTITY })
             .putString(PREF_EXTRA_UNIT, view.input(R.id.editExtraUnit).value())
@@ -111,6 +131,29 @@ class SettingsFragment : Fragment() {
             )
             .apply()
         Snackbar.make(view, R.string.settings_saved, Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun setupLanguagePickers(view: View) {
+        val appLanguageInput = view.findViewById<MaterialAutoCompleteTextView>(R.id.inputAppLanguage)
+        val appLanguages = AppLanguage.entries.map { it.label }
+        appLanguageInput.setAdapter(DropdownUi.adapter(requireContext(), appLanguages))
+        appLanguageInput.setText(LanguagePreferences.appLanguage(requireContext()).label, false)
+        DropdownUi.attach(appLanguageInput)
+
+        val pdfLanguageInput = view.findViewById<MaterialAutoCompleteTextView>(R.id.inputPdfLanguage)
+        val invoiceLanguages = InvoiceLanguage.entries.map { it.label }
+        pdfLanguageInput.setAdapter(DropdownUi.adapter(requireContext(), invoiceLanguages))
+        val savedPdfLanguage = requireContext()
+            .getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
+            .getString(PREF_PDF_LANGUAGE, InvoiceLanguage.SLOVAK.code)
+        pdfLanguageInput.setText(InvoiceLanguage.fromCode(savedPdfLanguage).label, false)
+        DropdownUi.attach(pdfLanguageInput)
+
+        appLanguageInput.setOnItemClickListener { _, _, _, _ ->
+            val language = AppLanguage.fromLabel(appLanguageInput.text?.toString().orEmpty())
+            LanguagePreferences.saveAppLanguage(requireContext(), language)
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language.code))
+        }
     }
 
     private fun setupAutoBackup(view: View) {
@@ -136,10 +179,21 @@ class SettingsFragment : Fragment() {
     }
 
     private fun saveAutoBackupFolder(uri: Uri) {
+        val password = pendingAutoBackupPassword
+        if (password.isNullOrBlank()) {
+            BackupPasswordDialog.show(requireContext(), layoutInflater, confirmPassword = true) { confirmedPassword ->
+                pendingAutoBackupPassword = confirmedPassword
+                saveAutoBackupFolder(uri)
+            }
+            return
+        }
+        pendingAutoBackupPassword = null
+
         val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         runCatching {
             requireContext().contentResolver.takePersistableUriPermission(uri, flags)
         }
+        AutoBackupPasswordStore.save(requireContext(), password)
         requireContext().getSharedPreferences(BACKUP_PREFS, Context.MODE_PRIVATE).edit()
             .putString(AutoBackupManager.PREF_AUTO_BACKUP_TREE_URI, uri.toString())
             .apply()
@@ -191,11 +245,13 @@ class SettingsFragment : Fragment() {
         }
 
     private fun exportBackup(uri: Uri) {
+        val password = pendingBackupPassword.orEmpty()
+        pendingBackupPassword = null
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 val appContext = requireContext().applicationContext
                 withContext(Dispatchers.IO) {
-                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).exportTo(uri)
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).exportEncryptedTo(uri, password)
                 }
             }
             if (!isAdded) return@launch
@@ -222,10 +278,29 @@ class SettingsFragment : Fragment() {
 
     private fun confirmRestoreBackup(uri: Uri) {
         viewLifecycleOwner.lifecycleScope.launch {
+            val encrypted = runCatching {
+                val appContext = requireContext().applicationContext
+                withContext(Dispatchers.IO) {
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).isEncryptedBackup(uri)
+                }
+            }.getOrDefault(true)
+            if (!isAdded) return@launch
+            if (encrypted) {
+                BackupPasswordDialog.show(requireContext(), layoutInflater, confirmPassword = false) { password ->
+                    previewRestoreBackup(uri, password)
+                }
+            } else {
+                previewRestoreBackup(uri, null)
+            }
+        }
+    }
+
+    private fun previewRestoreBackup(uri: Uri, password: String?) {
+        viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 val appContext = requireContext().applicationContext
                 withContext(Dispatchers.IO) {
-                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).previewFrom(uri)
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).previewFrom(uri, password)
                 }
             }
             if (!isAdded) return@launch
@@ -234,7 +309,7 @@ class SettingsFragment : Fragment() {
                     .setTitle(R.string.backup_restore_confirm_title)
                     .setMessage(getString(R.string.backup_restore_preview, summary.jobs, summary.entries, summary.invoices))
                     .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.backup_restore_confirm) { _, _ -> restoreBackup(uri) }
+                    .setPositiveButton(R.string.backup_restore_confirm) { _, _ -> restoreBackup(uri, password) }
                     .show()
             }.onFailure {
                 Snackbar.make(
@@ -246,12 +321,12 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun restoreBackup(uri: Uri) {
+    private fun restoreBackup(uri: Uri, password: String?) {
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 val appContext = requireContext().applicationContext
                 withContext(Dispatchers.IO) {
-                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).restoreFrom(uri)
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).restoreFrom(uri, password)
                 }
             }
             if (!isAdded) return@launch

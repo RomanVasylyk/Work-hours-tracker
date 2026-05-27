@@ -106,5 +106,18 @@
                 android:paddingEnd="8dp"
                 android:text="@string/invoice_recreate" />
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonDeleteInvoice"
+            style="@style/Widget.WorkTracker.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:minHeight="48dp"
+            android:text="@string/invoice_delete_confirm"
+            android:textColor="@color/error"
+            app:strokeColor="@color/error" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

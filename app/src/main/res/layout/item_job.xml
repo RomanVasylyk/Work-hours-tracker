@@ -81,6 +81,15 @@
             android:visibility="gone"
             style="@style/TextAppearance.Material3.BodySmall" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonEditJob"
+            style="@style/Widget.WorkTracker.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:minHeight="44dp"
+            android:text="@string/edit_job" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -35,6 +35,7 @@ data class InvoiceInput(
     val extraItem: InvoiceExtraItem?,
     val extraItems: List<InvoiceExtraItem> = emptyList(),
     val currency: String,
+    val pdfLanguage: String = InvoiceLanguage.SLOVAK.code,
     val iban: String,
     val bic: String,
     val variableSymbol: String,
@@ -116,6 +117,7 @@ class InvoicePdfGenerator(private val context: Context) {
         payBySquareCode: String
     ) {
         canvas.drawColor(Color.WHITE)
+        val texts = PdfTexts.forLanguage(input.pdfLanguage)
 
         val black = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
@@ -154,7 +156,7 @@ class InvoicePdfGenerator(private val context: Context) {
 
         canvas.drawRect(RectF(OUTER_LEFT, OUTER_TOP, OUTER_RIGHT, OUTER_BOTTOM), black)
         canvas.drawLine(OUTER_LEFT, 58f, OUTER_RIGHT, 58f, black)
-        canvas.drawText("FAKTÚRA", OUTER_LEFT + 4f, 50f, titlePaint)
+        canvas.drawText(texts.invoiceTitle, OUTER_LEFT + 4f, 50f, titlePaint)
         canvas.drawText(input.invoiceNumber, OUTER_RIGHT - 10f, 50f, invoiceNumberPaint)
 
         val splitX = 284f
@@ -164,8 +166,8 @@ class InvoicePdfGenerator(private val context: Context) {
 
         drawKeyValueRow(
             canvas = canvas,
-            label = "Forma úhrady:",
-            value = "peňažný prevod",
+            label = texts.paymentMethod,
+            value = texts.bankTransfer,
             left = splitX + 4f,
             right = 425f - 4f,
             y = 71f,
@@ -174,8 +176,8 @@ class InvoicePdfGenerator(private val context: Context) {
         )
         drawKeyValueRow(
             canvas = canvas,
-            label = "Variabilný symbol:",
-            value = input.invoiceNumber,
+            label = texts.variableSymbol,
+            value = input.variableSymbol,
             left = 428f,
             right = OUTER_RIGHT - 6f,
             y = 71f,
@@ -184,7 +186,7 @@ class InvoicePdfGenerator(private val context: Context) {
         )
 
         drawSupplier(canvas, input.supplier, OUTER_LEFT + 12f, 79f, 222f, partyNamePaint, bodyPaint)
-        canvas.drawText("Odberateľ", splitX + 4f, 95f, smallPaint)
+        canvas.drawText(texts.customer, splitX + 4f, 95f, smallPaint)
         drawCustomer(canvas, input.customer, splitX + 32f, 119f, 214f, customerNamePaint, bodyPaint)
 
         val dateTop = 225f
@@ -193,9 +195,9 @@ class InvoicePdfGenerator(private val context: Context) {
         canvas.drawLine(OUTER_LEFT, dateBottom, OUTER_RIGHT, dateBottom, black)
         canvas.drawLine(212f, dateTop, 212f, dateBottom, thin)
         canvas.drawLine(382f, dateTop, 382f, dateBottom, thin)
-        drawDateBox(canvas, "Dátum vystavenia", input.issueDate, OUTER_LEFT, 212f, dateTop, smallPaint, datePaint)
-        drawDateBox(canvas, "Dátum dodania", period.atEndOfMonth(), 212f, 382f, dateTop, smallPaint, datePaint)
-        drawDateBox(canvas, "Dátum splatnosti", input.dueDate, 382f, OUTER_RIGHT, dateTop, smallPaint, datePaint)
+        drawDateBox(canvas, texts.issueDate, input.issueDate, OUTER_LEFT, 212f, dateTop, smallPaint, datePaint, texts.locale)
+        drawDateBox(canvas, texts.deliveryDate, period.atEndOfMonth(), 212f, 382f, dateTop, smallPaint, datePaint, texts.locale)
+        drawDateBox(canvas, texts.dueDate, input.dueDate, 382f, OUTER_RIGHT, dateTop, smallPaint, datePaint, texts.locale)
 
         val tableTop = 274f
         val tableLeft = OUTER_LEFT + 14f
@@ -219,21 +221,21 @@ class InvoicePdfGenerator(private val context: Context) {
         canvas.drawLine(priceRight, extraBottom, priceRight, totalBottom, thin)
         canvas.drawLine(tableRight, extraBottom, tableRight, totalBottom, thin)
 
-        canvas.drawText("Popis položky", (tableLeft + descRight) / 2f, tableTop + 11f, centerPaint)
-        canvas.drawText("Množstvo", (descRight + qtyRight) / 2f, tableTop + 11f, centerPaint)
+        canvas.drawText(texts.itemDescription, (tableLeft + descRight) / 2f, tableTop + 11f, centerPaint)
+        canvas.drawText(texts.quantity, (descRight + qtyRight) / 2f, tableTop + 11f, centerPaint)
         canvas.drawText("MJ", (qtyRight + unitRight) / 2f, tableTop + 11f, centerPaint)
-        canvas.drawText("Cena za MJ", (unitRight + priceRight) / 2f, tableTop + 11f, centerPaint)
-        canvas.drawText("Celková cena", (priceRight + tableRight) / 2f, tableTop + 11f, centerPaint)
+        canvas.drawText(texts.unitPrice, (unitRight + priceRight) / 2f, tableTop + 11f, centerPaint)
+        canvas.drawText(texts.totalPrice, (priceRight + tableRight) / 2f, tableTop + 11f, centerPaint)
 
         val description = input.description.ifBlank {
-            "Fakturujem Vám za vykonanú prácu v mesiaci ${monthName(period)}"
+            texts.defaultDescription(monthName(period, texts.locale))
         }
         val itemPaint = textPaint(8.6f)
         wrapText(description, itemPaint, descRight - tableLeft - 8f).take(1).forEach { line ->
             canvas.drawText(line, tableLeft + 4f, headerBottom + 10.8f, itemPaint)
         }
         canvas.drawText(formatQuantity(totals.hours), qtyRight - 24f, headerBottom + 10.8f, rightPaint)
-        canvas.drawText("hod", (qtyRight + unitRight) / 2f, headerBottom + 10.8f, unitPaint)
+        canvas.drawText(texts.hourUnit, (qtyRight + unitRight) / 2f, headerBottom + 10.8f, unitPaint)
         canvas.drawText(formatNumber(unitPrice(totals)), priceRight - 10f, headerBottom + 10.8f, rightPaint)
         canvas.drawText(formatNumber(totals.total), tableRight - 20f, headerBottom + 10.8f, rightPaint)
         extraItems.forEachIndexed { index, extraItem ->
@@ -244,7 +246,7 @@ class InvoicePdfGenerator(private val context: Context) {
             canvas.drawText(formatNumber(extraItem.unitPrice), priceRight - 10f, baseline, rightPaint)
             canvas.drawText(formatNumber(extraItem.total), tableRight - 20f, baseline, rightPaint)
         }
-        canvas.drawText("Spolu:", priceRight - 3f, extraBottom + 10.8f, rightPaint)
+        canvas.drawText(texts.total, priceRight - 3f, extraBottom + 10.8f, rightPaint)
         canvas.drawText(formatNumber(invoiceTotal), tableRight - 20f, extraBottom + 10.8f, rightPaint)
 
         drawPayBySquare(canvas, OUTER_LEFT + 14f, 584f, payBySquareCode)
@@ -253,8 +255,8 @@ class InvoicePdfGenerator(private val context: Context) {
         canvas.drawLine(OUTER_LEFT, footerTop, OUTER_RIGHT, footerTop, black)
         canvas.drawLine(212f, footerTop, 212f, OUTER_BOTTOM, thin)
         canvas.drawLine(382f, footerTop, 382f, OUTER_BOTTOM, thin)
-        canvas.drawText("Vyhotovil:", OUTER_LEFT + 8f, footerTop + 14f, smallPaint)
-        canvas.drawText("Prevzal:", 216f, footerTop + 14f, smallPaint)
+        canvas.drawText(texts.createdBy, OUTER_LEFT + 8f, footerTop + 14f, smallPaint)
+        canvas.drawText(texts.receivedBy, 216f, footerTop + 14f, smallPaint)
 
         val totalsLabelX = 386f
         val totalsValueX = OUTER_RIGHT - 8f
@@ -263,16 +265,16 @@ class InvoicePdfGenerator(private val context: Context) {
             canvas.drawLine(382f, y, OUTER_RIGHT, y, thin)
         }
         canvas.drawLine(summaryRightSplit, footerTop, summaryRightSplit, footerTop + 45f, thin)
-        drawSummaryLine(canvas, "Celková suma:", formatAmount(invoiceTotal, input.currency), totalsLabelX, totalsValueX, footerTop + 11f, smallPaint, rightPaint)
-        drawSummaryLine(canvas, "Uhradené zálohami:", formatAmount(0.0, input.currency), totalsLabelX, totalsValueX, footerTop + 26f, smallPaint, rightPaint)
-        drawSummaryLine(canvas, "Zostáva uhradiť:", formatAmount(invoiceTotal, input.currency), totalsLabelX, totalsValueX, footerTop + 41f, smallPaint, rightPaint)
+        drawSummaryLine(canvas, texts.totalAmount, formatAmount(invoiceTotal, input.currency), totalsLabelX, totalsValueX, footerTop + 11f, smallPaint, rightPaint)
+        drawSummaryLine(canvas, texts.paidByAdvances, formatAmount(0.0, input.currency), totalsLabelX, totalsValueX, footerTop + 26f, smallPaint, rightPaint)
+        drawSummaryLine(canvas, texts.remaining, formatAmount(invoiceTotal, input.currency), totalsLabelX, totalsValueX, footerTop + 41f, smallPaint, rightPaint)
         val amountRightX = OUTER_RIGHT - 25f
-        canvas.drawText("K úhrade:", totalsLabelX, footerTop + 56f, smallPaint)
+        canvas.drawText(texts.amountDue, totalsLabelX, footerTop + 56f, smallPaint)
         canvas.drawText(formatAmount(invoiceTotal, input.currency), amountRightX, footerTop + 75f, bigTotalPaint)
         val wordsPaint = textPaint(8f).apply { textAlign = Paint.Align.RIGHT }
         drawWrappedRightText(
             canvas = canvas,
-            text = amountWordsSk(invoiceTotal, input.currency),
+            text = texts.amountWords(invoiceTotal, input.currency, ::amountWordsSk),
             right = amountRightX,
             firstBaseline = footerTop + 89f,
             maxWidth = amountRightX - totalsLabelX,
@@ -394,11 +396,12 @@ class InvoicePdfGenerator(private val context: Context) {
         right: Float,
         y: Float,
         labelPaint: Paint,
-        datePaint: Paint
+        datePaint: Paint,
+        locale: Locale
     ) {
         canvas.drawText(label, left + 4f, y + 11f, labelPaint)
         val dateX = left + (right - left) * 0.64f
-        canvas.drawText(date.format(dateFormatter), dateX, y + 25f, datePaint)
+        canvas.drawText(date.format(DateTimeFormatter.ofPattern("d.M.yyyy", locale)), dateX, y + 25f, datePaint)
     }
 
     private fun drawSummaryLine(
@@ -598,7 +601,7 @@ class InvoicePdfGenerator(private val context: Context) {
     private fun unitPrice(totals: InvoiceTotals): Double =
         if (totals.hours > 0.0) totals.total / totals.hours else 0.0
 
-    private fun monthName(period: YearMonth): String =
+    private fun monthName(period: YearMonth, locale: Locale): String =
         period.month.getDisplayName(TextStyle.FULL, locale)
 
     private fun amountWordsSk(value: Double, currency: String): String {
@@ -703,6 +706,113 @@ class InvoicePdfGenerator(private val context: Context) {
     ) {
         val total: Double
             get() = base
+    }
+
+    private data class PdfTexts(
+        val locale: Locale,
+        val invoiceTitle: String,
+        val paymentMethod: String,
+        val bankTransfer: String,
+        val variableSymbol: String,
+        val customer: String,
+        val issueDate: String,
+        val deliveryDate: String,
+        val dueDate: String,
+        val itemDescription: String,
+        val quantity: String,
+        val unitPrice: String,
+        val totalPrice: String,
+        val hourUnit: String,
+        val total: String,
+        val createdBy: String,
+        val receivedBy: String,
+        val totalAmount: String,
+        val paidByAdvances: String,
+        val remaining: String,
+        val amountDue: String,
+        val defaultDescription: (String) -> String,
+        val amountWords: (Double, String, (Double, String) -> String) -> String
+    ) {
+        companion object {
+            fun forLanguage(code: String): PdfTexts =
+                when (InvoiceLanguage.fromCode(code)) {
+                    InvoiceLanguage.UKRAINIAN -> PdfTexts(
+                        locale = Locale("uk", "UA"),
+                        invoiceTitle = "ФАКТУРА",
+                        paymentMethod = "Форма оплати:",
+                        bankTransfer = "банківський переказ",
+                        variableSymbol = "Варіабельний символ:",
+                        customer = "Клієнт",
+                        issueDate = "Дата виставлення",
+                        deliveryDate = "Дата постачання",
+                        dueDate = "Термін оплати",
+                        itemDescription = "Опис позиції",
+                        quantity = "Кількість",
+                        unitPrice = "Ціна за од.",
+                        totalPrice = "Сума",
+                        hourUnit = "год",
+                        total = "Разом:",
+                        createdBy = "Виставив:",
+                        receivedBy = "Прийняв:",
+                        totalAmount = "Загальна сума:",
+                        paidByAdvances = "Оплачено авансом:",
+                        remaining = "Залишилось оплатити:",
+                        amountDue = "До оплати:",
+                        defaultDescription = { month -> "Виставляю оплату за виконану роботу за місяць $month" },
+                        amountWords = { value, currency, _ -> "До оплати ${"%.2f".format(Locale.US, value)} $currency" }
+                    )
+                    InvoiceLanguage.ENGLISH -> PdfTexts(
+                        locale = Locale.ENGLISH,
+                        invoiceTitle = "INVOICE",
+                        paymentMethod = "Payment method:",
+                        bankTransfer = "bank transfer",
+                        variableSymbol = "Variable symbol:",
+                        customer = "Customer",
+                        issueDate = "Issue date",
+                        deliveryDate = "Delivery date",
+                        dueDate = "Due date",
+                        itemDescription = "Item description",
+                        quantity = "Quantity",
+                        unitPrice = "Unit price",
+                        totalPrice = "Total price",
+                        hourUnit = "hrs",
+                        total = "Total:",
+                        createdBy = "Issued by:",
+                        receivedBy = "Received by:",
+                        totalAmount = "Total amount:",
+                        paidByAdvances = "Paid by advances:",
+                        remaining = "Remaining:",
+                        amountDue = "Amount due:",
+                        defaultDescription = { month -> "Work performed in $month" },
+                        amountWords = { value, currency, _ -> "Amount due ${"%.2f".format(Locale.US, value)} $currency" }
+                    )
+                    InvoiceLanguage.SLOVAK -> PdfTexts(
+                        locale = Locale("sk", "SK"),
+                        invoiceTitle = "FAKTÚRA",
+                        paymentMethod = "Forma úhrady:",
+                        bankTransfer = "peňažný prevod",
+                        variableSymbol = "Variabilný symbol:",
+                        customer = "Odberateľ",
+                        issueDate = "Dátum vystavenia",
+                        deliveryDate = "Dátum dodania",
+                        dueDate = "Dátum splatnosti",
+                        itemDescription = "Popis položky",
+                        quantity = "Množstvo",
+                        unitPrice = "Cena za MJ",
+                        totalPrice = "Celková cena",
+                        hourUnit = "hod",
+                        total = "Spolu:",
+                        createdBy = "Vyhotovil:",
+                        receivedBy = "Prevzal:",
+                        totalAmount = "Celková suma:",
+                        paidByAdvances = "Uhradené zálohami:",
+                        remaining = "Zostáva uhradiť:",
+                        amountDue = "K úhrade:",
+                        defaultDescription = { month -> "Fakturujem Vám za vykonanú prácu v mesiaci $month" },
+                        amountWords = { value, currency, skWords -> skWords(value, currency) }
+                    )
+                }
+        }
     }
 
     private companion object {

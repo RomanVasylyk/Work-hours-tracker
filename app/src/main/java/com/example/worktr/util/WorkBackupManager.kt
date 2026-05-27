@@ -6,6 +6,7 @@ import android.util.Base64
 import androidx.core.content.edit
 import androidx.room.withTransaction
 import com.example.worktr.data.AppDatabase
+import com.example.worktr.data.Client
 import com.example.worktr.data.InvoiceRecord
 import com.example.worktr.data.Job
 import com.example.worktr.data.WorkEntry
@@ -23,35 +24,54 @@ class WorkBackupManager(
     private val db: AppDatabase
 ) {
     suspend fun exportTo(uri: Uri): BackupSummary {
+        val (json, summary) = createBackupJson()
+        writeJson(uri, json)
+        return summary
+    }
+
+    suspend fun exportEncryptedTo(uri: Uri, password: String): BackupSummary {
+        val (json, summary) = createBackupJson()
+        writeJson(uri, BackupCrypto.encrypt(json, password))
+        return summary
+    }
+
+    private suspend fun createBackupJson(): Pair<JSONObject, BackupSummary> {
         val jobs = db.jobDao().getAllJobsList()
+        val clients = db.clientDao().getAllClientsList()
         val entries = db.workEntryDao().getAllEntriesList()
         val invoices = db.invoiceDao().getAllInvoicesList()
         val json = JSONObject()
             .put("schemaVersion", BACKUP_SCHEMA_VERSION)
             .put("exportedAtMillis", System.currentTimeMillis())
             .put("jobs", jobsToJson(jobs))
+            .put("clients", clientsToJson(clients))
             .put("workEntries", entriesToJson(entries))
             .put("invoices", invoicesToJson(invoices))
             .put("invoicePrefs", preferencesToJson(INVOICE_PREFS))
 
+        return json to BackupSummary(jobs.size, entries.size, invoices.size)
+    }
+
+    private fun writeJson(uri: Uri, json: JSONObject) {
         context.contentResolver.openOutputStream(uri)?.use { output ->
             output.write(json.toString(2).toByteArray(Charsets.UTF_8))
         } ?: error("Cannot open backup file.")
-
-        return BackupSummary(jobs.size, entries.size, invoices.size)
     }
 
-    suspend fun restoreFrom(uri: Uri): BackupSummary {
-        val json = readBackupJson(uri)
+    suspend fun restoreFrom(uri: Uri, password: String? = null): BackupSummary {
+        val json = readBackupJson(uri, password)
         val jobs = jobsFromJson(json.optJSONArray("jobs") ?: JSONArray())
+        val clients = clientsFromJson(json.optJSONArray("clients") ?: JSONArray())
         val entries = entriesFromJson(json.optJSONArray("workEntries") ?: JSONArray())
         val invoices = invoicesFromJson(json.optJSONArray("invoices") ?: JSONArray())
 
         db.withTransaction {
             db.invoiceDao().deleteAll()
             db.workEntryDao().deleteAll()
+            db.clientDao().deleteAll()
             db.jobDao().deleteAll()
             db.jobDao().insertAll(jobs)
+            db.clientDao().insertAll(clients)
             db.workEntryDao().insertAll(entries)
             db.invoiceDao().insertAll(invoices)
         }
@@ -61,8 +81,8 @@ class WorkBackupManager(
         return BackupSummary(jobs.size, entries.size, invoices.size)
     }
 
-    suspend fun previewFrom(uri: Uri): BackupSummary {
-        val json = readBackupJson(uri)
+    suspend fun previewFrom(uri: Uri, password: String? = null): BackupSummary {
+        val json = readBackupJson(uri, password)
         return BackupSummary(
             jobs = json.optJSONArray("jobs")?.length() ?: 0,
             entries = json.optJSONArray("workEntries")?.length() ?: 0,
@@ -70,7 +90,21 @@ class WorkBackupManager(
         )
     }
 
-    private fun readBackupJson(uri: Uri): JSONObject {
+    fun isEncryptedBackup(uri: Uri): Boolean {
+        val json = readRawBackupJson(uri)
+        return BackupCrypto.isEncrypted(json)
+    }
+
+    private fun readBackupJson(uri: Uri, password: String?): JSONObject {
+        val json = readRawBackupJson(uri)
+        return if (BackupCrypto.isEncrypted(json)) {
+            BackupCrypto.decrypt(json, password.orEmpty())
+        } else {
+            json
+        }
+    }
+
+    private fun readRawBackupJson(uri: Uri): JSONObject {
         val text = context.contentResolver.openInputStream(uri)?.use { input ->
             input.readBytes().toString(Charsets.UTF_8)
         } ?: error("Cannot read backup file.")
@@ -89,6 +123,26 @@ class WorkBackupManager(
                         .put("saturdayBonus", job.saturdayBonus)
                         .put("sundayBonus", job.sundayBonus)
                         .put("holidayBonus", job.holidayBonus)
+                )
+            }
+        }
+
+    private fun clientsToJson(clients: List<Client>): JSONArray =
+        JSONArray().apply {
+            clients.forEach { client ->
+                put(
+                    JSONObject()
+                        .put("clientId", client.clientId)
+                        .put("jobId", client.jobId)
+                        .put("name", client.name)
+                        .put("street", client.street)
+                        .put("city", client.city)
+                        .put("zip", client.zip)
+                        .put("country", client.country)
+                        .put("ico", client.ico)
+                        .put("dic", client.dic)
+                        .put("icdph", client.icdph)
+                        .put("serviceTemplate", client.serviceTemplate)
                 )
             }
         }
@@ -176,6 +230,24 @@ class WorkBackupManager(
                 saturdayBonus = json.optDouble("saturdayBonus", 0.0),
                 sundayBonus = json.optDouble("sundayBonus", 0.0),
                 holidayBonus = json.optDouble("holidayBonus", 0.0)
+            )
+        }
+
+    private fun clientsFromJson(array: JSONArray): List<Client> =
+        (0 until array.length()).map { index ->
+            val json = array.getJSONObject(index)
+            Client(
+                clientId = json.optLong("clientId"),
+                jobId = json.optInt("jobId"),
+                name = json.optString("name"),
+                street = json.optString("street"),
+                city = json.optString("city"),
+                zip = json.optString("zip"),
+                country = json.optString("country"),
+                ico = json.optString("ico"),
+                dic = json.optString("dic"),
+                icdph = json.optString("icdph"),
+                serviceTemplate = json.optString("serviceTemplate", ClientDefaults.SERVICE_TEMPLATE)
             )
         }
 

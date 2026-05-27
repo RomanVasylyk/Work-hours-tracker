@@ -51,6 +51,46 @@
                     style="@style/TextAppearance.Material3.TitleMedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="@string/settings_language_section" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutAppLanguage"
+                    style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:hint="@string/settings_app_language">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/inputAppLanguage"
+                        style="@style/Widget.WorkTracker.DropdownInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/job_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_surface_panel"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/invoice_supplier_section" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -246,19 +286,19 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.WorkTracker.TextInputLayout"
+                    android:id="@+id/layoutPdfLanguage"
+                    style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:hint="@string/settings_pdf_language">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editPdfLanguage"
-                        style="@style/Widget.WorkTracker.TextInputEditText"
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/inputPdfLanguage"
+                        style="@style/Widget.WorkTracker.DropdownInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textCapCharacters"
-                        android:maxLength="8" />
+                        android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout

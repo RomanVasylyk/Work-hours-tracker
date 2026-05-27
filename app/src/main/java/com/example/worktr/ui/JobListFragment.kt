@@ -61,6 +61,7 @@ class JobListFragment : Fragment() {
     private lateinit var viewModel: com.example.worktr.viewmodel.JobListViewModel
     private lateinit var adapter: JobListAdapter
     private var currentJobs: List<Job> = emptyList()
+    private var pendingBackupPassword: String? = null
     private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) {
             showImportTargetDialog(uri)
@@ -105,7 +106,7 @@ class JobListFragment : Fragment() {
                     .actionJobListFragmentToJobDetailFragment(job.jobId)
                 findNavController().navigate(action)
             },
-            onLongClick = { job -> showJobOptions(job) }
+            onEdit = { job -> showJobOptions(job) }
         )
         binding.recyclerJobs.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
         binding.recyclerJobs.adapter = adapter
@@ -266,13 +267,23 @@ class JobListFragment : Fragment() {
         hol.setText(job.holidayBonus.toString())
         val dlg = MaterialAlertDialogBuilder(requireContext()).setView(v).create()
         v.findViewById<MaterialButton>(R.id.buttonSave).setOnClickListener {
+            val parsedName = name.text?.toString()?.trim().orEmpty()
+            if (parsedName.isBlank()) {
+                name.error = getString(R.string.validation_required)
+                return@setOnClickListener
+            }
+            val hourlyRate = hourly.requireDecimal(positive = true) ?: return@setOnClickListener
+            val nightBonus = night.requireDecimal() ?: return@setOnClickListener
+            val saturdayBonus = sat.requireDecimal() ?: return@setOnClickListener
+            val sundayBonus = sun.requireDecimal() ?: return@setOnClickListener
+            val holidayBonus = hol.requireDecimal() ?: return@setOnClickListener
             val updated = job.copy(
-                name = name.text.toString().trim(),
-                hourlyRate = hourly.text.toString().toDoubleOrNull() ?: 0.0,
-                nightBonus = night.text.toString().toDoubleOrNull() ?: 0.0,
-                saturdayBonus = sat.text.toString().toDoubleOrNull() ?: 0.0,
-                sundayBonus = sun.text.toString().toDoubleOrNull() ?: 0.0,
-                holidayBonus = hol.text.toString().toDoubleOrNull() ?: 0.0
+                name = parsedName,
+                hourlyRate = hourlyRate,
+                nightBonus = nightBonus,
+                saturdayBonus = saturdayBonus,
+                sundayBonus = sundayBonus,
+                holidayBonus = holidayBonus
             )
             viewModel.update(updated)
             dlg.dismiss()
@@ -296,20 +307,48 @@ class JobListFragment : Fragment() {
             .setView(v)
             .create()
         v.findViewById<MaterialButton>(R.id.buttonSave).setOnClickListener {
-                val j = Job(
-                    name = name.text.toString().trim(),
-                    hourlyRate = hourly.text.toString().toDoubleOrNull() ?: 0.0,
-                    nightBonus = night.text.toString().toDoubleOrNull() ?: 0.0,
-                    saturdayBonus = sat.text.toString().toDoubleOrNull() ?: 0.0,
-                    sundayBonus = sun.text.toString().toDoubleOrNull() ?: 0.0,
-                    holidayBonus = hol.text.toString().toDoubleOrNull() ?: 0.0
-                )
-                if (j.name.isNotEmpty()) {
-                    viewModel.insert(j)
-                    dialog.dismiss()
+                val parsedName = name.text?.toString()?.trim().orEmpty()
+                if (parsedName.isBlank()) {
+                    name.error = getString(R.string.validation_required)
+                    return@setOnClickListener
                 }
+                val hourlyRate = hourly.requireDecimal(positive = true) ?: return@setOnClickListener
+                val nightBonus = night.requireDecimal() ?: return@setOnClickListener
+                val saturdayBonus = sat.requireDecimal() ?: return@setOnClickListener
+                val sundayBonus = sun.requireDecimal() ?: return@setOnClickListener
+                val holidayBonus = hol.requireDecimal() ?: return@setOnClickListener
+                val j = Job(
+                    name = parsedName,
+                    hourlyRate = hourlyRate,
+                    nightBonus = nightBonus,
+                    saturdayBonus = saturdayBonus,
+                    sundayBonus = sundayBonus,
+                    holidayBonus = holidayBonus
+                )
+                viewModel.insert(j)
+                dialog.dismiss()
             }
         dialog.show()
+    }
+
+    private fun TextInputEditText.requireDecimal(positive: Boolean = false): Double? {
+        error = null
+        val value = text?.toString()?.replace(',', '.')?.toDoubleOrNull()
+        return when {
+            value == null -> {
+                error = getString(R.string.validation_non_negative_number)
+                null
+            }
+            positive && value <= 0.0 -> {
+                error = getString(R.string.validation_positive_number)
+                null
+            }
+            value < 0.0 -> {
+                error = getString(R.string.validation_non_negative_number)
+                null
+            }
+            else -> value
+        }
     }
 
     private fun exportAllData() {
@@ -355,7 +394,10 @@ class JobListFragment : Fragment() {
                 )
             ) { _, which ->
                 when (which) {
-                    0 -> backupExportLauncher.launch("worktr-backup-${LocalDate.now()}.json")
+                    0 -> BackupPasswordDialog.show(requireContext(), layoutInflater, confirmPassword = true) { password ->
+                        pendingBackupPassword = password
+                        backupExportLauncher.launch("worktr-backup-${LocalDate.now()}.json")
+                    }
                     1 -> backupRestoreLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
                 }
             }
@@ -429,11 +471,13 @@ class JobListFragment : Fragment() {
     }
 
     private fun exportBackup(uri: Uri) {
+        val password = pendingBackupPassword.orEmpty()
+        pendingBackupPassword = null
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 val appContext = requireContext().applicationContext
                 withContext(Dispatchers.IO) {
-                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).exportTo(uri)
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).exportEncryptedTo(uri, password)
                 }
             }
             if (!isAdded) return@launch
@@ -474,10 +518,29 @@ class JobListFragment : Fragment() {
 
     private fun confirmRestoreBackup(uri: Uri) {
         viewLifecycleOwner.lifecycleScope.launch {
+            val encrypted = runCatching {
+                val appContext = requireContext().applicationContext
+                withContext(Dispatchers.IO) {
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).isEncryptedBackup(uri)
+                }
+            }.getOrDefault(true)
+            if (!isAdded) return@launch
+            if (encrypted) {
+                BackupPasswordDialog.show(requireContext(), layoutInflater, confirmPassword = false) { password ->
+                    previewRestoreBackup(uri, password)
+                }
+            } else {
+                previewRestoreBackup(uri, null)
+            }
+        }
+    }
+
+    private fun previewRestoreBackup(uri: Uri, password: String?) {
+        viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 val appContext = requireContext().applicationContext
                 withContext(Dispatchers.IO) {
-                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).previewFrom(uri)
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).previewFrom(uri, password)
                 }
             }
             if (!isAdded) return@launch
@@ -486,7 +549,7 @@ class JobListFragment : Fragment() {
                     .setTitle(R.string.backup_restore_confirm_title)
                     .setMessage(getString(R.string.backup_restore_preview, summary.jobs, summary.entries, summary.invoices))
                     .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.backup_restore_confirm) { _, _ -> restoreBackup(uri) }
+                    .setPositiveButton(R.string.backup_restore_confirm) { _, _ -> restoreBackup(uri, password) }
                     .show()
             }.onFailure {
                 Snackbar.make(
@@ -498,12 +561,12 @@ class JobListFragment : Fragment() {
         }
     }
 
-    private fun restoreBackup(uri: Uri) {
+    private fun restoreBackup(uri: Uri, password: String?) {
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 val appContext = requireContext().applicationContext
                 withContext(Dispatchers.IO) {
-                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).restoreFrom(uri)
+                    WorkBackupManager(appContext, DatabaseProvider.get(appContext)).restoreFrom(uri, password)
                 }
             }
             if (!isAdded) return@launch

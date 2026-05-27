@@ -10,12 +10,13 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.worktr.R
 import com.example.worktr.data.Job
+import com.google.android.material.button.MaterialButton
 import java.text.NumberFormat
 import java.util.Locale
 
 class JobListAdapter(
     private val onClick: (Job) -> Unit,
-    private val onLongClick: (Job) -> Unit
+    private val onEdit: (Job) -> Unit
 ) : ListAdapter<Job, JobListAdapter.JobViewHolder>(JobDiff) {
     private var monthlySummaries: Map<Int, JobMonthSummary> = emptyMap()
 
@@ -41,6 +42,7 @@ class JobListAdapter(
         private val bonusesText: TextView = itemView.findViewById(R.id.textJobBonuses)
         private val captionText: TextView = itemView.findViewById(R.id.textJobCaption)
         private val nextIcon: ImageView = itemView.findViewById(R.id.imageNext)
+        private val editButton: MaterialButton = itemView.findViewById(R.id.buttonEditJob)
         private val numberFormatter = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
             maximumFractionDigits = 2
             minimumFractionDigits = 0
@@ -70,9 +72,10 @@ class JobListAdapter(
             nextIcon.contentDescription = job.name
             itemView.setOnClickListener { onClick(job) }
             itemView.setOnLongClickListener {
-                onLongClick(job)
+                onEdit(job)
                 true
             }
+            editButton.setOnClickListener { onEdit(job) }
         }
     }
 

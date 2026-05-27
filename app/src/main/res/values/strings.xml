@@ -248,8 +248,16 @@
     <string name="backup_restore_preview">У файлі: робіт %1$d, записів %2$d, фактур %3$d.\n\nПоточні дані буде замінено.</string>
     <string name="backup_restore_confirm">Відновити</string>
     <string name="backup_reminder">Давно не створювався backup. Краще зберегти копію даних.</string>
+    <string name="backup_password_title">Пароль backup-файлу</string>
+    <string name="backup_password_hint">Файл містить робочі, клієнтські та банківські дані. Збережіть пароль окремо: без нього backup не відновиться.</string>
+    <string name="backup_password">Пароль</string>
+    <string name="backup_password_confirm">Повторіть пароль</string>
+    <string name="backup_password_too_short">Мінімум 6 символів.</string>
+    <string name="backup_password_mismatch">Паролі не збігаються.</string>
     <string name="settings_title">Налаштування</string>
     <string name="settings_subtitle">Дані для фактур, клієнти, шаблон Doprava і резервні копії.</string>
+    <string name="settings_language_section">Мови</string>
+    <string name="settings_app_language">Мова додатку</string>
     <string name="settings_bank_section">Bankové údaje</string>
     <string name="settings_invoice_defaults_section">Predvolené hodnoty faktúry</string>
     <string name="settings_pdf_language">Мова PDF</string>
@@ -283,6 +291,10 @@
     <string name="month_invoices_title">Фактури за місяць</string>
     <string name="month_no_jobs">За цей місяць ще немає записів.</string>
     <string name="month_no_invoices">За цей місяць ще немає фактур.</string>
+    <string name="validation_required">Заповніть поле.</string>
+    <string name="validation_positive_number">Введіть число більше 0.</string>
+    <string name="validation_non_negative_number">Введіть число 0 або більше.</string>
+    <string name="validation_break_too_large">Перерва не може бути більшою за години зміни.</string>
 
     <string-array name="months">
         <item>Січень</item>

@@ -14,6 +14,7 @@ object InvoiceInputJson {
             .put("extraItem", input.extraItem?.let(::extraItemToJson))
             .put("extraItems", extraItemsToJson(input.allExtraItems()))
             .put("currency", input.currency)
+            .put("pdfLanguage", input.pdfLanguage)
             .put("iban", input.iban)
             .put("bic", input.bic)
             .put("variableSymbol", input.variableSymbol)
@@ -32,6 +33,7 @@ object InvoiceInputJson {
             extraItem = json.optJSONObject("extraItem")?.let(::extraItemFromJson),
             extraItems = json.optJSONArray("extraItems")?.let(::extraItemsFromJson).orEmpty(),
             currency = json.optString("currency", "EUR"),
+            pdfLanguage = json.optString("pdfLanguage", InvoiceLanguage.SLOVAK.code),
             iban = json.optString("iban"),
             bic = json.optString("bic"),
             variableSymbol = json.optString("variableSymbol"),

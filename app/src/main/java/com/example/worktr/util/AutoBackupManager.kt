@@ -34,7 +34,9 @@ object AutoBackupManager {
 
     suspend fun exportNow(context: Context, db: AppDatabase, treeUri: Uri): BackupSummary {
         val backupUri = createBackupDocument(context, treeUri)
-        return WorkBackupManager(context, db).exportTo(backupUri)
+        val password = AutoBackupPasswordStore.read(context)
+            ?: error("Auto backup password is not set.")
+        return WorkBackupManager(context, db).exportEncryptedTo(backupUri, password)
     }
 
     fun intervalMillis(interval: String): Long =

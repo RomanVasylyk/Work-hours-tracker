@@ -21,7 +21,7 @@ class InvoiceArchiveAdapter(
     private val onShare: (InvoiceRecord) -> Unit,
     private val onRecreate: (InvoiceRecord) -> Unit,
     private val onStatus: (InvoiceRecord) -> Unit,
-    private val onLongPress: (InvoiceRecord) -> Unit
+    private val onDelete: (InvoiceRecord) -> Unit
 ) : ListAdapter<InvoiceRecord, InvoiceArchiveAdapter.InvoiceViewHolder>(Diff) {
 
     private val locale = Locale("sk", "SK")
@@ -64,8 +64,9 @@ class InvoiceArchiveAdapter(
             binding.buttonOpenInvoice.setOnClickListener { onOpen(invoice) }
             binding.buttonShareInvoice.setOnClickListener { onShare(invoice) }
             binding.buttonRecreateInvoice.setOnClickListener { onRecreate(invoice) }
+            binding.buttonDeleteInvoice.setOnClickListener { onDelete(invoice) }
             binding.root.setOnLongClickListener {
-                onLongPress(invoice)
+                onDelete(invoice)
                 true
             }
         }

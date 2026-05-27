@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.worktr.R
+import com.example.worktr.data.Client
 import com.example.worktr.data.InvoiceRecord
 import com.example.worktr.data.Job
 import com.example.worktr.databinding.ItemClientBinding
@@ -63,6 +64,7 @@ class ClientsAdapter(
 
 data class ClientUiModel(
     val job: Job,
+    val client: Client,
     val customerName: String,
     val lastInvoice: InvoiceRecord?
 )

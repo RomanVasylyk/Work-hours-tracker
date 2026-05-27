@@ -63,6 +63,11 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+}
+
 dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("io.github.janhalasa:pay-by-square-java:1.0.0") {

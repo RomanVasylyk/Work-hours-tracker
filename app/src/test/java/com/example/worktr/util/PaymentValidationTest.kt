@@ -3,7 +3,9 @@ package com.example.worktr.util
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.Locale
 
 class PaymentValidationTest {
     @Test
@@ -51,5 +53,27 @@ class PaymentValidationTest {
         )
 
         assertTrue(code.length > 20)
+    }
+
+    @Test
+    fun payBySquarePayloadUsesDotDecimalRegardlessOfLocale() {
+        val previous = Locale.getDefault()
+        Locale.setDefault(Locale("sk", "SK"))
+        try {
+            val payload = PaymentValidation.serializePayBySquarePayload(
+                invoiceNumber = "FV-2026/04",
+                supplierLines = listOf("Ukážkový dodávateľ", "Hlavná 12", "94901 Nitra", "Slovensko"),
+                amount = BigDecimal("123.45"),
+                currency = "€",
+                iban = "SK7111000000001234567890",
+                bic = "TATRSKBX",
+                variableSymbol = "FV-2026/04",
+                dueDate = LocalDate.of(2026, 5, 16)
+            )
+
+            assertTrue(payload.contains("\t123.45\tEUR\t20260516\t202604\t"))
+        } finally {
+            Locale.setDefault(previous)
+        }
     }
 }
