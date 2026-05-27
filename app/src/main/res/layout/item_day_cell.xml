@@ -21,14 +21,38 @@
             android:textColor="?android:textColorPrimary"
             android:textStyle="bold" />
 
-        <View
-            android:id="@+id/dayDot"
-            android:layout_width="6dp"
-            android:layout_height="6dp"
+        <LinearLayout
+            android:id="@+id/dayIndicators"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="9dp"
-            android:background="@drawable/bg_circle_dot"
-            android:visibility="gone" />
+            android:layout_marginBottom="7dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/dayDot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_circle_dot" />
+
+            <View
+                android:id="@+id/dayNightDot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginStart="3dp"
+                android:background="@drawable/bg_circle_dot"
+                android:visibility="gone" />
+
+            <View
+                android:id="@+id/dayBonusDot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginStart="3dp"
+                android:background="@drawable/bg_circle_dot"
+                android:visibility="gone" />
+        </LinearLayout>
     </FrameLayout>
 
 </com.google.android.material.card.MaterialCardView>

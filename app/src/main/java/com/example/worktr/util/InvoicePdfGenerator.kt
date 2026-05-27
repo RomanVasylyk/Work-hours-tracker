@@ -32,6 +32,8 @@ data class InvoiceInput(
     val customer: String,
     val note: String,
     val description: String,
+    val serviceQuantity: Double? = null,
+    val serviceUnit: String = "",
     val extraItem: InvoiceExtraItem?,
     val extraItems: List<InvoiceExtraItem> = emptyList(),
     val currency: String,
@@ -64,7 +66,7 @@ class InvoicePdfGenerator(private val context: Context) {
     }
 
     fun generate(job: Job, entries: List<WorkEntry>, period: YearMonth, input: InvoiceInput): File {
-        val totals = calculateTotals(entries)
+        val totals = calculateTotals(entries, input.serviceQuantity)
         val invoiceExtraItems = input.allExtraItems()
         val invoiceTotal = totals.total + invoiceExtraItems.sumOf { it.total }
         val payBySquareCode = createPayBySquareCode(input, invoiceTotal)
@@ -85,7 +87,7 @@ class InvoicePdfGenerator(private val context: Context) {
         return file
     }
 
-    private fun calculateTotals(entries: List<WorkEntry>): InvoiceTotals {
+    private fun calculateTotals(entries: List<WorkEntry>, serviceQuantityOverride: Double?): InvoiceTotals {
         val zone = ZoneId.systemDefault()
         var hours = 0.0
         var base = 0.0
@@ -103,7 +105,11 @@ class InvoicePdfGenerator(private val context: Context) {
             sunday += breakdown.sunday
             holiday += breakdown.holiday
         }
-        return InvoiceTotals(hours, base, night, saturday, sunday, holiday)
+        val adjustedBase = serviceQuantityOverride
+            ?.takeIf { it > 0.0 && hours > 0.0 }
+            ?.let { quantity -> (base / hours) * quantity }
+            ?: base
+        return InvoiceTotals(serviceQuantityOverride?.takeIf { it > 0.0 } ?: hours, adjustedBase, night, saturday, sunday, holiday)
     }
 
     private fun drawInvoice(
@@ -230,13 +236,16 @@ class InvoicePdfGenerator(private val context: Context) {
         val description = input.description.ifBlank {
             texts.defaultDescription(monthName(period, texts.locale))
         }
+        val serviceQuantity = totals.hours
+        val serviceUnit = input.serviceUnit.ifBlank { texts.hourUnit }
+        val serviceUnitPrice = if (serviceQuantity > 0.0) totals.total / serviceQuantity else 0.0
         val itemPaint = textPaint(8.6f)
         wrapText(description, itemPaint, descRight - tableLeft - 8f).take(1).forEach { line ->
             canvas.drawText(line, tableLeft + 4f, headerBottom + 10.8f, itemPaint)
         }
-        canvas.drawText(formatQuantity(totals.hours), qtyRight - 24f, headerBottom + 10.8f, rightPaint)
-        canvas.drawText(texts.hourUnit, (qtyRight + unitRight) / 2f, headerBottom + 10.8f, unitPaint)
-        canvas.drawText(formatNumber(unitPrice(totals)), priceRight - 10f, headerBottom + 10.8f, rightPaint)
+        canvas.drawText(formatQuantity(serviceQuantity), qtyRight - 24f, headerBottom + 10.8f, rightPaint)
+        canvas.drawText(serviceUnit, (qtyRight + unitRight) / 2f, headerBottom + 10.8f, unitPaint)
+        canvas.drawText(formatNumber(serviceUnitPrice), priceRight - 10f, headerBottom + 10.8f, rightPaint)
         canvas.drawText(formatNumber(totals.total), tableRight - 20f, headerBottom + 10.8f, rightPaint)
         extraItems.forEachIndexed { index, extraItem ->
             val baseline = rowBottom + index * 15f + 10.8f

@@ -1,11 +1,14 @@
 package com.example.worktr.ui
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup
+import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -53,6 +56,7 @@ class StatsFragment : Fragment() {
     private lateinit var repo: WorkEntryRepository
     private lateinit var chartHours: LineChart
     private lateinit var chartSalary: BarChart
+    private lateinit var salaryLegend: GridLayout
     private lateinit var hoursMarker: PeriodMarkerView
     private lateinit var salaryMarker: PeriodMarkerView
     private lateinit var yearSpinner: DynamicYearSpinner
@@ -88,6 +92,7 @@ class StatsFragment : Fragment() {
 
         chartHours = view.findViewById(R.id.chartHours)
         chartSalary = view.findViewById(R.id.chartSalary)
+        salaryLegend = view.findViewById(R.id.layoutSalaryLegend)
         hoursMarker = PeriodMarkerView(requireContext(), emptyList()) {
             getString(R.string.marker_hours_value, numberFormatter.format(it))
         }
@@ -98,7 +103,6 @@ class StatsFragment : Fragment() {
         chartSalary.marker = salaryMarker
         styleChart(chartHours)
         styleChart(chartSalary)
-        chartSalary.legend.isEnabled = true
         applyResponsiveLayout(view)
         updateScopeHeader(activeJobs = 0)
         val modeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
@@ -189,14 +193,23 @@ class StatsFragment : Fragment() {
                 val invoiceEntries = mutableListOf<BarEntry>()
                 val buckets = if (!isMonth) (1..12) else (1..periodCount)
                 val hoursBuckets = DoubleArray(periodCount + 1)
-                val salaryBuckets = DoubleArray(periodCount + 1)
+                val baseBuckets = DoubleArray(periodCount + 1)
+                val nightBuckets = DoubleArray(periodCount + 1)
+                val saturdayBuckets = DoubleArray(periodCount + 1)
+                val sundayBuckets = DoubleArray(periodCount + 1)
+                val holidayBuckets = DoubleArray(periodCount + 1)
                 val invoiceBuckets = DoubleArray(periodCount + 1)
 
                 list.forEach { entry ->
                     val date = entry.localDate(zone)
                     val index = if (isMonth) date.dayOfMonth else date.monthValue
+                    val breakdown = entry.salaryBreakdown(zone)
                     hoursBuckets[index] += entry.workedHours()
-                    salaryBuckets[index] += entry.salaryBreakdown(zone).total
+                    baseBuckets[index] += breakdown.base
+                    nightBuckets[index] += breakdown.night
+                    saturdayBuckets[index] += breakdown.saturday
+                    sundayBuckets[index] += breakdown.sunday
+                    holidayBuckets[index] += breakdown.holiday
                 }
                 val invoices = withContext(Dispatchers.IO) {
                     DatabaseProvider.get(requireContext().applicationContext)
@@ -231,9 +244,20 @@ class StatsFragment : Fragment() {
 
                 buckets.forEach { i ->
                     val sumHours = hoursBuckets[i]
-                    val sumSalary = salaryBuckets[i]
+                    val sumSalary = baseBuckets[i] + nightBuckets[i] + saturdayBuckets[i] + sundayBuckets[i] + holidayBuckets[i]
                     hoursEntries.add(Entry(i.toFloat(), sumHours.toFloat()))
-                    salaryEntries.add(BarEntry(i.toFloat() - 0.18f, sumSalary.toFloat()))
+                    salaryEntries.add(
+                        BarEntry(
+                            i.toFloat() - 0.18f,
+                            floatArrayOf(
+                                baseBuckets[i].toFloat(),
+                                nightBuckets[i].toFloat(),
+                                saturdayBuckets[i].toFloat(),
+                                sundayBuckets[i].toFloat(),
+                                holidayBuckets[i].toFloat()
+                            )
+                        )
+                    )
                     invoiceEntries.add(BarEntry(i.toFloat() + 0.18f, invoiceBuckets[i].toFloat()))
                     totalHours += sumHours
                     totalSalary += sumSalary
@@ -357,7 +381,20 @@ class StatsFragment : Fragment() {
 
     private fun createSalaryDataSet(entries: List<BarEntry>, isMonth: Boolean): BarDataSet {
         return BarDataSet(entries, getString(R.string.chart_salary_earned)).apply {
-            color = ContextCompat.getColor(requireContext(), R.color.chart_salary_bar)
+            colors = listOf(
+                ContextCompat.getColor(requireContext(), R.color.chart_salary_base),
+                ContextCompat.getColor(requireContext(), R.color.chart_salary_night),
+                ContextCompat.getColor(requireContext(), R.color.chart_salary_saturday),
+                ContextCompat.getColor(requireContext(), R.color.chart_salary_sunday),
+                ContextCompat.getColor(requireContext(), R.color.chart_salary_holiday)
+            )
+            stackLabels = arrayOf(
+                getString(R.string.hourly_rate),
+                getString(R.string.night_bonus),
+                getString(R.string.sat_bonus),
+                getString(R.string.sun_bonus),
+                getString(R.string.hol_bonus)
+            )
             setDrawValues(false)
             highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
             highLightAlpha = if (isMonth) 180 else 150
@@ -370,6 +407,52 @@ class StatsFragment : Fragment() {
             setDrawValues(false)
             highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
             highLightAlpha = if (isMonth) 180 else 150
+        }
+    }
+
+    private fun bindSalaryLegend() {
+        val items = listOf(
+            SalaryLegendItem(R.color.chart_salary_base, getString(R.string.hourly_rate)),
+            SalaryLegendItem(R.color.chart_salary_night, getString(R.string.night_bonus)),
+            SalaryLegendItem(R.color.chart_salary_saturday, getString(R.string.sat_bonus)),
+            SalaryLegendItem(R.color.chart_salary_sunday, getString(R.string.sun_bonus)),
+            SalaryLegendItem(R.color.chart_salary_holiday, getString(R.string.hol_bonus)),
+            SalaryLegendItem(R.color.chart_invoice_bar, getString(R.string.chart_salary_invoiced))
+        )
+        val columns = if (ResponsiveUi.profile(requireContext()).isCompact) 1 else 2
+        salaryLegend.removeAllViews()
+        salaryLegend.columnCount = columns
+        items.forEach { item ->
+            salaryLegend.addView(createLegendItem(item), GridLayout.LayoutParams().apply {
+                width = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(0, ResponsiveUi.dp(requireContext(), 2), ResponsiveUi.dp(requireContext(), 8), ResponsiveUi.dp(requireContext(), 2))
+            })
+        }
+    }
+
+    private fun createLegendItem(item: SalaryLegendItem): View {
+        val color = ContextCompat.getColor(requireContext(), item.colorRes)
+        return LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = ResponsiveUi.dp(requireContext(), 32)
+            setPadding(0, ResponsiveUi.dp(requireContext(), 4), ResponsiveUi.dp(requireContext(), 8), ResponsiveUi.dp(requireContext(), 4))
+
+            addView(View(requireContext()).apply {
+                background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_circle_dot)
+                ViewCompat.setBackgroundTintList(this, ColorStateList.valueOf(color))
+            }, LinearLayout.LayoutParams(ResponsiveUi.dp(requireContext(), 10), ResponsiveUi.dp(requireContext(), 10)))
+
+            addView(TextView(requireContext()).apply {
+                text = item.label
+                maxLines = 2
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.onSurface))
+                textSize = 12f
+            }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = ResponsiveUi.dp(requireContext(), 8)
+            })
         }
     }
 
@@ -421,6 +504,7 @@ class StatsFragment : Fragment() {
         ResponsiveUi.applyContentPadding(view.findViewById(R.id.statsContent), profile)
         ResponsiveUi.updateHeight(chartHours, profile.chartHeightPx)
         ResponsiveUi.updateHeight(chartSalary, profile.chartHeightPx)
+        bindSalaryLegend()
 
         val groupMode = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
         val filters = view.findViewById<LinearLayout>(R.id.layoutStatsFilters)
@@ -483,4 +567,9 @@ class StatsFragment : Fragment() {
         YEAR,
         MONTH
     }
+
+    private data class SalaryLegendItem(
+        val colorRes: Int,
+        val label: String
+    )
 }

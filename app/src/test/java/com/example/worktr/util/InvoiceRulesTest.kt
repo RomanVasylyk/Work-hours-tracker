@@ -119,6 +119,28 @@ class InvoiceRulesTest {
         assertEquals(210.0, totals.total, 0.0001)
     }
 
+    @Test
+    fun editableServiceQuantityRecalculatesOnlyServiceAmount() {
+        val zone = ZoneId.of("Europe/Bratislava")
+        val entries = listOf(
+            entry(LocalDate.of(2026, 4, 10), hours = 10.0, breakHours = 0.0, hourlyRate = 12.0, zone = zone),
+            entry(LocalDate.of(2026, 4, 11), hours = 10.0, breakHours = 0.0, hourlyRate = 12.0, zone = zone)
+        )
+        val extras = listOf(InvoiceExtraItem(name = "Doprava", quantity = 1.0, unit = "", unitPrice = 30.0))
+
+        val totals = InvoiceRules.calculateTotals(
+            entries = entries,
+            extraItems = extras,
+            serviceQuantityOverride = 15.0
+        )
+
+        assertEquals(15.0, totals.hours, 0.0001)
+        assertEquals(180.0, totals.servicesTotal, 0.0001)
+        assertEquals(30.0, totals.extraTotal, 0.0001)
+        assertEquals(210.0, totals.total, 0.0001)
+        assertEquals(12.0, totals.unitPrice, 0.0001)
+    }
+
     private fun entry(
         date: LocalDate,
         hours: Double,

@@ -31,17 +31,28 @@ object InvoiceRules {
 
     fun calculateTotals(
         entries: List<WorkEntry>,
-        extraItems: List<InvoiceExtraItem>
+        extraItems: List<InvoiceExtraItem>,
+        serviceQuantityOverride: Double? = null
     ): InvoiceCalculation {
         val hours = entries.sumOf { it.workedHours() }
-        val servicesTotal = entries.sumOf { it.workedHours() * it.hourlyRate }
+        val originalServicesTotal = entries.sumOf { it.workedHours() * it.hourlyRate }
+        val originalUnitPrice = if (hours > 0.0) originalServicesTotal / hours else 0.0
+        val servicesTotal = serviceQuantityOverride
+            ?.takeIf { it > 0.0 && hours > 0.0 }
+            ?.let { it * originalUnitPrice }
+            ?: originalServicesTotal
         val extraTotal = extraItems.sumOf { it.total }
+        val effectiveHours = serviceQuantityOverride?.takeIf { it > 0.0 } ?: hours
         return InvoiceCalculation(
-            hours = hours,
+            hours = effectiveHours,
             servicesTotal = servicesTotal,
             extraTotal = extraTotal,
             total = servicesTotal + extraTotal,
-            unitPrice = if (hours > 0.0) servicesTotal / hours else 0.0
+            unitPrice = if (effectiveHours > 0.0) {
+                servicesTotal / effectiveHours
+            } else {
+                0.0
+            }
         )
     }
 

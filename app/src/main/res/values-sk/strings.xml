@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Sledovanie pracovného času</string>
+    <string name="bottom_jobs">Práce</string>
+    <string name="bottom_month">Mesiac</string>
+    <string name="bottom_stats">Grafy</string>
+    <string name="bottom_invoices">Faktúry</string>
+    <string name="bottom_settings">Voľby</string>
+    <string name="job_detail_title">Detail práce</string>
     <string name="add_job">Pridať prácu</string>
     <string name="add_entry">Pridať/Upraviť záznam</string>
+    <string name="add_entry_selected_dates">Vybrané dni: %1$d</string>
     <string name="job_detail_add_entry">Pridať záznam</string>
     <string name="hours_worked_month">Odpracované hodiny za mesiac: %1$d</string>
     <string name="days_worked_month">Odpracované dni za mesiac: %1$d</string>
@@ -100,6 +107,9 @@
     <string name="calendar_legend_selected">Vybrané</string>
     <string name="calendar_legend_saved">Má záznam</string>
     <string name="calendar_legend_today">Dnes</string>
+    <string name="calendar_legend_night">Nočná</string>
+    <string name="calendar_legend_bonus">Príplatok</string>
+    <string name="calendar_legend_holiday">Sviatok</string>
     <string name="today_short">Dnes</string>
     <string name="add_selected_entries">Pridať záznam pre %1$d dní</string>
     <string name="delete_selected_entries">Odstrániť %1$d záznamov</string>
@@ -182,6 +192,8 @@
     <string name="invoice_iban">IBAN pre QR platbu</string>
     <string name="invoice_bic">BIC / SWIFT (voliteľné)</string>
     <string name="invoice_description">Popis služby</string>
+    <string name="invoice_service_quantity">Množstvo hlavnej položky</string>
+    <string name="invoice_service_unit">Jednotka hlavnej položky</string>
     <string name="invoice_extra_item_enable">Pridať dopravu</string>
     <string name="invoice_settings_title">Nastavenia faktúry</string>
     <string name="invoice_settings_subtitle">Tieto údaje sa automaticky vložia pred vytvorením PDF.</string>
@@ -193,10 +205,13 @@
     <string name="invoice_extra_unit">MJ</string>
     <string name="invoice_extra_price">Cena za MJ</string>
     <string name="invoice_extra_items">Dodatočné položky: názov | množstvo | MJ | cena</string>
+    <string name="invoice_extra_items_section">Dodatočné položky</string>
+    <string name="invoice_extra_items_hint">Každú položku píšte na nový riadok: názov | množstvo | MJ | cena.</string>
     <string name="invoice_extra_add">Pridať položku</string>
     <string name="invoice_extra_remove">Odstrániť</string>
     <string name="invoice_issue_date">Dátum vystavenia YYYY-MM-DD</string>
     <string name="invoice_due_date">Dátum splatnosti YYYY-MM-DD</string>
+    <string name="invoice_dates_section">Dátumy faktúry</string>
     <string name="invoice_currency">Mena</string>
     <string name="invoice_note">Poznámka, IBAN, platobné podmienky</string>
     <string name="invoice_create_pdf">Vytvoriť PDF</string>
@@ -217,6 +232,7 @@
     <string name="invoice_recreate">Znovu</string>
     <string name="invoice_recreate_direct">Vytvoriť hneď</string>
     <string name="invoice_recreate_edit">Znovu s úpravou</string>
+    <string name="invoice_recreate_edit_hint">Rýchlo upravte popis, množstvo služby, príplatky a dátumy pred opätovným vytvorením PDF.</string>
     <string name="invoice_recreated">Faktúra bola vytvorená znova.</string>
     <string name="invoice_status_created">Vytvorená</string>
     <string name="invoice_status_sent">Odoslaná</string>

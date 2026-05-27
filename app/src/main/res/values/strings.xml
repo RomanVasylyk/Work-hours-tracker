@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Трекер робочого часу</string>
+    <string name="bottom_jobs">Роботи</string>
+    <string name="bottom_month">Місяць</string>
+    <string name="bottom_stats">Графіки</string>
+    <string name="bottom_invoices">Фактури</string>
+    <string name="bottom_settings">Опції</string>
+    <string name="job_detail_title">Деталі роботи</string>
     <string name="add_job">Додати роботу</string>
     <string name="add_entry">Додати/Редагувати запис</string>
+    <string name="add_entry_selected_dates">Вибрано днів: %1$d</string>
     <string name="job_detail_add_entry">Додати запис</string>
     <string name="hours_worked_month">Відпрацьовано годин за місяць: %1$d</string>
     <string name="days_worked_month">Відпрацьовано днів за місяць: %1$d</string>
@@ -100,6 +107,9 @@
     <string name="calendar_legend_selected">Вибрано</string>
     <string name="calendar_legend_saved">Є запис</string>
     <string name="calendar_legend_today">Сьогодні</string>
+    <string name="calendar_legend_night">Нічна</string>
+    <string name="calendar_legend_bonus">Доплата</string>
+    <string name="calendar_legend_holiday">Свято</string>
     <string name="today_short">Сьогодні</string>
     <string name="add_selected_entries">Додати запис для %1$d дн.</string>
     <string name="delete_selected_entries">Видалити %1$d записів</string>
@@ -182,6 +192,8 @@
     <string name="invoice_iban">IBAN для QR оплати</string>
     <string name="invoice_bic">BIC / SWIFT (необов’язково)</string>
     <string name="invoice_description">Опис послуги</string>
+    <string name="invoice_service_quantity">Кількість у головній позиції</string>
+    <string name="invoice_service_unit">Одиниця головної позиції</string>
     <string name="invoice_extra_item_enable">Додати Doprava</string>
     <string name="invoice_settings_title">Налаштування фактури</string>
     <string name="invoice_settings_subtitle">Ці дані підставляються автоматично перед створенням PDF.</string>
@@ -193,10 +205,13 @@
     <string name="invoice_extra_unit">MJ</string>
     <string name="invoice_extra_price">Cena za MJ</string>
     <string name="invoice_extra_items">Додаткові позиції: назва | кількість | MJ | ціна</string>
+    <string name="invoice_extra_items_section">Додаткові позиції</string>
+    <string name="invoice_extra_items_hint">Кожну позицію пишіть з нового рядка у форматі: назва | кількість | MJ | ціна.</string>
     <string name="invoice_extra_add">Додати позицію</string>
     <string name="invoice_extra_remove">Видалити</string>
     <string name="invoice_issue_date">Dátum vystavenia YYYY-MM-DD</string>
     <string name="invoice_due_date">Dátum splatnosti YYYY-MM-DD</string>
+    <string name="invoice_dates_section">Дати фактури</string>
     <string name="invoice_currency">Валюта</string>
     <string name="invoice_note">Примітка, IBAN, умови оплати</string>
     <string name="invoice_create_pdf">Створити PDF</string>
@@ -217,6 +232,7 @@
     <string name="invoice_recreate">Заново</string>
     <string name="invoice_recreate_direct">Створити одразу</string>
     <string name="invoice_recreate_edit">Заново з редагуванням</string>
+    <string name="invoice_recreate_edit_hint">Тут можна швидко змінити опис, кількість годин, доплати і дати перед повторним створенням PDF.</string>
     <string name="invoice_recreated">Фактуру створено заново.</string>
     <string name="invoice_status_created">Створена</string>
     <string name="invoice_status_sent">Відправлена</string>

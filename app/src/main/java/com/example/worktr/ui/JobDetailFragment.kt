@@ -8,7 +8,9 @@ import android.view.*
 import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -41,6 +43,7 @@ import com.example.worktr.util.InvoiceRules
 import com.example.worktr.util.ClientDefaults
 import com.example.worktr.util.PaymentValidation
 import com.example.worktr.util.PaymentValidationResult
+import com.example.worktr.util.SecureInvoicePrefs
 import com.example.worktr.util.workedHours
 import com.example.worktr.viewmodel.JobDetailViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -81,7 +84,6 @@ class JobDetailFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
         enterTransition = MaterialSharedAxis(MaterialSharedAxis.X, true)
         returnTransition = MaterialSharedAxis(MaterialSharedAxis.X, false)
     }
@@ -99,6 +101,8 @@ class JobDetailFragment : Fragment() {
             override fun <T : ViewModel> create(modelClass: Class<T>) =
                 JobDetailViewModel(jobRepository, args.jobId) as T
         })[JobDetailViewModel::class.java]
+        setupMenu()
+        setupCalendarResults()
         applyResponsiveLayout()
 
         viewModel.job.observe(viewLifecycleOwner) { job ->
@@ -317,45 +321,75 @@ class JobDetailFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_job_detail, menu)
+    private fun setupMenu() {
+        requireActivity().addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_job_detail, menu)
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
+                    when (menuItem.itemId) {
+                        R.id.action_export -> {
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                val appContext = requireContext().applicationContext
+                                val file: File = withContext(Dispatchers.IO) {
+                                    ExcelExporter(appContext).export(args.jobId)
+                                }
+                                if (!isAdded) return@launch
+
+                                val context = requireContext()
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    file
+                                )
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/csv"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                startActivity(Intent.createChooser(intent, getString(R.string.share)))
+                            }
+                            true
+                        }
+                        R.id.action_import -> {
+                            launchImportPicker()
+                            true
+                        }
+                        R.id.action_calendar -> {
+                            CalendarDialogFragment.newInstance(
+                                args.jobId,
+                                CalendarDialogFragment.REQUEST_JOB_DETAIL
+                            )
+                                .show(parentFragmentManager, "calendar")
+                            true
+                        }
+                        else -> false
+                    }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_export -> {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val appContext = requireContext().applicationContext
-                    val file: File = withContext(Dispatchers.IO) {
-                        ExcelExporter(appContext).export(args.jobId)
-                    }
-                    if (!isAdded) return@launch
-
-                    val context = requireContext()
-                    val uri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        file
-                    )
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/csv"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    startActivity(Intent.createChooser(intent, getString(R.string.share)))
-                }
-                true
-            }
-            R.id.action_import -> {
-                launchImportPicker()
-                true
-            }
-            R.id.action_invoice -> {
-                showInvoicePreview()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+    private fun setupCalendarResults() {
+        setFragmentResultListener(CalendarDialogFragment.dateResultKey(CalendarDialogFragment.REQUEST_JOB_DETAIL)) { _, bundle ->
+            openAddEntryWithDates(longArrayOf(bundle.getLong("date")))
         }
+        setFragmentResultListener(CalendarDialogFragment.datesResultKey(CalendarDialogFragment.REQUEST_JOB_DETAIL)) { _, bundle ->
+            openAddEntryWithDates(bundle.getLongArray("dates") ?: longArrayOf())
+        }
+    }
+
+    private fun openAddEntryWithDates(dates: LongArray) {
+        if (dates.isEmpty()) return
+        findNavController().currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(AddEntryFragment.ENTRY_DATES_KEY, dates)
+        findNavController().navigate(
+            JobDetailFragmentDirections.actionJobDetailFragmentToAddEntryFragment(args.jobId)
+        )
     }
 
     private fun showInvoicePreview() {
@@ -396,7 +430,12 @@ class JobDetailFragment : Fragment() {
                 val draft = invoiceDraftFromPreferences(job, period, client)
                 val hours = entries.sumOf { it.workedHours() }
                 val automaticExtras = InvoiceRules.bonusExtraItems(entries, draft.pdfLanguage)
-                val calculation = InvoiceRules.calculateTotals(entries, draft.extraItems + automaticExtras)
+                val calculation = InvoiceRules.calculateTotals(
+                    entries = entries,
+                    extraItems = draft.extraItems + automaticExtras,
+                    serviceQuantityOverride = draft.serviceQuantity
+                )
+                val serviceQuantity = draft.serviceQuantity?.takeIf { it > 0.0 } ?: hours
                 val unitPrice = calculation.unitPrice
                 val paymentValidation = PaymentValidation.validatePayment(draft.iban, draft.bic)
                 val checklist = listOf(
@@ -420,7 +459,7 @@ class JobDetailFragment : Fragment() {
                     slovakMonthLabel(period),
                     period.year,
                     draft.customer.name,
-                    formatInvoiceQuantity(hours),
+                    formatInvoiceQuantity(serviceQuantity),
                     formatInvoiceAmount(unitPrice, draft.currency),
                     formatInvoiceAmount(calculation.total, draft.currency)
                 ) + "\n\n$checklistText"
@@ -454,19 +493,25 @@ class JobDetailFragment : Fragment() {
             Snackbar.make(binding.root, R.string.invoice_no_entries, Snackbar.LENGTH_LONG).show()
             return
         }
+        val period = selectedInvoicePeriod()
+        val start = period.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val end = period.atEndOfMonth()
+            .plusDays(1)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli() - 1
         viewLifecycleOwner.lifecycleScope.launch {
-            val client = withContext(Dispatchers.IO) {
-                DatabaseProvider.get(requireContext().applicationContext)
-                    .clientDao()
-                    .getClientForJob(job.jobId)
+            val (client, serviceHours) = withContext(Dispatchers.IO) {
+                val database = DatabaseProvider.get(requireContext().applicationContext)
+                val entries = workRepository.getEntriesForPeriod(job.jobId, start, end).first()
+                database.clientDao().getClientForJob(job.jobId) to entries.sumOf { it.workedHours() }
             }
             if (!isAdded) return@launch
-            showInvoiceDialog(job, client)
+            showInvoiceDialog(job, client, period, serviceHours)
         }
     }
 
-    private fun showInvoiceDialog(job: WorkJob, client: Client?) {
-        val period = selectedInvoicePeriod()
+    private fun showInvoiceDialog(job: WorkJob, client: Client?, period: YearMonth, serviceHours: Double) {
         val prefs = requireContext().getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
         val invoiceBinding = DialogInvoiceBinding.inflate(layoutInflater)
 
@@ -483,8 +528,8 @@ class JobDetailFragment : Fragment() {
         invoiceBinding.editSupplierZip.setText(prefs.getString(PREF_SUPPLIER_ZIP, DEFAULT_SUPPLIER_ZIP))
         invoiceBinding.editSupplierCountry.setText(prefs.getString(PREF_SUPPLIER_COUNTRY, DEFAULT_COUNTRY))
         invoiceBinding.editSupplierIco.setText(prefs.getString(PREF_SUPPLIER_ICO, DEFAULT_SUPPLIER_ICO))
-        invoiceBinding.editIban.setText(prefs.getString(PREF_IBAN, ""))
-        invoiceBinding.editBic.setText(prefs.getString(PREF_BIC, ""))
+        invoiceBinding.editIban.setText(SecureInvoicePrefs.readIban(requireContext()))
+        invoiceBinding.editBic.setText(SecureInvoicePrefs.readBic(requireContext()))
 
         val invoiceClient = client ?: clientFromPreferences(prefs, job.jobId)
         invoiceBinding.editCustomerName.setText(invoiceClient.name)
@@ -496,6 +541,8 @@ class JobDetailFragment : Fragment() {
         invoiceBinding.editCustomerDic.setText(invoiceClient.dic)
         invoiceBinding.editCustomerIcdph.setText(invoiceClient.icdph)
         invoiceBinding.editDescription.setText(invoiceDescriptionFromClient(invoiceClient, period, selectedPdfLanguage(prefs)))
+        invoiceBinding.editServiceQuantity.setText(formatInvoiceQuantity(serviceHours))
+        invoiceBinding.editServiceUnit.setText(defaultServiceUnit(selectedPdfLanguage(prefs)))
         invoiceBinding.editExtraName.setText(prefs.getString(PREF_EXTRA_NAME, DEFAULT_EXTRA_NAME))
         invoiceBinding.editExtraQuantity.setText(prefs.getString(PREF_EXTRA_QUANTITY, DEFAULT_EXTRA_QUANTITY))
         invoiceBinding.editExtraUnit.setText(prefs.getString(PREF_EXTRA_UNIT, DEFAULT_EXTRA_UNIT))
@@ -594,6 +641,8 @@ class JobDetailFragment : Fragment() {
                         customer = draft.customer.toCustomerLines(),
                         note = "",
                         description = draft.description,
+                        serviceQuantity = draft.serviceQuantity,
+                        serviceUnit = draft.serviceUnit,
                         extraItem = null,
                         extraItems = invoiceExtraItems,
                         currency = draft.currency,
@@ -606,7 +655,11 @@ class JobDetailFragment : Fragment() {
                     )
                     val generatedFile = InvoicePdfGenerator(appContext).generate(job, entries, period, input)
                     val archiveFile = InvoiceFiles.persist(appContext, generatedFile)
-                    val totalAmount = InvoiceRules.calculateTotals(entries, invoiceExtraItems).total
+                    val totalAmount = InvoiceRules.calculateTotals(
+                        entries = entries,
+                        extraItems = invoiceExtraItems,
+                        serviceQuantityOverride = draft.serviceQuantity
+                    ).total
                     DatabaseProvider.get(appContext).invoiceDao().insert(
                         InvoiceRecord(
                             invoiceNumber = draft.invoiceNumber,
@@ -698,6 +751,10 @@ class JobDetailFragment : Fragment() {
             currency = invoiceBinding.editCurrency.text?.toString()?.trim()?.uppercase(Locale.ROOT).orEmpty().ifBlank { "EUR" },
             pdfLanguage = InvoiceLanguage.fromLabel(invoiceBinding.inputPdfLanguage.text?.toString().orEmpty()).code,
             description = invoiceBinding.editDescription.text?.toString()?.trim().orEmpty(),
+            serviceQuantity = invoiceBinding.editServiceQuantity.value().toInvoiceDoubleOrNull(),
+            serviceUnit = invoiceBinding.editServiceUnit.value().ifBlank {
+                defaultServiceUnit(InvoiceLanguage.fromLabel(invoiceBinding.inputPdfLanguage.text?.toString().orEmpty()))
+            },
             extraItem = extraItem,
             extraItems = extraItems,
             extraName = extraName,
@@ -709,8 +766,8 @@ class JobDetailFragment : Fragment() {
 
     private fun invoiceDraftFromPreferences(job: WorkJob, period: YearMonth, client: Client?): InvoiceDraft {
         val prefs = requireContext().getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
-        val iban = normalizeBankValue(prefs.getString(PREF_IBAN, "").orEmpty())
-        val bic = normalizeBankValue(prefs.getString(PREF_BIC, "").orEmpty())
+        val iban = normalizeBankValue(SecureInvoicePrefs.readIban(requireContext()))
+        val bic = normalizeBankValue(SecureInvoicePrefs.readBic(requireContext()))
             .ifBlank { inferSlovakBic(iban).orEmpty() }
         val invoiceLanguage = selectedPdfLanguage(prefs)
         val invoiceClient = client ?: clientFromPreferences(prefs, job.jobId)
@@ -743,6 +800,8 @@ class JobDetailFragment : Fragment() {
             currency = prefs.getString(PREF_CURRENCY, "EUR").orEmpty().ifBlank { "EUR" },
             pdfLanguage = invoiceLanguage.code,
             description = invoiceDescriptionFromClient(invoiceClient, period, invoiceLanguage),
+            serviceQuantity = null,
+            serviceUnit = defaultServiceUnit(invoiceLanguage),
             extraItem = null,
             extraItems = emptyList(),
             extraName = prefs.getString(PREF_EXTRA_NAME, DEFAULT_EXTRA_NAME).orEmpty(),
@@ -761,8 +820,6 @@ class JobDetailFragment : Fragment() {
             .putString(PREF_SUPPLIER_ZIP, draft.supplier.zip)
             .putString(PREF_SUPPLIER_COUNTRY, draft.supplier.country)
             .putString(PREF_SUPPLIER_ICO, draft.supplier.ico)
-            .putString(PREF_IBAN, draft.iban)
-            .putString(PREF_BIC, draft.bic)
             .putString(clientPref(jobId, PREF_CLIENT_NAME), draft.customer.name)
             .putString(clientPref(jobId, PREF_CLIENT_STREET), draft.customer.street)
             .putString(clientPref(jobId, PREF_CLIENT_CITY), draft.customer.city)
@@ -779,6 +836,7 @@ class JobDetailFragment : Fragment() {
             .putString(PREF_PDF_LANGUAGE, draft.pdfLanguage)
             .putInt(sequencePrefKey(period), maxOf(currentInvoiceSequence(period), generatedSequence))
             .apply()
+        SecureInvoicePrefs.saveBank(requireContext(), draft.iban, draft.bic)
     }
 
     private fun selectedMonth(): Int {
@@ -828,6 +886,13 @@ class JobDetailFragment : Fragment() {
         val month = period.month.getDisplayName(TextStyle.FULL, monthLocale)
         return InvoiceRules.serviceDescription(template, month)
     }
+
+    private fun defaultServiceUnit(language: InvoiceLanguage): String =
+        when (language) {
+            InvoiceLanguage.SLOVAK -> "hod"
+            InvoiceLanguage.UKRAINIAN -> "год"
+            InvoiceLanguage.ENGLISH -> "hrs"
+        }
 
     private fun selectedPdfLanguage(prefs: android.content.SharedPreferences): InvoiceLanguage =
         InvoiceLanguage.fromCode(prefs.getString(PREF_PDF_LANGUAGE, InvoiceLanguage.SLOVAK.code))
@@ -967,6 +1032,9 @@ class JobDetailFragment : Fragment() {
     private fun String.toInvoiceDouble(defaultValue: Double): Double =
         replace(',', '.').toDoubleOrNull() ?: defaultValue
 
+    private fun String.toInvoiceDoubleOrNull(): Double? =
+        replace(',', '.').toDoubleOrNull()?.takeIf { it > 0.0 }
+
     private fun addExtraItemRow(container: LinearLayout, item: InvoiceExtraItem? = null) {
         val rowBinding = ItemInvoiceExtraPositionBinding.inflate(layoutInflater, container, false)
         rowBinding.editExtraRowName.setText(item?.name.orEmpty())
@@ -1053,6 +1121,8 @@ class JobDetailFragment : Fragment() {
         val currency: String,
         val pdfLanguage: String,
         val description: String,
+        val serviceQuantity: Double?,
+        val serviceUnit: String,
         val extraItem: InvoiceExtraItem?,
         val extraItems: List<InvoiceExtraItem>,
         val extraName: String,

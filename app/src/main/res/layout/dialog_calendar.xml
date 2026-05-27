@@ -264,6 +264,58 @@
                             android:textColor="@color/chart_axis_text"
                             style="@style/TextAppearance.Material3.LabelMedium" />
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:background="@drawable/bg_circle_dot"
+                            android:backgroundTint="@color/calendar_night" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.LabelMedium"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="@string/calendar_legend_night"
+                            android:textColor="@color/chart_axis_text" />
+
+                        <View
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:layout_marginStart="14dp"
+                            android:background="@drawable/bg_circle_dot"
+                            android:backgroundTint="@color/calendar_bonus" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.LabelMedium"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="@string/calendar_legend_bonus"
+                            android:textColor="@color/chart_axis_text" />
+
+                        <View
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:layout_marginStart="14dp"
+                            android:background="@drawable/bg_circle_dot"
+                            android:backgroundTint="@color/calendar_holiday" />
+
+                        <TextView
+                            style="@style/TextAppearance.Material3.LabelMedium"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="@string/calendar_legend_holiday"
+                            android:textColor="@color/chart_axis_text" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

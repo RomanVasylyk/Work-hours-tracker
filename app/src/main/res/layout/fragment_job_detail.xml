@@ -98,7 +98,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:maxLines="1"
+                        android:maxLines="2"
+                        android:minHeight="56dp"
                         android:text="@string/job_detail_add_entry" />
 
                     <com.google.android.material.button.MaterialButton
@@ -109,6 +110,8 @@
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:gravity="center"
+                        android:maxLines="2"
+                        android:minHeight="56dp"
                         android:text="@string/stat"
                         android:textColor="@color/primary"
                         app:strokeColor="@color/primary" />
@@ -121,7 +124,8 @@
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:maxLines="1"
+                        android:maxLines="2"
+                        android:minHeight="56dp"
                         android:text="@string/create_invoice" />
                 </LinearLayout>
             </LinearLayout>

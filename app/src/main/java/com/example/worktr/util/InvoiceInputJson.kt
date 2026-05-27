@@ -11,6 +11,8 @@ object InvoiceInputJson {
             .put("customer", input.customer)
             .put("note", input.note)
             .put("description", input.description)
+            .put("serviceQuantity", input.serviceQuantity ?: JSONObject.NULL)
+            .put("serviceUnit", input.serviceUnit)
             .put("extraItem", input.extraItem?.let(::extraItemToJson))
             .put("extraItems", extraItemsToJson(input.allExtraItems()))
             .put("currency", input.currency)
@@ -30,6 +32,8 @@ object InvoiceInputJson {
             customer = json.optString("customer"),
             note = json.optString("note"),
             description = json.optString("description"),
+            serviceQuantity = json.takeUnless { it.isNull("serviceQuantity") }?.optDouble("serviceQuantity"),
+            serviceUnit = json.optString("serviceUnit"),
             extraItem = json.optJSONObject("extraItem")?.let(::extraItemFromJson),
             extraItems = json.optJSONArray("extraItems")?.let(::extraItemsFromJson).orEmpty(),
             currency = json.optString("currency", "EUR"),

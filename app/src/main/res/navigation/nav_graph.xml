@@ -7,7 +7,7 @@
     <fragment
         android:id="@+id/jobListFragment"
         android:name="com.example.worktr.ui.JobListFragment"
-        android:label="Job List">
+        android:label="@string/jobs_section_title">
         <action
             android:id="@+id/action_jobListFragment_to_jobDetailFragment"
             app:destination="@id/jobDetailFragment"
@@ -48,7 +48,7 @@
     <fragment
         android:id="@+id/jobDetailFragment"
         android:name="com.example.worktr.ui.JobDetailFragment"
-        android:label="Job Detail">
+        android:label="@string/job_detail_title">
         <argument
             android:name="jobId"
             app:argType="integer" />
@@ -71,7 +71,7 @@
     <fragment
         android:id="@+id/statsFragment"
         android:name="com.example.worktr.ui.StatsFragment"
-        android:label="Статистика">
+        android:label="@string/stats_title">
         <argument
             android:name="jobId"
             app:argType="integer"
@@ -109,7 +109,7 @@
     <fragment
         android:id="@+id/addEntryFragment"
         android:name="com.example.worktr.ui.AddEntryFragment"
-        android:label="Add Entry">
+        android:label="@string/add_entry">
         <argument
             android:name="jobId"
             app:argType="integer" />

@@ -48,6 +48,7 @@ class WorkBackupManager(
             .put("workEntries", entriesToJson(entries))
             .put("invoices", invoicesToJson(invoices))
             .put("invoicePrefs", preferencesToJson(INVOICE_PREFS))
+            .put("secureInvoicePrefs", SecureInvoicePrefs.toBackupJson(context))
 
         return json to BackupSummary(jobs.size, entries.size, invoices.size)
     }
@@ -77,6 +78,12 @@ class WorkBackupManager(
         }
         restoreInvoiceFiles(json.optJSONArray("invoices") ?: JSONArray())
         restorePreferences(INVOICE_PREFS, json.optJSONObject("invoicePrefs") ?: JSONObject())
+        val secureInvoicePrefs = json.optJSONObject("secureInvoicePrefs")
+        if (secureInvoicePrefs != null) {
+            SecureInvoicePrefs.restoreFromBackupJson(context, secureInvoicePrefs)
+        } else {
+            migrateRestoredPlainBankPrefs()
+        }
 
         return BackupSummary(jobs.size, entries.size, invoices.size)
     }
@@ -286,6 +293,7 @@ class WorkBackupManager(
     private fun preferencesToJson(name: String): JSONObject =
         JSONObject().apply {
             context.getSharedPreferences(name, Context.MODE_PRIVATE).all.forEach { (key, value) ->
+                if (name == INVOICE_PREFS && SecureInvoicePrefs.isSensitiveKey(key)) return@forEach
                 put(
                     key,
                     JSONObject().apply {
@@ -330,6 +338,15 @@ class WorkBackupManager(
                 }
             }
         }
+    }
+
+    private fun migrateRestoredPlainBankPrefs() {
+        val prefs = context.getSharedPreferences(INVOICE_PREFS, Context.MODE_PRIVATE)
+        SecureInvoicePrefs.saveBank(
+            context = context,
+            iban = prefs.getString("iban", "").orEmpty(),
+            bic = prefs.getString("bic", "").orEmpty()
+        )
     }
 
     private companion object {

@@ -27,7 +27,6 @@
                 android:id="@+id/textJobName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
                 android:maxLines="2"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -85,9 +84,10 @@
             android:id="@+id/buttonEditJob"
             style="@style/Widget.WorkTracker.Button.Outlined"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:minHeight="44dp"
+            android:maxLines="2"
+            android:minHeight="48dp"
             android:text="@string/edit_job" />
 
     </LinearLayout>

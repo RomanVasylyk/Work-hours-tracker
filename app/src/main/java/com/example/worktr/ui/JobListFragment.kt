@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -17,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
+import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
@@ -34,6 +34,7 @@ import com.example.worktr.util.AutoBackupManager
 import com.example.worktr.util.CsvImporter
 import com.example.worktr.util.CsvImportSummary
 import com.example.worktr.util.ExcelExporter
+import com.example.worktr.util.SecureInvoicePrefs
 import com.example.worktr.util.WorkBackupManager
 import com.example.worktr.util.salaryBreakdown
 import com.example.worktr.util.workedHours
@@ -78,7 +79,6 @@ class JobListFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
         enterTransition = MaterialFadeThrough()
         returnTransition = MaterialFadeThrough()
     }
@@ -97,6 +97,7 @@ class JobListFragment : Fragment() {
                 return com.example.worktr.viewmodel.JobListViewModel(repository) as T
             }
         })[com.example.worktr.viewmodel.JobListViewModel::class.java]
+        setupMenu()
         prepareMainActions()
         applyResponsiveLayout()
 
@@ -151,15 +152,15 @@ class JobListFragment : Fragment() {
         binding.cardOverallStats.visibility = View.GONE
         binding.cardImportData.visibility = View.GONE
         binding.cardExportAll.visibility = View.GONE
-
-        binding.quickActionRow.removeView(binding.cardInvoiceSettings)
-        val backupIndex = binding.quickActionRow.indexOfChild(binding.cardBackupData)
-        binding.quickActionRow.addView(binding.cardInvoiceSettings, backupIndex)
+        binding.cardInvoiceArchive.visibility = View.GONE
+        binding.cardInvoiceSettings.visibility = View.GONE
+        binding.cardBackupData.visibility = View.GONE
+        binding.quickActionRow.visibility = View.GONE
         normalizeQuickActionCards()
     }
 
     private fun normalizeQuickActionCards() {
-        val height = ResponsiveUi.dp(requireContext(), 58)
+        val height = ResponsiveUi.dp(requireContext(), 72)
         listOf(
             binding.cardOverallStats,
             binding.cardImportData,
@@ -179,29 +180,33 @@ class JobListFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_job_list, menu)
-    }
+    private fun setupMenu() {
+        requireActivity().addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_job_list, menu)
+                }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_overall_stats -> {
-                findNavController().navigate(
-                    R.id.action_jobListFragment_to_statsFragment,
-                    bundleOf("jobId" to -1)
-                )
-                true
-            }
-            R.id.action_import -> {
-                launchImportPicker()
-                true
-            }
-            R.id.action_export -> {
-                exportAllData()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
+                    when (menuItem.itemId) {
+                        R.id.action_import -> {
+                            launchImportPicker()
+                            true
+                        }
+                        R.id.action_export -> {
+                            exportAllData()
+                            true
+                        }
+                        R.id.action_backup -> {
+                            showBackupDialog()
+                            true
+                        }
+                        else -> false
+                    }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     private fun loadCurrentMonthSummary(db: com.example.worktr.data.AppDatabase) {
@@ -414,8 +419,8 @@ class JobListFragment : Fragment() {
         settingsBinding.editSupplierZip.setText(prefs.getString(PREF_SUPPLIER_ZIP, DEFAULT_SUPPLIER_ZIP))
         settingsBinding.editSupplierCountry.setText(prefs.getString(PREF_SUPPLIER_COUNTRY, DEFAULT_COUNTRY))
         settingsBinding.editSupplierIco.setText(prefs.getString(PREF_SUPPLIER_ICO, DEFAULT_SUPPLIER_ICO))
-        settingsBinding.editIban.setText(prefs.getString(PREF_IBAN, ""))
-        settingsBinding.editBic.setText(prefs.getString(PREF_BIC, ""))
+        settingsBinding.editIban.setText(SecureInvoicePrefs.readIban(requireContext()))
+        settingsBinding.editBic.setText(SecureInvoicePrefs.readBic(requireContext()))
 
         settingsBinding.editCustomerName.setText(prefs.getString(PREF_CLIENT_NAME, DEFAULT_CLIENT_NAME))
         settingsBinding.editCustomerStreet.setText(prefs.getString(PREF_CLIENT_STREET, DEFAULT_CLIENT_STREET))
@@ -447,8 +452,6 @@ class JobListFragment : Fragment() {
                 .putString(PREF_SUPPLIER_ZIP, settingsBinding.editSupplierZip.value())
                 .putString(PREF_SUPPLIER_COUNTRY, settingsBinding.editSupplierCountry.value())
                 .putString(PREF_SUPPLIER_ICO, settingsBinding.editSupplierIco.value())
-                .putString(PREF_IBAN, settingsBinding.editIban.value())
-                .putString(PREF_BIC, settingsBinding.editBic.value())
                 .putString(PREF_CLIENT_NAME, settingsBinding.editCustomerName.value())
                 .putString(PREF_CLIENT_STREET, settingsBinding.editCustomerStreet.value())
                 .putString(PREF_CLIENT_CITY, settingsBinding.editCustomerCity.value())
@@ -463,6 +466,11 @@ class JobListFragment : Fragment() {
                 .putString(PREF_EXTRA_PRICE, settingsBinding.editExtraPrice.value().ifBlank { DEFAULT_EXTRA_PRICE })
                 .putString(PREF_CURRENCY, settingsBinding.editCurrency.value().uppercase().ifBlank { "EUR" })
                 .apply()
+            SecureInvoicePrefs.saveBank(
+                context = requireContext(),
+                iban = settingsBinding.editIban.value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT),
+                bic = settingsBinding.editBic.value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT)
+            )
             dialog.dismiss()
             Snackbar.make(binding.root, R.string.invoice_settings_saved, Snackbar.LENGTH_SHORT).show()
         }
@@ -692,8 +700,9 @@ class JobListFragment : Fragment() {
     private fun MaterialCardView.applyOneLineLabels() {
         fun visit(view: View) {
             if (view is TextView) {
-                view.maxLines = 1
-                view.ellipsize = TextUtils.TruncateAt.END
+                view.maxLines = 2
+                view.ellipsize = null
+                view.isSingleLine = false
                 view.gravity = Gravity.CENTER
                 view.textAlignment = View.TEXT_ALIGNMENT_CENTER
                 view.layoutParams = view.layoutParams.apply {

@@ -228,6 +228,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="280dp"
                     android:layout_marginTop="12dp" />
+
+                <GridLayout
+                    android:id="@+id/layoutSalaryLegend"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:alignmentMode="alignMargins"
+                    android:columnCount="2"
+                    android:useDefaultMargins="true" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

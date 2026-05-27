@@ -35,6 +35,7 @@ class AddEntryFragment : Fragment() {
     private lateinit var jobRepository: JobRepository
     private var currentEntry: WorkEntry? = null
     private var selectedMillis: Long? = null
+    private var selectedDateMillis: LongArray = longArrayOf()
     private var loadEntryJob: Job? = null
     private var selectedBreakHours: Double = 0.0
 
@@ -58,11 +59,11 @@ class AddEntryFragment : Fragment() {
         applyResponsiveLayout()
         setupShiftDropdown()
 
-        setFragmentResultListener("calendar_date") { _, b ->
-            selectedMillis = b.getLong("date")
-            val z = ZonedDateTime.ofInstant(Instant.ofEpochMilli(selectedMillis!!), ZoneId.systemDefault())
-            binding.textSelectedDate.text = z.toLocalDate().toString()
-            loadExisting(selectedMillis!!)
+        setFragmentResultListener(CalendarDialogFragment.dateResultKey()) { _, b ->
+            selectDates(longArrayOf(b.getLong("date")))
+        }
+        setFragmentResultListener(CalendarDialogFragment.datesResultKey()) { _, b ->
+            selectDates(b.getLongArray("dates") ?: longArrayOf())
         }
 
         binding.buttonSelectDate.setOnClickListener {
@@ -74,6 +75,13 @@ class AddEntryFragment : Fragment() {
         binding.buttonSaveEntry.setOnClickListener { saveEntry() }
         binding.buttonDeleteEntry.setOnClickListener { deleteEntry() }
         updateBreakSummary()
+
+        findNavController()
+            .previousBackStackEntry
+            ?.savedStateHandle
+            ?.remove<LongArray>(ENTRY_DATES_KEY)
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { selectDates(it) }
     }
 
     private fun applyResponsiveLayout() {
@@ -100,6 +108,21 @@ class AddEntryFragment : Fragment() {
         }
     }
 
+    private fun selectDates(rawDates: LongArray) {
+        val dates = rawDates.distinct().sorted().toLongArray()
+        if (dates.isEmpty()) return
+        selectedDateMillis = dates
+        selectedMillis = dates.first()
+        if (dates.size == 1) {
+            val z = ZonedDateTime.ofInstant(Instant.ofEpochMilli(dates.first()), ZoneId.systemDefault())
+            binding.textSelectedDate.text = z.toLocalDate().toString()
+            loadExisting(dates.first())
+        } else {
+            binding.textSelectedDate.text = getString(R.string.add_entry_selected_dates, dates.size)
+            bindEntry(null)
+        }
+    }
+
     private fun bindEntry(entry: WorkEntry?) {
         val shiftTypes = resources.getStringArray(R.array.shift_types)
         currentEntry = entry
@@ -122,14 +145,16 @@ class AddEntryFragment : Fragment() {
     }
 
     private fun saveEntry() {
-        val millis = selectedMillis ?: run {
-            com.google.android.material.snackbar.Snackbar.make(
-                binding.root,
-                R.string.select_date,
-                com.google.android.material.snackbar.Snackbar.LENGTH_LONG
-            ).show()
-            return
-        }
+        val dates = selectedDateMillis.takeIf { it.isNotEmpty() }
+            ?: selectedMillis?.let { longArrayOf(it) }
+            ?: run {
+                com.google.android.material.snackbar.Snackbar.make(
+                    binding.root,
+                    R.string.select_date,
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show()
+                return
+            }
         binding.inputHours.error = null
         val hours = binding.inputHours.text.toString().replace(',', '.').toDoubleOrNull()
         if (hours == null || hours <= 0.0) {
@@ -144,8 +169,9 @@ class AddEntryFragment : Fragment() {
         val shift = binding.inputShiftType.text?.toString().orEmpty()
         val hol = binding.checkHoliday.isChecked
         viewLifecycleOwner.lifecycleScope.launch {
-            val base = currentEntry ?: jobRepository.getJobById(args.jobId)?.let { job ->
-                WorkEntry(
+            val job = jobRepository.getJobById(args.jobId) ?: return@launch
+            dates.forEachIndexed { index, millis ->
+                val base = currentEntry?.takeIf { dates.size == 1 && index == 0 } ?: WorkEntry(
                     jobId = args.jobId,
                     date = millis,
                     hoursWorked = 0.0,
@@ -158,15 +184,20 @@ class AddEntryFragment : Fragment() {
                     sundayBonus = job.sundayBonus,
                     holidayBonus = job.holidayBonus
                 )
-            } ?: return@launch
 
-            val entry = base.copy(
-                hoursWorked = hours,
-                breakHours = br,
-                shiftType = shift,
-                isHoliday = hol
-            )
-            if (currentEntry == null) viewModel.insert(entry) else viewModel.update(entry)
+                val entry = base.copy(
+                    date = millis,
+                    hoursWorked = hours,
+                    breakHours = br,
+                    shiftType = shift,
+                    isHoliday = hol
+                )
+                if (dates.size == 1 && currentEntry != null) {
+                    viewModel.update(entry)
+                } else {
+                    viewModel.insert(entry)
+                }
+            }
             findNavController().popBackStack()
         }
     }
@@ -211,5 +242,9 @@ class AddEntryFragment : Fragment() {
         super.onDestroyView()
         loadEntryJob?.cancel()
         _binding = null
+    }
+
+    companion object {
+        const val ENTRY_DATES_KEY = "entry_dates"
     }
 }

@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Work Time Tracker</string>
+    <string name="bottom_jobs">Jobs</string>
+    <string name="bottom_month">Month</string>
+    <string name="bottom_stats">Charts</string>
+    <string name="bottom_invoices">Invoices</string>
+    <string name="bottom_settings">Setup</string>
+    <string name="job_detail_title">Job details</string>
     <string name="add_job">Add job</string>
     <string name="add_entry">Add/Edit entry</string>
+    <string name="add_entry_selected_dates">Selected days: %1$d</string>
     <string name="job_detail_add_entry">Add entry</string>
     <string name="hours_worked_month">Hours worked this month: %1$d</string>
     <string name="days_worked_month">Days worked this month: %1$d</string>
@@ -100,6 +107,9 @@
     <string name="calendar_legend_selected">Selected</string>
     <string name="calendar_legend_saved">Has entry</string>
     <string name="calendar_legend_today">Today</string>
+    <string name="calendar_legend_night">Night</string>
+    <string name="calendar_legend_bonus">Bonus</string>
+    <string name="calendar_legend_holiday">Holiday</string>
     <string name="today_short">Today</string>
     <string name="add_selected_entries">Add entry for %1$d days</string>
     <string name="delete_selected_entries">Delete %1$d entries</string>
@@ -182,6 +192,8 @@
     <string name="invoice_iban">IBAN for QR payment</string>
     <string name="invoice_bic">BIC / SWIFT (optional)</string>
     <string name="invoice_description">Service description</string>
+    <string name="invoice_service_quantity">Main item quantity</string>
+    <string name="invoice_service_unit">Main item unit</string>
     <string name="invoice_extra_item_enable">Add transport</string>
     <string name="invoice_settings_title">Invoice settings</string>
     <string name="invoice_settings_subtitle">These details are inserted automatically before PDF creation.</string>
@@ -193,10 +205,13 @@
     <string name="invoice_extra_unit">Unit</string>
     <string name="invoice_extra_price">Unit price</string>
     <string name="invoice_extra_items">Extra items: name | quantity | unit | price</string>
+    <string name="invoice_extra_items_section">Extra items</string>
+    <string name="invoice_extra_items_hint">Write each item on a new line: name | quantity | unit | price.</string>
     <string name="invoice_extra_add">Add item</string>
     <string name="invoice_extra_remove">Remove</string>
     <string name="invoice_issue_date">Issue date YYYY-MM-DD</string>
     <string name="invoice_due_date">Due date YYYY-MM-DD</string>
+    <string name="invoice_dates_section">Invoice dates</string>
     <string name="invoice_currency">Currency</string>
     <string name="invoice_note">Note, IBAN, payment terms</string>
     <string name="invoice_create_pdf">Create PDF</string>
@@ -217,6 +232,7 @@
     <string name="invoice_recreate">Recreate</string>
     <string name="invoice_recreate_direct">Create now</string>
     <string name="invoice_recreate_edit">Recreate with editing</string>
+    <string name="invoice_recreate_edit_hint">Quickly adjust description, service quantity, extras and dates before recreating the PDF.</string>
     <string name="invoice_recreated">Invoice recreated.</string>
     <string name="invoice_status_created">Created</string>
     <string name="invoice_status_sent">Sent</string>

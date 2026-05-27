@@ -23,6 +23,7 @@ import com.example.worktr.util.AutoBackupPasswordStore
 import com.example.worktr.util.AppLanguage
 import com.example.worktr.util.InvoiceLanguage
 import com.example.worktr.util.LanguagePreferences
+import com.example.worktr.util.SecureInvoicePrefs
 import com.example.worktr.util.WorkBackupManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -93,8 +94,8 @@ class SettingsFragment : Fragment() {
         view.input(R.id.editSupplierZip).setText(prefs.getString(PREF_SUPPLIER_ZIP, DEFAULT_SUPPLIER_ZIP))
         view.input(R.id.editSupplierCountry).setText(prefs.getString(PREF_SUPPLIER_COUNTRY, DEFAULT_COUNTRY))
         view.input(R.id.editSupplierIco).setText(prefs.getString(PREF_SUPPLIER_ICO, DEFAULT_SUPPLIER_ICO))
-        view.input(R.id.editIban).setText(prefs.getString(PREF_IBAN, ""))
-        view.input(R.id.editBic).setText(prefs.getString(PREF_BIC, ""))
+        view.input(R.id.editIban).setText(SecureInvoicePrefs.readIban(requireContext()))
+        view.input(R.id.editBic).setText(SecureInvoicePrefs.readBic(requireContext()))
         view.input(R.id.editCurrency).setText(prefs.getString(PREF_CURRENCY, "EUR"))
         view.input(R.id.editExtraName).setText(prefs.getString(PREF_EXTRA_NAME, DEFAULT_EXTRA_NAME))
         view.input(R.id.editExtraQuantity).setText(prefs.getString(PREF_EXTRA_QUANTITY, DEFAULT_EXTRA_QUANTITY))
@@ -110,8 +111,6 @@ class SettingsFragment : Fragment() {
             .putString(PREF_SUPPLIER_ZIP, view.input(R.id.editSupplierZip).value())
             .putString(PREF_SUPPLIER_COUNTRY, view.input(R.id.editSupplierCountry).value())
             .putString(PREF_SUPPLIER_ICO, view.input(R.id.editSupplierIco).value())
-            .putString(PREF_IBAN, view.input(R.id.editIban).value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT))
-            .putString(PREF_BIC, view.input(R.id.editBic).value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT))
             .putString(PREF_CURRENCY, view.input(R.id.editCurrency).value().uppercase(Locale.ROOT).ifBlank { "EUR" })
             .putString(
                 PREF_PDF_LANGUAGE,
@@ -124,6 +123,11 @@ class SettingsFragment : Fragment() {
             .putString(PREF_EXTRA_UNIT, view.input(R.id.editExtraUnit).value())
             .putString(PREF_EXTRA_PRICE, view.input(R.id.editExtraPrice).value().ifBlank { DEFAULT_EXTRA_PRICE })
             .apply()
+        SecureInvoicePrefs.saveBank(
+            context = requireContext(),
+            iban = view.input(R.id.editIban).value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT),
+            bic = view.input(R.id.editBic).value().replace(Regex("\\s+"), "").uppercase(Locale.ROOT)
+        )
         requireContext().getSharedPreferences(BACKUP_PREFS, Context.MODE_PRIVATE).edit()
             .putString(
                 AutoBackupManager.PREF_AUTO_BACKUP_INTERVAL,

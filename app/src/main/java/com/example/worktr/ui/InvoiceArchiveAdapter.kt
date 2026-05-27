@@ -1,7 +1,10 @@
 package com.example.worktr.ui
 
+import android.content.res.ColorStateList
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -60,6 +63,8 @@ class InvoiceArchiveAdapter(
                 createdDate.format(dateFormatter)
             )
             binding.textInvoiceStatus.text = invoice.statusLabel(context)
+            binding.textInvoiceStatus.backgroundTintList = ColorStateList.valueOf(invoice.statusColor(context))
+            binding.textInvoiceStatus.setTextColor(ContextCompat.getColor(context, R.color.onPrimary))
             binding.textInvoiceStatus.setOnClickListener { onStatus(invoice) }
             binding.buttonOpenInvoice.setOnClickListener { onOpen(invoice) }
             binding.buttonShareInvoice.setOnClickListener { onShare(invoice) }
@@ -78,6 +83,14 @@ class InvoiceArchiveAdapter(
             InvoiceStatus.SENT -> context.getString(R.string.invoice_status_sent)
             InvoiceStatus.PAID -> context.getString(R.string.invoice_status_paid)
             InvoiceStatus.OVERDUE -> context.getString(R.string.invoice_status_overdue)
+        }
+
+    private fun InvoiceRecord.statusColor(context: Context): Int =
+        when (InvoiceStatus.fromValue(status)) {
+            InvoiceStatus.CREATED -> ContextCompat.getColor(context, R.color.chart_highlight)
+            InvoiceStatus.SENT -> ContextCompat.getColor(context, R.color.calendar_selected_fill)
+            InvoiceStatus.PAID -> ContextCompat.getColor(context, R.color.primary)
+            InvoiceStatus.OVERDUE -> ContextCompat.getColor(context, R.color.error)
         }
 
     private object Diff : DiffUtil.ItemCallback<InvoiceRecord>() {

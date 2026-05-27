@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.FileProvider
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
@@ -59,11 +60,6 @@ class InvoiceArchiveFragment : Fragment() {
         maximumFractionDigits = 2
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentInvoiceArchiveBinding.inflate(inflater, container, false)
         return binding.root
@@ -72,6 +68,7 @@ class InvoiceArchiveFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val profile = ResponsiveUi.profile(requireContext())
         ResponsiveUi.applyOuterPadding(binding.invoiceArchiveContent, profile)
+        setupMenu()
         allLabel = getString(R.string.invoice_filter_all)
         statusLabels = mapOf(
             allLabel to null,
@@ -105,18 +102,25 @@ class InvoiceArchiveFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_invoice_archive, menu)
-    }
+    private fun setupMenu() {
+        requireActivity().addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_invoice_archive, menu)
+                }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_export_invoice_zip -> {
-                showExportZipDialog()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
+                    when (menuItem.itemId) {
+                        R.id.action_export_invoice_zip -> {
+                            showExportZipDialog()
+                            true
+                        }
+                        else -> false
+                    }
+            },
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
     private fun setupFilters() {
@@ -264,6 +268,8 @@ class InvoiceArchiveFragment : Fragment() {
         }
         val dialogBinding = DialogInvoiceRecreateEditBinding.inflate(layoutInflater)
         dialogBinding.editDescription.setText(input.description)
+        dialogBinding.editServiceQuantity.setText(input.serviceQuantity?.toString().orEmpty())
+        dialogBinding.editServiceUnit.setText(input.serviceUnit)
         dialogBinding.editExtraItems.setText(input.allExtraItems().joinToString("\n") {
             listOf(it.name, it.quantity.toString(), it.unit, it.unitPrice.toString()).joinToString(" | ")
         })
@@ -278,6 +284,14 @@ class InvoiceArchiveFragment : Fragment() {
             val editedInput = runCatching {
                 input.copy(
                     description = dialogBinding.editDescription.text?.toString()?.trim().orEmpty(),
+                    serviceQuantity = dialogBinding.editServiceQuantity.text
+                        ?.toString()
+                        ?.trim()
+                        .orEmpty()
+                        .replace(',', '.')
+                        .toDoubleOrNull()
+                        ?.takeIf { it > 0.0 },
+                    serviceUnit = dialogBinding.editServiceUnit.text?.toString()?.trim().orEmpty(),
                     extraItem = null,
                     extraItems = parseExtraItems(dialogBinding.editExtraItems.text?.toString().orEmpty()),
                     issueDate = LocalDate.parse(dialogBinding.editIssueDate.text?.toString()?.trim().orEmpty()),
@@ -333,7 +347,11 @@ class InvoiceArchiveFragment : Fragment() {
                     val input = inputOverride ?: InvoiceInputJson.decode(invoice.inputJson)
                     val generatedFile = InvoicePdfGenerator(appContext).generate(job, entries, period, input)
                     val archiveFile = InvoiceFiles.persist(appContext, generatedFile)
-                    val totalAmount = InvoiceRules.calculateTotals(entries, input.allExtraItems()).total
+                    val totalAmount = InvoiceRules.calculateTotals(
+                        entries = entries,
+                        extraItems = input.allExtraItems(),
+                        serviceQuantityOverride = input.serviceQuantity
+                    ).total
                     db.invoiceDao().update(
                         invoice.copy(
                             jobName = job.name,
