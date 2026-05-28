@@ -298,10 +298,11 @@ class StatsFragment : Fragment() {
                 )
 
                 if (!isMonth) {
+                    val averagePeriodCount = averageYearPeriodCount(year)
                     avgHoursLabel.visibility = View.VISIBLE
                     avgSalaryLabel.visibility = View.VISIBLE
-                    avgHoursLabel.text = getString(R.string.avg_hours, totalHours / periodCount)
-                    avgSalaryLabel.text = getString(R.string.avg_salary, totalSalary / periodCount)
+                    avgHoursLabel.text = getString(R.string.avg_hours, safeAverage(totalHours, averagePeriodCount))
+                    avgSalaryLabel.text = getString(R.string.avg_salary, safeAverage(totalSalary, averagePeriodCount))
                 } else {
                     avgHoursLabel.visibility = View.GONE
                     avgSalaryLabel.visibility = View.GONE
@@ -483,6 +484,18 @@ class StatsFragment : Fragment() {
             }
         }
     }
+
+    private fun averageYearPeriodCount(year: Int): Int {
+        val now = LocalDate.now()
+        return when {
+            year < now.year -> 12
+            year == now.year -> now.monthValue
+            else -> 0
+        }
+    }
+
+    private fun safeAverage(total: Double, periodCount: Int): Double =
+        if (periodCount > 0) total / periodCount else 0.0
 
     private fun updateScopeHeader(activeJobs: Int?) {
         val root = view ?: return

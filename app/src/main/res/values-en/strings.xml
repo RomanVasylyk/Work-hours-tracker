@@ -211,6 +211,7 @@
     <string name="invoice_extra_remove">Remove</string>
     <string name="invoice_issue_date">Issue date YYYY-MM-DD</string>
     <string name="invoice_due_date">Due date YYYY-MM-DD</string>
+    <string name="invoice_due_date_auto">Due date will be: %1$s</string>
     <string name="invoice_dates_section">Invoice dates</string>
     <string name="invoice_currency">Currency</string>
     <string name="invoice_note">Note, IBAN, payment terms</string>

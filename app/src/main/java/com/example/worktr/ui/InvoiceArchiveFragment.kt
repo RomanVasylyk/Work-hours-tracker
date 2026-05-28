@@ -10,6 +10,7 @@ import android.view.MenuItem
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.core.content.FileProvider
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -22,18 +23,21 @@ import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.InvoiceRecord
 import com.example.worktr.databinding.DialogInvoiceRecreateEditBinding
 import com.example.worktr.databinding.FragmentInvoiceArchiveBinding
+import com.example.worktr.databinding.ItemInvoiceExtraPositionBinding
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.responsive.ResponsiveUi
 import com.example.worktr.util.InvoiceFiles
 import com.example.worktr.util.InvoiceExtraItem
 import com.example.worktr.util.InvoiceInput
 import com.example.worktr.util.InvoiceInputJson
+import com.example.worktr.util.InvoiceLanguage
 import com.example.worktr.util.InvoicePdfGenerator
 import com.example.worktr.util.InvoiceRules
 import com.example.worktr.util.InvoiceStatus
 import com.example.worktr.util.workedHours
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -47,6 +51,8 @@ import java.text.NumberFormat
 import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+
+private const val INVOICE_DUE_DAYS = 15L
 
 class InvoiceArchiveFragment : Fragment() {
     private var _binding: FragmentInvoiceArchiveBinding? = null
@@ -270,11 +276,40 @@ class InvoiceArchiveFragment : Fragment() {
         dialogBinding.editDescription.setText(input.description)
         dialogBinding.editServiceQuantity.setText(input.serviceQuantity?.toString().orEmpty())
         dialogBinding.editServiceUnit.setText(input.serviceUnit)
-        dialogBinding.editExtraItems.setText(input.allExtraItems().joinToString("\n") {
-            listOf(it.name, it.quantity.toString(), it.unit, it.unitPrice.toString()).joinToString(" | ")
-        })
+        dialogBinding.editCurrency.setText(input.currency.ifBlank { "EUR" })
+        val invoiceLanguages = InvoiceLanguage.entries.map { it.label }
+        val selectedLanguage = InvoiceLanguage.fromCode(input.pdfLanguage)
+        dialogBinding.inputPdfLanguage.setAdapter(DropdownUi.adapter(requireContext(), invoiceLanguages))
+        dialogBinding.inputPdfLanguage.setText(selectedLanguage.label, false)
+        DropdownUi.attach(dialogBinding.inputPdfLanguage) {
+            invoiceLanguages.indexOf(dialogBinding.inputPdfLanguage.text?.toString().orEmpty()).takeIf { it >= 0 }
+        }
+        dialogBinding.inputPdfLanguage.setOnItemClickListener { _, _, _, _ ->
+            if (dialogBinding.editServiceUnit.value().isBlank()) {
+                dialogBinding.editServiceUnit.setText(
+                    defaultServiceUnit(InvoiceLanguage.fromLabel(dialogBinding.inputPdfLanguage.text?.toString().orEmpty()))
+                )
+            }
+        }
+        input.allExtraItems().forEach { addExtraItemRow(dialogBinding.layoutExtraItemsContainer, it) }
+        dialogBinding.buttonAddExtraItem.setOnClickListener {
+            addExtraItemRow(dialogBinding.layoutExtraItemsContainer)
+        }
         dialogBinding.editIssueDate.setText(input.issueDate.toString())
-        dialogBinding.editDueDate.setText(input.dueDate.toString())
+        fun updateDueDatePreview() {
+            val issueDate = dialogBinding.editIssueDate.value().let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            dialogBinding.textDueDatePreview.text = if (issueDate != null) {
+                getString(R.string.invoice_due_date_auto, issueDate.plusDays(INVOICE_DUE_DAYS).toString())
+            } else {
+                getString(R.string.invoice_due_date_auto, input.dueDate.toString())
+            }
+        }
+        dialogBinding.editIssueDate.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = updateDueDatePreview()
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
+        updateDueDatePreview()
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setView(dialogBinding.root)
@@ -282,6 +317,7 @@ class InvoiceArchiveFragment : Fragment() {
         dialogBinding.buttonCancelInvoice.setOnClickListener { dialog.dismiss() }
         dialogBinding.buttonCreateInvoice.setOnClickListener {
             val editedInput = runCatching {
+                val issueDate = LocalDate.parse(dialogBinding.editIssueDate.value())
                 input.copy(
                     description = dialogBinding.editDescription.text?.toString()?.trim().orEmpty(),
                     serviceQuantity = dialogBinding.editServiceQuantity.text
@@ -293,9 +329,11 @@ class InvoiceArchiveFragment : Fragment() {
                         ?.takeIf { it > 0.0 },
                     serviceUnit = dialogBinding.editServiceUnit.text?.toString()?.trim().orEmpty(),
                     extraItem = null,
-                    extraItems = parseExtraItems(dialogBinding.editExtraItems.text?.toString().orEmpty()),
-                    issueDate = LocalDate.parse(dialogBinding.editIssueDate.text?.toString()?.trim().orEmpty()),
-                    dueDate = LocalDate.parse(dialogBinding.editDueDate.text?.toString()?.trim().orEmpty())
+                    extraItems = readExtraItemRows(dialogBinding.layoutExtraItemsContainer),
+                    currency = dialogBinding.editCurrency.value().uppercase(Locale.ROOT).ifBlank { "EUR" },
+                    pdfLanguage = InvoiceLanguage.fromLabel(dialogBinding.inputPdfLanguage.text?.toString().orEmpty()).code,
+                    issueDate = issueDate,
+                    dueDate = issueDate.plusDays(INVOICE_DUE_DAYS)
                 )
             }.getOrElse {
                 Snackbar.make(dialogBinding.root, it.message ?: getString(R.string.invoice_open_failed), Snackbar.LENGTH_LONG).show()
@@ -472,20 +510,55 @@ class InvoiceArchiveFragment : Fragment() {
             .onFailure { Snackbar.make(binding.root, R.string.invoice_open_failed, Snackbar.LENGTH_LONG).show() }
     }
 
-    private fun parseExtraItems(text: String): List<InvoiceExtraItem> =
-        text.lines()
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .map { line ->
-                val parts = line.split("|").map { it.trim() }
-                require(parts.size >= 4) { getString(R.string.invoice_extra_items) }
+    private fun addExtraItemRow(container: LinearLayout, item: InvoiceExtraItem? = null) {
+        val rowBinding = ItemInvoiceExtraPositionBinding.inflate(layoutInflater, container, false)
+        rowBinding.editExtraRowName.setText(item?.name.orEmpty())
+        rowBinding.editExtraRowQuantity.setText(item?.quantity?.toString().orEmpty())
+        rowBinding.editExtraRowUnit.setText(item?.unit.orEmpty())
+        rowBinding.editExtraRowPrice.setText(item?.unitPrice?.toString().orEmpty())
+        rowBinding.buttonRemoveExtraRow.setOnClickListener {
+            container.removeView(rowBinding.root)
+        }
+        container.addView(rowBinding.root)
+    }
+
+    private fun readExtraItemRows(container: LinearLayout): List<InvoiceExtraItem> =
+        (0 until container.childCount)
+            .mapNotNull { index ->
+                val row = container.getChildAt(index)
+                val name = row.findViewById<TextInputEditText>(R.id.editExtraRowName)
+                    ?.value()
+                    .orEmpty()
+                if (name.isBlank()) return@mapNotNull null
                 InvoiceExtraItem(
-                    name = parts[0],
-                    quantity = parts[1].replace(',', '.').toDouble(),
-                    unit = parts[2],
-                    unitPrice = parts[3].replace(',', '.').toDouble()
+                    name = name,
+                    quantity = row.findViewById<TextInputEditText>(R.id.editExtraRowQuantity)
+                        ?.value()
+                        .orEmpty()
+                        .ifBlank { "0" }
+                        .toInvoiceDouble(0.0),
+                    unit = row.findViewById<TextInputEditText>(R.id.editExtraRowUnit)
+                        ?.value()
+                        .orEmpty(),
+                    unitPrice = row.findViewById<TextInputEditText>(R.id.editExtraRowPrice)
+                        ?.value()
+                        .orEmpty()
+                        .ifBlank { "0" }
+                        .toInvoiceDouble(0.0)
                 )
             }
+
+    private fun TextInputEditText.value(): String = text?.toString()?.trim().orEmpty()
+
+    private fun String.toInvoiceDouble(defaultValue: Double): Double =
+        replace(',', '.').toDoubleOrNull() ?: defaultValue
+
+    private fun defaultServiceUnit(language: InvoiceLanguage): String =
+        when (language) {
+            InvoiceLanguage.SLOVAK -> "hod"
+            InvoiceLanguage.UKRAINIAN -> "год"
+            InvoiceLanguage.ENGLISH -> "hrs"
+        }
 
     private fun InvoiceInput.allExtraItems(): List<InvoiceExtraItem> =
         extraItems.ifEmpty { listOfNotNull(extraItem) }

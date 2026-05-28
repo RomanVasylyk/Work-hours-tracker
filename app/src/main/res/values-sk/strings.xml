@@ -211,6 +211,7 @@
     <string name="invoice_extra_remove">Odstrániť</string>
     <string name="invoice_issue_date">Dátum vystavenia YYYY-MM-DD</string>
     <string name="invoice_due_date">Dátum splatnosti YYYY-MM-DD</string>
+    <string name="invoice_due_date_auto">Dátum splatnosti bude: %1$s</string>
     <string name="invoice_dates_section">Dátumy faktúry</string>
     <string name="invoice_currency">Mena</string>
     <string name="invoice_note">Poznámka, IBAN, platobné podmienky</string>

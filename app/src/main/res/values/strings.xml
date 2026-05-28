@@ -211,6 +211,7 @@
     <string name="invoice_extra_remove">Видалити</string>
     <string name="invoice_issue_date">Dátum vystavenia YYYY-MM-DD</string>
     <string name="invoice_due_date">Dátum splatnosti YYYY-MM-DD</string>
+    <string name="invoice_due_date_auto">Термін оплати буде: %1$s</string>
     <string name="invoice_dates_section">Дати фактури</string>
     <string name="invoice_currency">Валюта</string>
     <string name="invoice_note">Примітка, IBAN, умови оплати</string>

@@ -85,6 +85,37 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="@string/settings_pdf_language">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/inputPdfLanguage"
+                style="@style/Widget.WorkTracker.DropdownInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.WorkTracker.TextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="@string/invoice_currency">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editCurrency"
+                style="@style/Widget.WorkTracker.TextInputEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapCharacters"
+                android:maxLength="8" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <TextView
             style="@style/TextAppearance.Material3.TitleMedium"
             android:layout_width="match_parent"
@@ -92,30 +123,20 @@
             android:layout_marginTop="18dp"
             android:text="@string/invoice_extra_items_section" />
 
-        <TextView
-            style="@style/TextAppearance.Material3.BodySmall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/invoice_extra_items_hint"
-            android:textColor="@color/chart_axis_text" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.WorkTracker.TextInputLayout"
+        <LinearLayout
+            android:id="@+id/layoutExtraItemsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:hint="@string/invoice_extra_items">
+            android:orientation="vertical" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editExtraItems"
-                style="@style/Widget.WorkTracker.TextInputEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="top"
-                android:inputType="textMultiLine|textCapSentences"
-                android:minLines="3" />
-        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonAddExtraItem"
+            style="@style/Widget.WorkTracker.Button.Outlined"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/invoice_extra_add" />
 
         <TextView
             style="@style/TextAppearance.Material3.TitleMedium"
@@ -139,20 +160,13 @@
                 android:inputType="date" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.WorkTracker.TextInputLayout"
+        <TextView
+            android:id="@+id/textDueDatePreview"
+            style="@style/TextAppearance.Material3.BodyMedium"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:hint="@string/invoice_due_date">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editDueDate"
-                style="@style/Widget.WorkTracker.TextInputEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="date" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:textColor="@color/chart_axis_text" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonCreateInvoice"
