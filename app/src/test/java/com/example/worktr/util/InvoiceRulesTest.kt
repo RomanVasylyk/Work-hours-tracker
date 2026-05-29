@@ -10,13 +10,13 @@ import java.time.ZoneId
 
 class InvoiceRulesTest {
     @Test
-    fun firstDayOfMonthUsesLastClosedMonth() {
+    fun currentMonthSelectionStaysCurrentMonth() {
         val period = InvoiceRules.selectedInvoicePeriod(
             today = LocalDate.of(2026, 5, 1),
             selected = YearMonth.of(2026, 5)
         )
 
-        assertEquals(YearMonth.of(2026, 4), period)
+        assertEquals(YearMonth.of(2026, 5), period)
     }
 
     @Test
@@ -30,13 +30,13 @@ class InvoiceRulesTest {
     }
 
     @Test
-    fun futureSelectionIsClampedToLastClosedMonth() {
+    fun futureSelectionStaysSelectedMonth() {
         val period = InvoiceRules.selectedInvoicePeriod(
             today = LocalDate.of(2026, 5, 26),
             selected = YearMonth.of(2026, 12)
         )
 
-        assertEquals(YearMonth.of(2026, 4), period)
+        assertEquals(YearMonth.of(2026, 12), period)
     }
 
     @Test

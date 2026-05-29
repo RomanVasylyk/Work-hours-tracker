@@ -6,9 +6,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 object InvoiceRules {
+    @Suppress("UNUSED_PARAMETER")
     fun selectedInvoicePeriod(today: LocalDate, selected: YearMonth): YearMonth {
-        val lastClosedMonth = YearMonth.from(today).minusMonths(1)
-        return if (selected > lastClosedMonth) lastClosedMonth else selected
+        return selected
     }
 
     fun defaultInvoiceNumber(period: YearMonth, currentSequence: Int): String =
