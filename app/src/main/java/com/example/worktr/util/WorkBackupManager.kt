@@ -230,7 +230,7 @@ class WorkBackupManager(
                 date = json.optLong("date"),
                 hoursWorked = json.optDouble("hoursWorked", 0.0),
                 breakHours = json.optDouble("breakHours", 0.0),
-                shiftType = json.optString("shiftType"),
+                shiftType = ShiftType.fromStored(json.optString("shiftType")).code,
                 isHoliday = json.optBoolean("isHoliday", false),
                 hourlyRate = json.optDouble("hourlyRate", 0.0),
                 nightBonus = json.optDouble("nightBonus", 0.0),

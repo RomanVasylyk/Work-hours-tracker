@@ -312,6 +312,10 @@
     <string name="validation_positive_number">Enter a number greater than 0.</string>
     <string name="validation_non_negative_number">Enter a number of 0 or more.</string>
     <string name="validation_break_too_large">Break cannot be longer than shift hours.</string>
+    <string name="invoice_number_taken">Invoice number %1$s already exists — choose a different number.</string>
+    <string name="job_delete_title">Delete job?</string>
+    <string name="job_delete_message">“%1$s” and all of its time entries and client data will be deleted permanently.</string>
+    <string name="job_delete_confirm">Delete</string>
 
     <string-array name="months">
         <item>January</item>

@@ -167,7 +167,7 @@ class CsvImporter(
             dateMillis = parseDate(dateValue, lineNumber),
             hoursWorked = rowMap["hoursWorked"].toDoubleSafe(),
             breakHours = rowMap["breakHours"].toDoubleSafe(),
-            shiftType = rowMap["shiftType"].takeUnless { it.isNullOrBlank() } ?: "Денна",
+            shiftType = ShiftType.fromStored(rowMap["shiftType"]).code,
             isHoliday = rowMap["isHoliday"].toBooleanSafe(),
             hourlyRate = rowMap["hourlyRate"].toDoubleSafe(),
             nightBonus = rowMap["nightBonus"].toDoubleSafe(),

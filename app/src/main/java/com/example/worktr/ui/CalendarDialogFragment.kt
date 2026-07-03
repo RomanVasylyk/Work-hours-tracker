@@ -28,6 +28,7 @@ import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.example.worktr.ui.responsive.ResponsiveProfile
 import com.example.worktr.ui.responsive.ResponsiveUi
+import com.example.worktr.util.ShiftType
 import com.example.worktr.util.localDate
 import com.example.worktr.util.salaryBreakdown
 import com.example.worktr.util.workedHours
@@ -252,8 +253,10 @@ class CalendarDialogFragment : DialogFragment() {
         }
         view.findViewById<TextView>(R.id.textEntryDate).text =
             getString(R.string.entry_details_date, date.toString())
+        val shiftLabels = resources.getStringArray(R.array.shift_types)
+        val shiftLabel = shiftLabels.getOrElse(ShiftType.fromStored(entry.shiftType).labelIndex) { entry.shiftType }
         view.findViewById<TextView>(R.id.textEntryShift).text =
-            getString(R.string.entry_details_shift, entry.shiftType)
+            getString(R.string.entry_details_shift, shiftLabel)
         view.findViewById<TextView>(R.id.textEntryHours).text =
             getString(R.string.entry_details_hours, numberFormatter.format(entry.hoursWorked))
         view.findViewById<TextView>(R.id.textEntryBreak).text =
@@ -463,9 +466,7 @@ class CalendarDialogFragment : DialogFragment() {
     }
 
     private fun isNightShift(entry: WorkEntry): Boolean =
-        entry.shiftType.lowercase(Locale.getDefault()).let { shift ->
-            shift.contains("ніч") || shift.contains("night") || shift.contains("noč")
-        }
+        ShiftType.fromStored(entry.shiftType) == ShiftType.NIGHT
 
     private fun updateSelectionUi() {
         val primary = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorPrimary)

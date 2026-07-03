@@ -19,6 +19,7 @@ import com.example.worktr.databinding.FragmentAddEntryBinding
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.picker.DurationPicker
 import com.example.worktr.ui.responsive.ResponsiveUi
+import com.example.worktr.util.ShiftType
 import com.example.worktr.viewmodel.AddEntryViewModel
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import kotlinx.coroutines.Job
@@ -129,8 +130,9 @@ class AddEntryFragment : Fragment() {
         if (entry != null) {
             binding.inputHours.setText(entry.hoursWorked.toString())
             selectedBreakHours = entry.breakHours
-            val selectedShift = shiftTypes.find { it.equals(entry.shiftType, ignoreCase = true) }
-                ?: shiftTypes.firstOrNull().orEmpty()
+            val selectedShift = shiftTypes.getOrElse(ShiftType.fromStored(entry.shiftType).labelIndex) {
+                shiftTypes.firstOrNull().orEmpty()
+            }
             binding.inputShiftType.setText(selectedShift, false)
             binding.checkHoliday.isChecked = entry.isHoliday
             binding.buttonDeleteEntry.visibility = View.VISIBLE
@@ -166,7 +168,7 @@ class AddEntryFragment : Fragment() {
             binding.inputHours.error = getString(R.string.validation_break_too_large)
             return
         }
-        val shift = binding.inputShiftType.text?.toString().orEmpty()
+        val shift = ShiftType.fromStored(binding.inputShiftType.text?.toString()).code
         val hol = binding.checkHoliday.isChecked
         viewLifecycleOwner.lifecycleScope.launch {
             val job = jobRepository.getJobById(args.jobId) ?: return@launch

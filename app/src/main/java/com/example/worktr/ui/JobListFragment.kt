@@ -294,8 +294,15 @@ class JobListFragment : Fragment() {
             dlg.dismiss()
         }
         v.findViewById<MaterialButton>(R.id.buttonDelete).setOnClickListener {
-            viewModel.delete(job)
-            dlg.dismiss()
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.job_delete_title)
+                .setMessage(getString(R.string.job_delete_message, job.name))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.job_delete_confirm) { _, _ ->
+                    viewModel.delete(job)
+                    dlg.dismiss()
+                }
+                .show()
         }
         dlg.show()
     }

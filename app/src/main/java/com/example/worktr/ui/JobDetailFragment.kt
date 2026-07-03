@@ -44,6 +44,7 @@ import com.example.worktr.util.ClientDefaults
 import com.example.worktr.util.PaymentValidation
 import com.example.worktr.util.PaymentValidationResult
 import com.example.worktr.util.SecureInvoicePrefs
+import com.example.worktr.util.ShiftType
 import com.example.worktr.util.workedHours
 import com.example.worktr.viewmodel.JobDetailViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -250,10 +251,10 @@ class JobDetailFragment : Fragment() {
                         val h = entry.hoursWorked - entry.breakHours
                         hours += h
 
-                        when (entry.shiftType.lowercase()) {
-                            "ранкова","morning" -> morning++
-                            "денна","day"       -> dayCount++
-                            "нічна","night"     -> night++
+                        when (ShiftType.fromStored(entry.shiftType)) {
+                            ShiftType.MORNING -> morning++
+                            ShiftType.DAY -> dayCount++
+                            ShiftType.NIGHT -> night++
                         }
 
                         val date = Instant.ofEpochMilli(entry.date).atZone(zone).toLocalDate()
@@ -265,7 +266,7 @@ class JobDetailFragment : Fragment() {
 
                         baseSalary += h * entry.hourlyRate
 
-                        if (entry.shiftType.lowercase() in listOf("нічна","night")) {
+                        if (ShiftType.fromStored(entry.shiftType) == ShiftType.NIGHT) {
                             bonusNight += h * entry.nightBonus
                         }
                         if (date.dayOfWeek == DayOfWeek.SATURDAY) {
@@ -625,11 +626,16 @@ class JobDetailFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
-                val entries = withContext(Dispatchers.IO) {
-                    workRepository.getEntriesForPeriod(job.jobId, start, end).first()
+                val (entries, duplicateInvoice) = withContext(Dispatchers.IO) {
+                    val invoiceDao = DatabaseProvider.get(appContext).invoiceDao()
+                    workRepository.getEntriesForPeriod(job.jobId, start, end).first() to
+                        invoiceDao.getInvoiceByNumber(draft.invoiceNumber)
                 }
                 if (entries.isEmpty()) {
                     error(getString(R.string.invoice_no_entries))
+                }
+                if (duplicateInvoice != null) {
+                    error(getString(R.string.invoice_number_taken, draft.invoiceNumber))
                 }
 
                 withContext(Dispatchers.IO) {

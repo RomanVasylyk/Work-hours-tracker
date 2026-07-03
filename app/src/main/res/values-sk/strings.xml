@@ -312,6 +312,10 @@
     <string name="validation_positive_number">Zadajte číslo väčšie ako 0.</string>
     <string name="validation_non_negative_number">Zadajte číslo 0 alebo viac.</string>
     <string name="validation_break_too_large">Prestávka nemôže byť dlhšia ako hodiny zmeny.</string>
+    <string name="invoice_number_taken">Faktúra s číslom %1$s už existuje — zvoľte iné číslo.</string>
+    <string name="job_delete_title">Odstrániť prácu?</string>
+    <string name="job_delete_message">Práca „%1$s“ a všetky jej záznamy hodín a údaje klienta budú natrvalo odstránené.</string>
+    <string name="job_delete_confirm">Odstrániť</string>
 
     <string-array name="months">
         <item>Január</item>

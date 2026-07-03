@@ -26,7 +26,7 @@ fun WorkEntry.salaryBreakdown(zone: ZoneId = ZoneId.systemDefault()): SalaryBrea
     val workedHours = workedHours()
     val date = localDate(zone)
     val base = workedHours * hourlyRate
-    val night = if (shiftType.equals("нічна", ignoreCase = true) || shiftType.equals("night", ignoreCase = true)) {
+    val night = if (ShiftType.fromStored(shiftType) == ShiftType.NIGHT) {
         workedHours * nightBonus
     } else {
         0.0

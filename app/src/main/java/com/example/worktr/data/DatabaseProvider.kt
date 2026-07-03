@@ -6,8 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.worktr.util.ShiftType
 
-@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class, Client::class], version = 7, exportSchema = true)
+@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class, Client::class], version = 8, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun workEntryDao(): WorkEntryDao
@@ -118,6 +119,29 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Normalize localized shiftType values ("Нічна"/"Night"/"Nočná", …)
+            // to the canonical codes from ShiftType.
+            val remapped = mutableMapOf<String, String>()
+            db.query("SELECT DISTINCT shiftType FROM work_entries").use { cursor ->
+                while (cursor.moveToNext()) {
+                    val stored = cursor.getString(0) ?: continue
+                    val canonical = ShiftType.fromStored(stored).code
+                    if (canonical != stored) {
+                        remapped[stored] = canonical
+                    }
+                }
+            }
+            remapped.forEach { (stored, canonical) ->
+                db.execSQL(
+                    "UPDATE work_entries SET shiftType = ? WHERE shiftType = ?",
+                    arrayOf(canonical, stored)
+                )
+            }
+        }
+    }
+
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
@@ -134,6 +158,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_4_5)
                 .addMigrations(MIGRATION_5_6)
                 .addMigrations(MIGRATION_6_7)
+                .addMigrations(MIGRATION_7_8)
                 .build()
                 .also { INSTANCE = it }
         }
