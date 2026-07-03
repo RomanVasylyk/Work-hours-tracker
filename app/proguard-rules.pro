@@ -1,21 +1,15 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep readable stack traces in release builds.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Pay by Square encoder builds the payment payload; keep it intact.
+-keep class io.github.janhalasa.paybysquare.** { *; }
+-dontwarn io.github.janhalasa.paybysquare.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ZXing core (QR + Code128 rendering on the invoice PDF).
+-keep class com.google.zxing.** { *; }
+-dontwarn com.google.zxing.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# XZ compression used by Pay by Square.
+-keep class org.tukaani.xz.** { *; }
+-dontwarn org.tukaani.xz.**

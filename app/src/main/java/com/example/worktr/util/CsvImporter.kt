@@ -183,7 +183,15 @@ class CsvImporter(
             when {
                 value.all { it.isDigit() } && value.length >= 10 -> {
                     val numeric = value.toLong()
-                    if (value.length > 11) numeric else Instant.ofEpochSecond(numeric).toEpochMilli()
+                    val millis = if (value.length > 11) numeric else Instant.ofEpochSecond(numeric).toEpochMilli()
+                    // Normalize to the start of the local day so the unique
+                    // (jobId, date) index really means "one entry per calendar day".
+                    Instant.ofEpochMilli(millis)
+                        .atZone(zone)
+                        .toLocalDate()
+                        .atStartOfDay(zone)
+                        .toInstant()
+                        .toEpochMilli()
                 }
                 else -> LocalDate.parse(value).atStartOfDay(zone).toInstant().toEpochMilli()
             }

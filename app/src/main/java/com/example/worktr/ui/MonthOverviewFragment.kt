@@ -26,11 +26,11 @@ import java.util.Locale
 class MonthOverviewFragment : Fragment() {
     private var _binding: FragmentMonthOverviewBinding? = null
     private val binding get() = _binding!!
-    private val numberFormat = NumberFormat.getNumberInstance(Locale("sk", "SK")).apply {
+    private val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
     }
-    private val hoursFormat = NumberFormat.getNumberInstance(Locale("sk", "SK")).apply {
+    private val hoursFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
         minimumFractionDigits = 0
         maximumFractionDigits = 1
     }
@@ -72,16 +72,21 @@ class MonthOverviewFragment : Fragment() {
             val salary = entries.sumOf { it.salaryBreakdown(zone).total }
             val days = entries.map { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }.distinct().size
 
-            binding.textMonthHours.text = "Години\n${hoursFormat.format(hours)} hod"
-            binding.textMonthSalary.text = "Зарплата\n${numberFormat.format(salary)} €"
-            binding.textMonthDays.text = "Дні\n$days"
-            binding.textMonthInvoices.text = "Фактури\n${invoices.size}"
+            binding.textMonthHours.text = getString(R.string.month_stat_hours, hoursFormat.format(hours))
+            binding.textMonthSalary.text = getString(R.string.month_stat_salary, numberFormat.format(salary))
+            binding.textMonthDays.text = getString(R.string.month_stat_days, days)
+            binding.textMonthInvoices.text = getString(R.string.month_stat_invoices, invoices.size)
             binding.textMonthJobs.text = entries.groupBy { it.jobId }
                 .map { (jobId, jobEntries) ->
                     val jobName = jobs[jobId]?.name ?: "Job $jobId"
                     val jobHours = jobEntries.sumOf { it.workedHours() }
                     val jobSalary = jobEntries.sumOf { it.salaryBreakdown(zone).total }
-                    "$jobName · ${hoursFormat.format(jobHours)} hod · ${numberFormat.format(jobSalary)} €"
+                    getString(
+                        R.string.month_job_line,
+                        jobName,
+                        hoursFormat.format(jobHours),
+                        numberFormat.format(jobSalary)
+                    )
                 }
                 .ifEmpty { listOf(getString(R.string.month_no_jobs)) }
                 .joinToString("\n")

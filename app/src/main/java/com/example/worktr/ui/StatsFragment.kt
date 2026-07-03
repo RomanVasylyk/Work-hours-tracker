@@ -38,11 +38,10 @@ import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.ValueFormatter
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job as CoroutineJob
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.time.*
 import java.time.DayOfWeek
@@ -184,9 +183,12 @@ class StatsFragment : Fragment() {
             } else {
                 repo.getEntriesForPeriod(targetJobId, start, end)
             }
-            entriesFlow
+            val invoicesFlow = DatabaseProvider.get(requireContext().applicationContext)
+                .invoiceDao()
+                .getAllInvoices()
+            combine(entriesFlow, invoicesFlow) { entries, invoices -> entries to invoices }
                 .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
-                .collectLatest { list ->
+                .collectLatest { (list, invoices) ->
                 val labels = buildLabels(isMonth, periodCount)
                 val hoursEntries = mutableListOf<Entry>()
                 val salaryEntries = mutableListOf<BarEntry>()
@@ -210,11 +212,6 @@ class StatsFragment : Fragment() {
                     saturdayBuckets[index] += breakdown.saturday
                     sundayBuckets[index] += breakdown.sunday
                     holidayBuckets[index] += breakdown.holiday
-                }
-                val invoices = withContext(Dispatchers.IO) {
-                    DatabaseProvider.get(requireContext().applicationContext)
-                        .invoiceDao()
-                        .getAllInvoicesList()
                 }
                 invoices
                     .asSequence()

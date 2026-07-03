@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ExcelExporter(private val context: Context) {
+class CsvExporter(private val context: Context) {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     suspend fun export(jobId: Int): File = exportInternal(jobId)

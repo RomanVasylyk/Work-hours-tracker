@@ -20,8 +20,16 @@ object InvoiceRules {
     fun sequenceFromInvoiceNumber(period: YearMonth, invoiceNumber: String, currentSequence: Int): Int {
         val prefix = "${period.year}${period.monthValue.toString().padStart(2, '0')}"
         val digits = invoiceNumber.filter { it.isDigit() }
-        return digits.removePrefix(prefix).toIntOrNull() ?: (currentSequence + 1)
+        // Custom numbers that don't follow the YYYYMMNN pattern must not poison
+        // the stored sequence — just advance it by one.
+        if (!digits.startsWith(prefix)) return currentSequence + 1
+        return digits.removePrefix(prefix)
+            .toIntOrNull()
+            ?.takeIf { it in 1..MAX_SEQUENCE }
+            ?: (currentSequence + 1)
     }
+
+    const val MAX_SEQUENCE = 9999
 
     fun calculateTotals(
         entries: List<WorkEntry>,

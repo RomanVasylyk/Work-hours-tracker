@@ -23,12 +23,6 @@ class WorkBackupManager(
     private val context: Context,
     private val db: AppDatabase
 ) {
-    suspend fun exportTo(uri: Uri): BackupSummary {
-        val (json, summary) = createBackupJson()
-        writeJson(uri, json)
-        return summary
-    }
-
     suspend fun exportEncryptedTo(uri: Uri, password: String): BackupSummary {
         val (json, summary) = createBackupJson()
         writeJson(uri, BackupCrypto.encrypt(json, password))

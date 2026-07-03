@@ -36,7 +36,9 @@ object AutoBackupManager {
         val backupUri = createBackupDocument(context, treeUri)
         val password = AutoBackupPasswordStore.read(context)
             ?: error("Auto backup password is not set.")
-        return WorkBackupManager(context, db).exportEncryptedTo(backupUri, password)
+        val summary = WorkBackupManager(context, db).exportEncryptedTo(backupUri, password)
+        runCatching { deleteStaleBackups(context, treeUri) }
+        return summary
     }
 
     fun intervalMillis(interval: String): Long =
@@ -48,7 +50,7 @@ object AutoBackupManager {
     private fun createBackupDocument(context: Context, treeUri: Uri): Uri {
         val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
         val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
-        val fileName = "worktr-auto-backup-${LocalDate.now()}.json"
+        val fileName = "$BACKUP_FILE_PREFIX${LocalDate.now()}.json"
         return DocumentsContract.createDocument(
             context.contentResolver,
             parentUri,
@@ -56,4 +58,41 @@ object AutoBackupManager {
             fileName
         ) ?: error("Cannot create backup file.")
     }
+
+    /** Keeps only the [KEEP_BACKUP_COUNT] newest auto-backup files in the chosen folder. */
+    private fun deleteStaleBackups(context: Context, treeUri: Uri) {
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+            treeUri,
+            DocumentsContract.getTreeDocumentId(treeUri)
+        )
+        val backups = mutableListOf<Pair<String, String>>() // documentId to fileName
+        context.contentResolver.query(
+            childrenUri,
+            arrayOf(
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME
+            ),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                val documentId = cursor.getString(0) ?: continue
+                val name = cursor.getString(1) ?: continue
+                if (name.startsWith(BACKUP_FILE_PREFIX) && name.endsWith(".json")) {
+                    backups += documentId to name
+                }
+            }
+        }
+        backups
+            .sortedByDescending { (_, name) -> name } // ISO dates in names sort chronologically
+            .drop(KEEP_BACKUP_COUNT)
+            .forEach { (documentId, _) ->
+                val documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+                runCatching { DocumentsContract.deleteDocument(context.contentResolver, documentUri) }
+            }
+    }
+
+    private const val BACKUP_FILE_PREFIX = "worktr-auto-backup-"
+    private const val KEEP_BACKUP_COUNT = 10
 }

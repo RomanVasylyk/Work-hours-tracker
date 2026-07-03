@@ -57,8 +57,28 @@ class InvoiceRulesTest {
             7,
             InvoiceRules.sequenceFromInvoiceNumber(
                 period = YearMonth.of(2026, 4),
-                invoiceNumber = "fakrura-20260407",
+                invoiceNumber = "faktura-20260407",
                 currentSequence = 1
+            )
+        )
+    }
+
+    @Test
+    fun customInvoiceNumberDoesNotPoisonSequence() {
+        assertEquals(
+            4,
+            InvoiceRules.sequenceFromInvoiceNumber(
+                period = YearMonth.of(2026, 7),
+                invoiceNumber = "FA-2026-001",
+                currentSequence = 3
+            )
+        )
+        assertEquals(
+            1,
+            InvoiceRules.sequenceFromInvoiceNumber(
+                period = YearMonth.of(2026, 7),
+                invoiceNumber = "custom",
+                currentSequence = 0
             )
         )
     }

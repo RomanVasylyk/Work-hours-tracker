@@ -313,6 +313,12 @@
     <string name="validation_non_negative_number">Введіть число 0 або більше.</string>
     <string name="validation_break_too_large">Перерва не може бути більшою за години зміни.</string>
     <string name="invoice_number_taken">Фактура з номером %1$s вже існує — змініть номер.</string>
+    <string name="month_stat_hours">Години\n%1$s год</string>
+    <string name="month_stat_salary">Зарплата\n%1$s €</string>
+    <string name="month_stat_days">Дні\n%1$d</string>
+    <string name="month_stat_invoices">Фактури\n%1$d</string>
+    <string name="month_job_line">%1$s · %2$s год · %3$s €</string>
+    <string name="auto_backup_failed">Автобекап не виконано: %1$s</string>
     <string name="job_delete_title">Видалити роботу?</string>
     <string name="job_delete_message">«%1$s» і всі її записи годин та дані клієнта буде видалено назавжди.</string>
     <string name="job_delete_confirm">Видалити</string>

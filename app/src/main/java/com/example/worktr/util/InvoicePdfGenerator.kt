@@ -81,7 +81,7 @@ class InvoicePdfGenerator(private val context: Context) {
             .replace(Regex("[^A-Za-z0-9_-]+"), "_")
             .trim('_')
             .ifBlank { "invoice" }
-        val file = File(context.cacheDir, "fakrura-$safeNumber.pdf")
+        val file = File(context.cacheDir, "faktura-$safeNumber.pdf")
         FileOutputStream(file).use { output -> document.writeTo(output) }
         document.close()
         return file
@@ -191,7 +191,7 @@ class InvoicePdfGenerator(private val context: Context) {
             valuePaint = smallPaint
         )
 
-        drawSupplier(canvas, input.supplier, OUTER_LEFT + 12f, 79f, 222f, partyNamePaint, bodyPaint)
+        drawSupplier(canvas, input.supplier, OUTER_LEFT + 12f, 79f, 222f, partyNamePaint, bodyPaint, texts)
         canvas.drawText(texts.customer, splitX + 4f, 95f, smallPaint)
         drawCustomer(canvas, input.customer, splitX + 32f, 119f, 214f, customerNamePaint, bodyPaint)
 
@@ -281,9 +281,14 @@ class InvoicePdfGenerator(private val context: Context) {
         canvas.drawText(texts.amountDue, totalsLabelX, footerTop + 56f, smallPaint)
         canvas.drawText(formatAmount(invoiceTotal, input.currency), amountRightX, footerTop + 75f, bigTotalPaint)
         val wordsPaint = textPaint(8f).apply { textAlign = Paint.Align.RIGHT }
+        val amountInWords = when (InvoiceLanguage.fromCode(input.pdfLanguage)) {
+            InvoiceLanguage.SLOVAK -> amountWordsSk(invoiceTotal, input.currency)
+            InvoiceLanguage.UKRAINIAN -> amountWordsUk(invoiceTotal, input.currency)
+            InvoiceLanguage.ENGLISH -> amountWordsEn(invoiceTotal, input.currency)
+        }
         drawWrappedRightText(
             canvas = canvas,
-            text = texts.amountWords(invoiceTotal, input.currency, ::amountWordsSk),
+            text = amountInWords,
             right = amountRightX,
             firstBaseline = footerTop + 89f,
             maxWidth = amountRightX - totalsLabelX,
@@ -325,7 +330,8 @@ class InvoicePdfGenerator(private val context: Context) {
         y: Float,
         width: Float,
         namePaint: Paint,
-        bodyPaint: Paint
+        bodyPaint: Paint,
+        texts: PdfTexts
     ) {
         val lines = text.lines().filter { it.isNotBlank() }
         val name = lines.firstOrNull().orEmpty()
@@ -333,6 +339,8 @@ class InvoicePdfGenerator(private val context: Context) {
             canvas.drawText(name, x, y, namePaint)
         }
         var lineY = y + 21f
+        // "IČO:"/"Neplatiteľ DPH"/"IBAN:" act as data markers in the stored supplier
+        // block (see InvoiceParty.toSupplierLines); only the rendered label is localized.
         lines.drop(1).takeWhile { !it.startsWith("IČO:") && it != "Neplatiteľ DPH" && !it.startsWith("IBAN:") }
             .flatMap { wrapText(it, bodyPaint, width) }
             .take(4)
@@ -349,7 +357,7 @@ class InvoicePdfGenerator(private val context: Context) {
             canvas.drawText(ico, x + 90f, y + 80f, valuePaint)
         }
         if (lines.any { it == "Neplatiteľ DPH" }) {
-            canvas.drawText("Neplatiteľ DPH", x, y + 94f, bodyPaint)
+            canvas.drawText(texts.notVatPayer, x, y + 94f, bodyPaint)
         }
         val iban = lines.firstOrNull { it.startsWith("IBAN:") }?.substringAfter(":")?.trim().orEmpty()
         if (iban.isNotBlank()) {
@@ -629,6 +637,149 @@ class InvoicePdfGenerator(private val context: Context) {
         return "${numberToWordsSk(euros)} $euroWord$centPart".trim()
     }
 
+    private fun amountWordsUk(value: Double, currency: String): String {
+        val totalCents = BigDecimal.valueOf(value)
+            .movePointRight(2)
+            .setScale(0, RoundingMode.HALF_UP)
+            .toLong()
+        val units = (totalCents / 100).toInt()
+        val cents = (totalCents % 100).toInt()
+        val currencyWord = if (currency.equals("EUR", ignoreCase = true)) {
+            "євро"
+        } else {
+            currency.lowercase(Locale("uk", "UA"))
+        }
+        val centPart = if (cents > 0) {
+            " ${numberToWordsUk(cents)} ${ukPluralForm(cents, "цент", "центи", "центів")}"
+        } else {
+            ""
+        }
+        return "${numberToWordsUk(units)} $currencyWord$centPart".trim()
+    }
+
+    private fun numberToWordsUk(number: Int): String {
+        if (number == 0) return "нуль"
+        val parts = mutableListOf<String>()
+        val thousands = number / 1000
+        val rest = number % 1000
+        if (thousands > 0) {
+            parts += underThousandToWordsUk(thousands, feminine = true)
+            parts += ukPluralForm(thousands, "тисяча", "тисячі", "тисяч")
+        }
+        if (rest > 0) {
+            parts += underThousandToWordsUk(rest, feminine = false)
+        }
+        return parts.joinToString(" ")
+    }
+
+    private fun underThousandToWordsUk(number: Int, feminine: Boolean): String {
+        val hundredsWords = listOf(
+            "", "сто", "двісті", "триста", "чотириста",
+            "пʼятсот", "шістсот", "сімсот", "вісімсот", "девʼятсот"
+        )
+        val teens = listOf(
+            "десять", "одинадцять", "дванадцять", "тринадцять", "чотирнадцять",
+            "пʼятнадцять", "шістнадцять", "сімнадцять", "вісімнадцять", "девʼятнадцять"
+        )
+        val tens = listOf(
+            "", "", "двадцять", "тридцять", "сорок",
+            "пʼятдесят", "шістдесят", "сімдесят", "вісімдесят", "девʼяносто"
+        )
+        val parts = mutableListOf<String>()
+        val hundreds = number / 100
+        val rest = number % 100
+        if (hundreds > 0) parts += hundredsWords[hundreds]
+        when {
+            rest == 0 -> Unit
+            rest in 10..19 -> parts += teens[rest - 10]
+            else -> {
+                if (rest / 10 > 0) parts += tens[rest / 10]
+                if (rest % 10 > 0) parts += ukUnitWord(rest % 10, feminine)
+            }
+        }
+        return parts.joinToString(" ")
+    }
+
+    private fun ukUnitWord(number: Int, feminine: Boolean): String =
+        when (number) {
+            1 -> if (feminine) "одна" else "один"
+            2 -> if (feminine) "дві" else "два"
+            3 -> "три"
+            4 -> "чотири"
+            5 -> "пʼять"
+            6 -> "шість"
+            7 -> "сім"
+            8 -> "вісім"
+            9 -> "девʼять"
+            else -> ""
+        }
+
+    private fun ukPluralForm(number: Int, one: String, few: String, many: String): String {
+        val mod100 = number % 100
+        val mod10 = number % 10
+        return when {
+            mod100 in 11..14 -> many
+            mod10 == 1 -> one
+            mod10 in 2..4 -> few
+            else -> many
+        }
+    }
+
+    private fun amountWordsEn(value: Double, currency: String): String {
+        val totalCents = BigDecimal.valueOf(value)
+            .movePointRight(2)
+            .setScale(0, RoundingMode.HALF_UP)
+            .toLong()
+        val units = (totalCents / 100).toInt()
+        val cents = (totalCents % 100).toInt()
+        val currencyWord = when {
+            !currency.equals("EUR", ignoreCase = true) -> currency.uppercase(Locale.ROOT)
+            units == 1 -> "euro"
+            else -> "euros"
+        }
+        val centPart = if (cents > 0) {
+            " and ${numberToWordsEn(cents)} ${if (cents == 1) "cent" else "cents"}"
+        } else {
+            ""
+        }
+        return "${numberToWordsEn(units)} $currencyWord$centPart"
+    }
+
+    private fun numberToWordsEn(number: Int): String {
+        if (number == 0) return "zero"
+        val below20 = listOf(
+            "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+            "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+            "seventeen", "eighteen", "nineteen"
+        )
+        val tens = listOf(
+            "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
+        )
+
+        fun underThousand(value: Int): String {
+            val parts = mutableListOf<String>()
+            val hundreds = value / 100
+            val rest = value % 100
+            if (hundreds > 0) parts += "${below20[hundreds]} hundred"
+            when {
+                rest == 0 -> Unit
+                rest < 20 -> parts += below20[rest]
+                else -> {
+                    val tensWord = tens[rest / 10]
+                    parts += if (rest % 10 > 0) "$tensWord-${below20[rest % 10]}" else tensWord
+                }
+            }
+            return parts.joinToString(" ")
+        }
+
+        val parts = mutableListOf<String>()
+        val thousands = number / 1000
+        val rest = number % 1000
+        if (thousands > 0) parts += "${underThousand(thousands)} thousand"
+        if (rest > 0) parts += underThousand(rest)
+        return parts.joinToString(" ")
+    }
+
     private fun numberToWordsSk(number: Int): String {
         if (number == 0) return "nula"
         val parts = mutableListOf<String>()
@@ -732,6 +883,7 @@ class InvoicePdfGenerator(private val context: Context) {
         val unitPrice: String,
         val totalPrice: String,
         val hourUnit: String,
+        val notVatPayer: String,
         val total: String,
         val createdBy: String,
         val receivedBy: String,
@@ -739,8 +891,7 @@ class InvoicePdfGenerator(private val context: Context) {
         val paidByAdvances: String,
         val remaining: String,
         val amountDue: String,
-        val defaultDescription: (String) -> String,
-        val amountWords: (Double, String, (Double, String) -> String) -> String
+        val defaultDescription: (String) -> String
     ) {
         companion object {
             fun forLanguage(code: String): PdfTexts =
@@ -760,6 +911,7 @@ class InvoicePdfGenerator(private val context: Context) {
                         unitPrice = "Ціна за од.",
                         totalPrice = "Сума",
                         hourUnit = "год",
+                        notVatPayer = "Неплатник ПДВ",
                         total = "Разом:",
                         createdBy = "Виставив:",
                         receivedBy = "Прийняв:",
@@ -767,8 +919,7 @@ class InvoicePdfGenerator(private val context: Context) {
                         paidByAdvances = "Оплачено авансом:",
                         remaining = "Залишилось оплатити:",
                         amountDue = "До оплати:",
-                        defaultDescription = { month -> "Виставляю оплату за виконану роботу за місяць $month" },
-                        amountWords = { value, currency, _ -> "До оплати ${"%.2f".format(Locale.US, value)} $currency" }
+                        defaultDescription = { month -> "Виставляю оплату за виконану роботу за місяць $month" }
                     )
                     InvoiceLanguage.ENGLISH -> PdfTexts(
                         locale = Locale.ENGLISH,
@@ -785,6 +936,7 @@ class InvoicePdfGenerator(private val context: Context) {
                         unitPrice = "Unit price",
                         totalPrice = "Total price",
                         hourUnit = "hrs",
+                        notVatPayer = "Not a VAT payer",
                         total = "Total:",
                         createdBy = "Issued by:",
                         receivedBy = "Received by:",
@@ -792,8 +944,7 @@ class InvoicePdfGenerator(private val context: Context) {
                         paidByAdvances = "Paid by advances:",
                         remaining = "Remaining:",
                         amountDue = "Amount due:",
-                        defaultDescription = { month -> "Work performed in $month" },
-                        amountWords = { value, currency, _ -> "Amount due ${"%.2f".format(Locale.US, value)} $currency" }
+                        defaultDescription = { month -> "Work performed in $month" }
                     )
                     InvoiceLanguage.SLOVAK -> PdfTexts(
                         locale = Locale("sk", "SK"),
@@ -810,6 +961,7 @@ class InvoicePdfGenerator(private val context: Context) {
                         unitPrice = "Cena za MJ",
                         totalPrice = "Celková cena",
                         hourUnit = "hod",
+                        notVatPayer = "Neplatiteľ DPH",
                         total = "Spolu:",
                         createdBy = "Vyhotovil:",
                         receivedBy = "Prevzal:",
@@ -817,8 +969,7 @@ class InvoicePdfGenerator(private val context: Context) {
                         paidByAdvances = "Uhradené zálohami:",
                         remaining = "Zostáva uhradiť:",
                         amountDue = "K úhrade:",
-                        defaultDescription = { month -> "Fakturujem Vám za vykonanú prácu v mesiaci $month" },
-                        amountWords = { value, currency, skWords -> skWords(value, currency) }
+                        defaultDescription = { month -> "Fakturujem Vám za vykonanú prácu v mesiaci $month" }
                     )
                 }
         }
