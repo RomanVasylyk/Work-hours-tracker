@@ -17,7 +17,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.worktr.R
-import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.WorkEntry
 import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.ui.picker.DynamicYearSpinner
@@ -32,7 +31,9 @@ import com.example.worktr.util.ShiftType
 import com.example.worktr.util.localDate
 import com.example.worktr.util.salaryBreakdown
 import com.example.worktr.util.workedHours
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
+import javax.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -41,6 +42,7 @@ import java.time.format.TextStyle
 import java.util.*
 import kotlin.math.max
 
+@AndroidEntryPoint
 class CalendarDialogFragment : DialogFragment() {
     private enum class SelectionMode { ADD, DELETE }
 
@@ -50,7 +52,7 @@ class CalendarDialogFragment : DialogFragment() {
     private val entryByDate = mutableMapOf<LocalDate, WorkEntry>()
     private val selectedDates = mutableSetOf<LocalDate>()
     private lateinit var adapter: DayAdapter
-    private lateinit var repo: WorkEntryRepository
+    @Inject lateinit var repo: WorkEntryRepository
     private lateinit var yearSpinner: DynamicYearSpinner
     private lateinit var bulkButton: MaterialButton
     private lateinit var selectionState: TextView
@@ -79,8 +81,6 @@ class CalendarDialogFragment : DialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = DatabaseProvider.get(requireContext())
-        repo = WorkEntryRepository(db.workEntryDao())
         adapter = DayAdapter()
         bulkButton = view.findViewById(R.id.buttonBulkAdd)
         selectionState = view.findViewById(R.id.textSelectionState)

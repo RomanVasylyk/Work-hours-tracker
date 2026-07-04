@@ -10,16 +10,14 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.worktr.R
 import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.Job
-import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntryRepository
-import com.example.worktr.ui.chart.PeriodMarkerView
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.picker.DynamicYearSpinner
 import com.example.worktr.ui.responsive.ResponsiveUi
@@ -31,18 +29,26 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.example.worktr.viewmodel.JobDetailViewModel
-import com.github.mikephil.charting.charts.BarChart
-import com.github.mikephil.charting.charts.BarLineChartBase
-import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.AxisBase
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.*
-import com.github.mikephil.charting.formatter.ValueFormatter
+import com.example.worktr.ui.chart.chartMarker
+import com.patrykandpatrick.vico.core.cartesian.CartesianChart
+import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
+import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
+import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.core.cartesian.layer.ColumnCartesianLayer
+import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.core.common.Fill
+import com.patrykandpatrick.vico.core.common.component.LineComponent
+import com.patrykandpatrick.vico.views.cartesian.CartesianChartView
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import androidx.core.graphics.ColorUtils
 import kotlinx.coroutines.Job as CoroutineJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
 import java.time.*
 import java.time.DayOfWeek
 import java.time.Instant
@@ -50,24 +56,22 @@ import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
+@AndroidEntryPoint
 class StatsFragment : Fragment() {
-    private var viewModel: JobDetailViewModel? = null
-    private lateinit var repo: WorkEntryRepository
-    private lateinit var chartHours: LineChart
-    private lateinit var chartSalary: BarChart
+    private val jobViewModel: JobDetailViewModel by viewModels()
+    @Inject lateinit var repo: WorkEntryRepository
+    private lateinit var chartHours: CartesianChartView
+    private lateinit var chartSalary: CartesianChartView
     private lateinit var salaryLegend: GridLayout
-    private lateinit var hoursMarker: PeriodMarkerView
-    private lateinit var salaryMarker: PeriodMarkerView
+    private val hoursProducer = CartesianChartModelProducer()
+    private val salaryProducer = CartesianChartModelProducer()
+    private var axisLabels: List<String> = emptyList()
     private lateinit var yearSpinner: DynamicYearSpinner
     private lateinit var monthLabels: List<String>
     private var currentJob: Job? = null
     private var chartsJob: CoroutineJob? = null
     private var targetJobId: Int = -1
     private var currentMode: StatsMode = StatsMode.YEAR
-    private val numberFormatter: NumberFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
-        maximumFractionDigits = 2
-        minimumFractionDigits = 0
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,23 +89,10 @@ class StatsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val args = StatsFragmentArgs.fromBundle(requireArguments())
         targetJobId = args.jobId
-        val db = DatabaseProvider.get(requireContext())
-        repo = WorkEntryRepository(db.workEntryDao())
-        val jobRepo = JobRepository(db.jobDao())
-
         chartHours = view.findViewById(R.id.chartHours)
         chartSalary = view.findViewById(R.id.chartSalary)
         salaryLegend = view.findViewById(R.id.layoutSalaryLegend)
-        hoursMarker = PeriodMarkerView(requireContext(), emptyList()) {
-            getString(R.string.marker_hours_value, numberFormatter.format(it))
-        }
-        salaryMarker = PeriodMarkerView(requireContext(), emptyList()) {
-            getString(R.string.marker_salary_value, numberFormatter.format(it))
-        }
-        chartHours.marker = hoursMarker
-        chartSalary.marker = salaryMarker
-        styleChart(chartHours)
-        styleChart(chartSalary)
+        setupCharts()
         applyResponsiveLayout(view)
         updateScopeHeader(activeJobs = 0)
         val modeGroup = view.findViewById<MaterialButtonToggleGroup>(R.id.groupStatsMode)
@@ -109,11 +100,7 @@ class StatsFragment : Fragment() {
         val inputM = view.findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.inputStatsMonth)
 
         if (targetJobId != -1) {
-            viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-                override fun <T : androidx.lifecycle.ViewModel> create(c: Class<T>) =
-                    JobDetailViewModel(jobRepo, targetJobId) as T
-            })[JobDetailViewModel::class.java]
-            viewModel?.job?.observe(viewLifecycleOwner) {
+            jobViewModel.job.observe(viewLifecycleOwner) {
                 currentJob = it
                 updateScopeHeader(activeJobs = null)
                 loadCharts()
@@ -190,9 +177,7 @@ class StatsFragment : Fragment() {
                 .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { (list, invoices) ->
                 val labels = buildLabels(isMonth, periodCount)
-                val hoursEntries = mutableListOf<Entry>()
-                val salaryEntries = mutableListOf<BarEntry>()
-                val invoiceEntries = mutableListOf<BarEntry>()
+                axisLabels = labels
                 val buckets = if (!isMonth) (1..12) else (1..periodCount)
                 val hoursBuckets = DoubleArray(periodCount + 1)
                 val baseBuckets = DoubleArray(periodCount + 1)
@@ -236,52 +221,25 @@ class StatsFragment : Fragment() {
                         }
                     }
 
-                var totalHours = 0.0
-                var totalSalary = 0.0
-
-                buckets.forEach { i ->
-                    val sumHours = hoursBuckets[i]
-                    val sumSalary = baseBuckets[i] + nightBuckets[i] + saturdayBuckets[i] + sundayBuckets[i] + holidayBuckets[i]
-                    hoursEntries.add(Entry(i.toFloat(), sumHours.toFloat()))
-                    salaryEntries.add(
-                        BarEntry(
-                            i.toFloat() - 0.18f,
-                            floatArrayOf(
-                                baseBuckets[i].toFloat(),
-                                nightBuckets[i].toFloat(),
-                                saturdayBuckets[i].toFloat(),
-                                sundayBuckets[i].toFloat(),
-                                holidayBuckets[i].toFloat()
-                            )
-                        )
-                    )
-                    invoiceEntries.add(BarEntry(i.toFloat() + 0.18f, invoiceBuckets[i].toFloat()))
-                    totalHours += sumHours
-                    totalSalary += sumSalary
+                val xs = buckets.toList()
+                val totalHours = xs.sumOf { hoursBuckets[it] }
+                val totalSalary = xs.sumOf {
+                    baseBuckets[it] + nightBuckets[it] + saturdayBuckets[it] + sundayBuckets[it] + holidayBuckets[it]
                 }
 
-                hoursMarker.updateLabels(labels)
-                salaryMarker.updateLabels(labels)
-                chartHours.highlightValues(null)
-                chartSalary.highlightValues(null)
-                chartHours.data = LineData(createHoursDataSet(hoursEntries, isMonth))
-                applyXAxis(chartHours, labels, isMonth)
-                chartHours.fitScreen()
-                chartHours.notifyDataSetChanged()
-                chartHours.invalidate()
-                chartHours.animateX(450)
-                chartSalary.data = BarData(
-                    createSalaryDataSet(salaryEntries, isMonth),
-                    createInvoiceDataSet(invoiceEntries, isMonth)
-                ).apply {
-                    barWidth = if (isMonth) 0.28f else 0.28f
+                hoursProducer.runTransaction {
+                    lineSeries { series(xs, xs.map { hoursBuckets[it] }) }
                 }
-                chartSalary.setFitBars(true)
-                applyXAxis(chartSalary, labels, isMonth)
-                chartSalary.fitScreen()
-                chartSalary.notifyDataSetChanged()
-                chartSalary.invalidate()
-                chartSalary.animateY(450)
+                salaryProducer.runTransaction {
+                    columnSeries {
+                        series(xs, xs.map { baseBuckets[it] })
+                        series(xs, xs.map { nightBuckets[it] })
+                        series(xs, xs.map { saturdayBuckets[it] })
+                        series(xs, xs.map { sundayBuckets[it] })
+                        series(xs, xs.map { holidayBuckets[it] })
+                    }
+                    lineSeries { series(xs, xs.map { invoiceBuckets[it] }) }
+                }
 
                 val totalHoursLabel = root.findViewById<TextView>(R.id.textTotalHours)
                 val avgHoursLabel = root.findViewById<TextView>(R.id.textAvgHours)
@@ -323,89 +281,58 @@ class StatsFragment : Fragment() {
         }
     }
 
-    private fun styleChart(chart: BarLineChartBase<*>) {
-        val gridColor = ContextCompat.getColor(requireContext(), R.color.chart_grid)
-        val axisTextColor = ContextCompat.getColor(requireContext(), R.color.chart_axis_text)
-        chart.description.isEnabled = false
-        chart.legend.isEnabled = false
-        chart.setNoDataText(getString(R.string.chart_no_data))
-        chart.setDrawGridBackground(false)
-        chart.setPinchZoom(false)
-        chart.setScaleEnabled(false)
-        chart.isDoubleTapToZoomEnabled = false
-        chart.setExtraOffsets(8f, 12f, 8f, 4f)
-        chart.axisRight.isEnabled = false
-        chart.axisLeft.apply {
-            axisMinimum = 0f
-            textColor = axisTextColor
-            this.gridColor = gridColor
-            setDrawAxisLine(false)
-            valueFormatter = object : ValueFormatter() {
-                override fun getAxisLabel(value: Float, axis: AxisBase?): String {
-                    return numberFormatter.format(value)
-                }
-            }
-        }
-        chart.xAxis.apply {
-            position = XAxis.XAxisPosition.BOTTOM
-            textColor = axisTextColor
-            this.gridColor = gridColor
-            setDrawAxisLine(false)
-            setDrawGridLines(false)
-            granularity = 1f
-            yOffset = 6f
-        }
-    }
 
-    private fun createHoursDataSet(entries: List<Entry>, isMonth: Boolean): LineDataSet {
-        val lineColor = ContextCompat.getColor(requireContext(), R.color.chart_hours_line)
-        val holeColor = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSurface)
-        return LineDataSet(entries, getString(R.string.chart_hours_title)).apply {
-            color = lineColor
-            lineWidth = 3f
-            setDrawValues(false)
-            setCircleColor(lineColor)
-            circleHoleColor = holeColor
-            circleRadius = if (isMonth) 3.4f else 4.4f
-            setDrawCircleHole(true)
-            highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
-            highlightLineWidth = 1.5f
-            setDrawHorizontalHighlightIndicator(false)
-            mode = LineDataSet.Mode.HORIZONTAL_BEZIER
-            setDrawFilled(true)
-            fillDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.chart_hours_fill)
-        }
-    }
 
-    private fun createSalaryDataSet(entries: List<BarEntry>, isMonth: Boolean): BarDataSet {
-        return BarDataSet(entries, getString(R.string.chart_salary_earned)).apply {
-            colors = listOf(
-                ContextCompat.getColor(requireContext(), R.color.chart_salary_base),
-                ContextCompat.getColor(requireContext(), R.color.chart_salary_night),
-                ContextCompat.getColor(requireContext(), R.color.chart_salary_saturday),
-                ContextCompat.getColor(requireContext(), R.color.chart_salary_sunday),
-                ContextCompat.getColor(requireContext(), R.color.chart_salary_holiday)
+
+
+    private fun setupCharts() {
+        val context = requireContext()
+        val axisLabelFormatter = CartesianValueFormatter { _, value, _ ->
+            axisLabels.getOrElse(value.roundToInt() - 1) { "" }
+        }
+
+        val hoursColor = ContextCompat.getColor(context, R.color.chart_hours_line)
+        val hoursLine = LineCartesianLayer.Line(
+            fill = LineCartesianLayer.LineFill.single(Fill(hoursColor)),
+            stroke = LineCartesianLayer.LineStroke.Continuous(thicknessDp = 3f),
+            areaFill = LineCartesianLayer.AreaFill.single(
+                Fill(ColorUtils.setAlphaComponent(hoursColor, 60))
             )
-            stackLabels = arrayOf(
-                getString(R.string.hourly_rate),
-                getString(R.string.night_bonus),
-                getString(R.string.sat_bonus),
-                getString(R.string.sun_bonus),
-                getString(R.string.hol_bonus)
-            )
-            setDrawValues(false)
-            highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
-            highLightAlpha = if (isMonth) 180 else 150
-        }
-    }
+        )
+        chartHours.chart = CartesianChart(
+            LineCartesianLayer(LineCartesianLayer.LineProvider.series(hoursLine)),
+            startAxis = VerticalAxis.start(),
+            bottomAxis = HorizontalAxis.bottom(valueFormatter = axisLabelFormatter),
+            marker = chartMarker(context)
+        )
+        chartHours.modelProducer = hoursProducer
 
-    private fun createInvoiceDataSet(entries: List<BarEntry>, isMonth: Boolean): BarDataSet {
-        return BarDataSet(entries, getString(R.string.chart_salary_invoiced)).apply {
-            color = ContextCompat.getColor(requireContext(), R.color.chart_invoice_bar)
-            setDrawValues(false)
-            highLightColor = ContextCompat.getColor(requireContext(), R.color.chart_highlight)
-            highLightAlpha = if (isMonth) 180 else 150
+        val salaryColumns = listOf(
+            R.color.chart_salary_base,
+            R.color.chart_salary_night,
+            R.color.chart_salary_saturday,
+            R.color.chart_salary_sunday,
+            R.color.chart_salary_holiday
+        ).map { colorRes ->
+            LineComponent(fill = Fill(ContextCompat.getColor(context, colorRes)), thicknessDp = 10f)
         }
+        val invoiceLine = LineCartesianLayer.Line(
+            fill = LineCartesianLayer.LineFill.single(
+                Fill(ContextCompat.getColor(context, R.color.chart_invoice_bar))
+            ),
+            stroke = LineCartesianLayer.LineStroke.Continuous(thicknessDp = 2f)
+        )
+        chartSalary.chart = CartesianChart(
+            ColumnCartesianLayer(
+                ColumnCartesianLayer.ColumnProvider.series(salaryColumns),
+                mergeMode = { ColumnCartesianLayer.MergeMode.Stacked }
+            ),
+            LineCartesianLayer(LineCartesianLayer.LineProvider.series(invoiceLine)),
+            startAxis = VerticalAxis.start(),
+            bottomAxis = HorizontalAxis.bottom(valueFormatter = axisLabelFormatter),
+            marker = chartMarker(context)
+        )
+        chartSalary.modelProducer = salaryProducer
     }
 
     private fun bindSalaryLegend() {
@@ -454,22 +381,6 @@ class StatsFragment : Fragment() {
         }
     }
 
-    private fun applyXAxis(chart: BarLineChartBase<*>, labels: List<String>, isMonth: Boolean) {
-        chart.setExtraOffsets(8f, 12f, 8f, if (isMonth) 4f else 18f)
-        chart.xAxis.apply {
-            axisMinimum = 0.5f
-            axisMaximum = labels.size + 0.5f
-            labelCount = if (isMonth) minOf(labels.size, 8) else labels.size
-            labelRotationAngle = if (isMonth) 0f else -40f
-            setAvoidFirstLastClipping(true)
-            valueFormatter = object : ValueFormatter() {
-                override fun getAxisLabel(value: Float, axis: AxisBase?): String {
-                    val index = value.roundToInt() - 1
-                    return labels.getOrElse(index) { "" }
-                }
-            }
-        }
-    }
 
     private fun buildLabels(isMonth: Boolean, periodCount: Int): List<String> {
         return if (isMonth) {

@@ -1,6 +1,7 @@
 package com.example.worktr
 
 import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
@@ -11,6 +12,7 @@ import com.example.worktr.worker.AutoBackupWorker
 import com.example.worktr.worker.InvoiceReminderWorker
 import java.util.concurrent.TimeUnit
 
+@HiltAndroidApp
 class WorkTrApp : Application() {
     override fun onCreate() {
         super.onCreate()

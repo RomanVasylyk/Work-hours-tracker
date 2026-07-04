@@ -185,11 +185,13 @@
                     android:textColor="@color/chart_axis_text"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
-                <com.github.mikephil.charting.charts.LineChart
+                <com.patrykandpatrick.vico.views.cartesian.CartesianChartView
                     android:id="@+id/chartHours"
                     android:layout_width="match_parent"
                     android:layout_height="280dp"
-                    android:layout_marginTop="12dp" />
+                    android:layout_marginTop="12dp"
+                    app:scrollEnabled="false"
+                    app:zoomEnabled="false" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -223,11 +225,13 @@
                     android:textColor="@color/chart_axis_text"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 
-                <com.github.mikephil.charting.charts.BarChart
+                <com.patrykandpatrick.vico.views.cartesian.CartesianChartView
                     android:id="@+id/chartSalary"
                     android:layout_width="match_parent"
                     android:layout_height="280dp"
-                    android:layout_marginTop="12dp" />
+                    android:layout_marginTop="12dp"
+                    app:scrollEnabled="false"
+                    app:zoomEnabled="false" />
 
                 <GridLayout
                     android:id="@+id/layoutSalaryLegend"

@@ -10,10 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -22,7 +21,6 @@ import com.example.worktr.R
 import com.example.worktr.data.Client
 import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.InvoiceRecord
-import com.example.worktr.data.JobRepository
 import com.example.worktr.data.WorkEntryRepository
 import com.example.worktr.data.Job as WorkJob
 import com.example.worktr.databinding.DialogInvoiceBinding
@@ -51,6 +49,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.transition.platform.MaterialSharedAxis
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -65,12 +65,13 @@ import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Locale
 
+@AndroidEntryPoint
 class JobDetailFragment : Fragment() {
     private var _binding: FragmentJobDetailBinding? = null
     private val binding get() = _binding!!
     private val args by navArgs<JobDetailFragmentArgs>()
-    private lateinit var viewModel: com.example.worktr.viewmodel.JobDetailViewModel
-    private lateinit var workRepository: WorkEntryRepository
+    private val viewModel: JobDetailViewModel by viewModels()
+    @Inject lateinit var workRepository: WorkEntryRepository
     private lateinit var yearSpinner: DynamicYearSpinner
     private lateinit var monthLabels: List<String>
     private var currentWorkJob: WorkJob? = null
@@ -93,13 +94,6 @@ class JobDetailFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = DatabaseProvider.get(requireContext())
-        val jobRepository = JobRepository(db.jobDao())
-        workRepository = WorkEntryRepository(db.workEntryDao())
-        viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>) =
-                JobDetailViewModel(jobRepository, args.jobId) as T
-        })[JobDetailViewModel::class.java]
         setupMenu()
         setupCalendarResults()
         applyResponsiveLayout()

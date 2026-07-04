@@ -140,8 +140,6 @@
     <string name="chart_salary_invoiced">Invoiced</string>
     <string name="chart_salary_subtitle">Bars include base rate and all bonuses from saved entry snapshots.</string>
     <string name="stats_summary_title">Period summary</string>
-    <string name="marker_hours_value">%1$s h</string>
-    <string name="marker_salary_value">%1$s</string>
     <string name="chart_no_data">There is no data for the chart yet.</string>
     <string name="break_picker_title">Choose break duration</string>
     <string name="break_picker_label">Break</string>
@@ -311,17 +309,17 @@
     <string name="repeat_last_done">Today\'s entry was created from your last one.</string>
     <string name="repeat_last_exists">There is already an entry for today.</string>
     <string name="repeat_last_empty">This job has no entries yet.</string>
-    <string name="shift_time_label">Shift time (optional — fills hours and shift type)</string>
-    <string name="shift_time_start">Start: %1$s</string>
-    <string name="shift_time_end">End: %1$s</string>
-    <string name="shift_time_start_title">Shift start</string>
-    <string name="shift_time_end_title">Shift end</string>
     <string name="settings_due_days">Invoice due period (days)</string>
     <string name="settings_invoice_reminder">Remind about the invoice at month end</string>
     <string name="reminder_channel_name">Reminders</string>
     <string name="invoice_reminder_title">Time to create an invoice</string>
     <string name="invoice_reminder_text">You have logged hours for %1$s but no invoice yet.</string>
     <string name="invoice_checklist_supplier">Supplier details filled in</string>
+
+    <string name="widget_description">Current month summary</string>
+    <string name="widget_summary_line">%1$s hrs · %2$s €</string>
+    <string name="widget_days_line">Days: %1$d</string>
+    <string name="widget_empty">No entries yet</string>
 
     <string-array name="months">
         <item>January</item>

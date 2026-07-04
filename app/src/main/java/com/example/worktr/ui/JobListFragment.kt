@@ -14,18 +14,17 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.worktr.R
 import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.data.Job
-import com.example.worktr.data.JobRepository
 import com.example.worktr.databinding.FragmentJobListBinding
 import com.example.worktr.ui.picker.DropdownUi
 import com.example.worktr.ui.responsive.ResponsiveUi
@@ -41,6 +40,8 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.transition.platform.MaterialFadeThrough
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -53,10 +54,12 @@ import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Locale
 
+@AndroidEntryPoint
 class JobListFragment : Fragment() {
     private var _binding: FragmentJobListBinding? = null
     private val binding get() = _binding!!
-    private lateinit var viewModel: com.example.worktr.viewmodel.JobListViewModel
+    private val viewModel: com.example.worktr.viewmodel.JobListViewModel by viewModels()
+    @Inject lateinit var database: com.example.worktr.data.AppDatabase
     private lateinit var adapter: JobListAdapter
     private var currentJobs: List<Job> = emptyList()
     private var pendingBackupPassword: String? = null
@@ -86,14 +89,7 @@ class JobListFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = DatabaseProvider.get(requireContext())
-        val repository = JobRepository(db.jobDao())
-        viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return com.example.worktr.viewmodel.JobListViewModel(repository) as T
-            }
-        })[com.example.worktr.viewmodel.JobListViewModel::class.java]
+        val db = database
         setupMenu()
         prepareMainActions()
         applyResponsiveLayout()

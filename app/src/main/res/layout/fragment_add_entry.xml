@@ -110,37 +110,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="@string/shift_time_label"
-                    style="@style/TextAppearance.Material3.BodyMedium" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonShiftStart"
-                        style="@style/Widget.WorkTracker.Button.Outlined"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        tools:text="Початок: 06:00" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonShiftEnd"
-                        style="@style/Widget.WorkTracker.Button.Outlined"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        tools:text="Кінець: 14:00" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     android:text="@string/break_picker_label"
                     style="@style/TextAppearance.Material3.BodyMedium" />
 

@@ -3,8 +3,11 @@ package com.example.worktr.viewmodel
 import androidx.lifecycle.ViewModel
 import com.example.worktr.data.WorkEntry
 import com.example.worktr.data.WorkEntryRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class AddEntryViewModel(
+@HiltViewModel
+class AddEntryViewModel @Inject constructor(
     private val repository: WorkEntryRepository
 ) : ViewModel() {
 

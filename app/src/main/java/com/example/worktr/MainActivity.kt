@@ -17,7 +17,10 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupWithNavController
 import com.example.worktr.databinding.ActivityMainBinding
 import com.example.worktr.util.LanguagePreferences
+import com.example.worktr.widget.MonthSummaryWidgetProvider
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -47,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         binding.toolbar.setupWithNavController(navController, appBarConfiguration)
         setupBottomNavigation()
         applyWindowInsets()
+        MonthSummaryWidgetProvider.enqueueRefresh(this)
     }
 
     override fun onSupportNavigateUp(): Boolean {
