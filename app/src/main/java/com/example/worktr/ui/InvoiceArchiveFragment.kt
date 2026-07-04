@@ -61,7 +61,7 @@ class InvoiceArchiveFragment : Fragment() {
     private var allInvoices: List<InvoiceRecord> = emptyList()
     private lateinit var allLabel: String
     private lateinit var statusLabels: Map<String, InvoiceStatus?>
-    private val numberFormat = NumberFormat.getNumberInstance(Locale("sk", "SK")).apply {
+    private val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
     }

@@ -27,7 +27,7 @@ class InvoiceArchiveAdapter(
     private val onDelete: (InvoiceRecord) -> Unit
 ) : ListAdapter<InvoiceRecord, InvoiceArchiveAdapter.InvoiceViewHolder>(Diff) {
 
-    private val locale = Locale("sk", "SK")
+    private val locale = Locale.getDefault()
     private val numberFormat = NumberFormat.getNumberInstance(locale).apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2

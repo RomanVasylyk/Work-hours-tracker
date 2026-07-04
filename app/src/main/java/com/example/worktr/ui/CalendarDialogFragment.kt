@@ -401,7 +401,7 @@ class CalendarDialogFragment : DialogFragment() {
                 val entryFillColor = ContextCompat.getColor(requireContext(), R.color.calendar_entry_fill)
                 val entryStrokeColor = ContextCompat.getColor(requireContext(), R.color.calendar_entry_stroke)
                 val selectedFillColor = if (selectionMode == SelectionMode.DELETE) {
-                    MaterialColors.getColor(card, com.google.android.material.R.attr.colorError)
+                    MaterialColors.getColor(card, androidx.appcompat.R.attr.colorError)
                 } else {
                     ContextCompat.getColor(requireContext(), R.color.calendar_selected_fill)
                 }
@@ -469,9 +469,9 @@ class CalendarDialogFragment : DialogFragment() {
         ShiftType.fromStored(entry.shiftType) == ShiftType.NIGHT
 
     private fun updateSelectionUi() {
-        val primary = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorPrimary)
+        val primary = MaterialColors.getColor(bulkButton, androidx.appcompat.R.attr.colorPrimary)
         val onPrimary = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorOnPrimary)
-        val error = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorError)
+        val error = MaterialColors.getColor(bulkButton, androidx.appcompat.R.attr.colorError)
         val onError = MaterialColors.getColor(bulkButton, com.google.android.material.R.attr.colorOnError)
         val scroll = view?.findViewById<ScrollView>(R.id.calendarScroll)
         if (selectedDates.isEmpty()) {

@@ -615,9 +615,6 @@ class InvoicePdfGenerator(private val context: Context) {
 
     private fun formatNumber(value: Double): String = numberFormat.format(value)
 
-    private fun unitPrice(totals: InvoiceTotals): Double =
-        if (totals.hours > 0.0) totals.total / totals.hours else 0.0
-
     private fun monthName(period: YearMonth, locale: Locale): String =
         period.month.getDisplayName(TextStyle.FULL, locale)
 

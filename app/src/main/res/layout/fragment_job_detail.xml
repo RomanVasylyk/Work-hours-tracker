@@ -150,17 +150,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Період"
+                    android:text="@string/job_detail_period_title"
                     style="@style/TextAppearance.Material3.TitleMedium" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Перемикайте місяць і рік, щоб переглянути статистику по роботі."
-                    android:textColor="@color/chart_axis_text"
-                    android:visibility="gone"
-                    style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <LinearLayout
                     android:id="@+id/layoutJobFilters"
@@ -209,17 +201,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Зміни і дні"
+            android:text="@string/job_detail_shifts_title"
             style="@style/TextAppearance.Material3.TitleLarge" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Компактний зріз по навантаженню і типах змін."
-            android:textColor="@color/chart_axis_text"
-            android:visibility="gone"
-            style="@style/TextAppearance.Material3.BodyMedium" />
 
         <GridLayout
             android:id="@+id/gridPrimaryStats"
@@ -313,7 +297,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Доплати"
+            android:text="@string/job_detail_bonuses_title"
             style="@style/TextAppearance.Material3.TitleLarge" />
 
         <GridLayout

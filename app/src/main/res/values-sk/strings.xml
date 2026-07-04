@@ -11,13 +11,9 @@
     <string name="add_entry">Pridať/Upraviť záznam</string>
     <string name="add_entry_selected_dates">Vybrané dni: %1$d</string>
     <string name="job_detail_add_entry">Pridať záznam</string>
-    <string name="hours_worked_month">Odpracované hodiny za mesiac: %1$d</string>
-    <string name="days_worked_month">Odpracované dni za mesiac: %1$d</string>
-    <string name="hours_worked_format">Odpracované hodiny: %1$.1f</string>
     <string name="days_worked_format">Odpracované dni: %1$d</string>
     <string name="select_date">Vyberte dátum</string>
     <string name="worked_hours">Odpracované hodiny</string>
-    <string name="break_hours">Prestávka v hodinách</string>
     <string name="shift_type">Typ zmeny</string>
     <string name="holiday">Sviatok</string>
     <string name="holiday_toggle_hint">Zapnite, ak zmena pripadá na oficiálny sviatok.</string>
@@ -36,8 +32,6 @@
     <string name="import_dialog_pick_job">Vyberte prácu pre import</string>
     <string name="import_csv">Import CSV</string>
     <string name="overall_stats">Celková štatistika</string>
-    <string name="jobs_overview_title">Všetky práce pod kontrolou</string>
-    <string name="jobs_overview_subtitle">Rýchly prístup k analytike, exportu a úprave sadzieb.</string>
     <string name="current_month_title">Tento mesiac</string>
     <string name="current_month_hours_value">Hodiny\n%1$s</string>
     <string name="current_month_salary_value">Mzda\n%1$s €</string>
@@ -45,7 +39,6 @@
     <string name="current_month_invoice_ready">Za tento mesiac sú záznamy. Faktúru vytvorte z príslušnej práce.</string>
     <string name="current_month_invoice_empty">Za tento mesiac ešte nie sú žiadne záznamy.</string>
     <string name="jobs_overview_count">Aktívne práce: %1$d</string>
-    <string name="jobs_overview_empty">Zatiaľ nemáte žiadnu prácu. Pridajte prvú a začnite evidenciu.</string>
     <string name="jobs_overview_empty_badge">Žiadne práce</string>
     <string name="quick_action_stats_title">Analytika</string>
     <string name="quick_action_stats_subtitle">Súhrn za všetky práce</string>
@@ -69,14 +62,12 @@
     <string name="job_dialog_bonus_title">Príplatky</string>
     <string name="job_rate_badge">%1$s / hod</string>
     <string name="job_month_summary">Tento mesiac: %1$s hod · %2$s €</string>
-    <string name="job_bonuses_summary">Noc: %1$s  •  So: %2$s  •  Ne: %3$s  •  Sviatok: %4$s</string>
     <string name="job_item_hint">Ťuknite pre detail. Dlhé stlačenie otvorí úpravu.</string>
     <string name="morning_shifts_format">Ranné zmeny: %1$d</string>
     <string name="day_shifts_format">Denné zmeny: %1$d</string>
     <string name="night_shifts_format">Nočné zmeny: %1$d</string>
     <string name="saturday_days_format">Soboty: %1$d</string>
     <string name="sunday_days_format">Nedele: %1$d</string>
-    <string name="duplicate_entry">Záznam pre tento dátum už existuje. Údaje boli načítané na úpravu.</string>
     <string name="holiday_days_format">Sviatky: %1$d</string>
     <string name="edit_job">Upraviť prácu</string>
     <string name="delete_job">Odstrániť prácu</string>
@@ -86,7 +77,6 @@
     <string name="sat_bonus">Sobotný príplatok</string>
     <string name="sun_bonus">Nedeľný príplatok</string>
     <string name="hol_bonus">Príplatok za sviatok</string>
-    <string name="salary_format">Mzda: %1$.2f</string>
     <string name="job_detail_salary_value">%1$s €</string>
     <string name="job_detail_hours_value">%1$s hod</string>
     <string name="job_detail_meta">%1$d dní · %2$s €/hod</string>
@@ -160,7 +150,6 @@
     <string name="break_picker_hours_minutes">%1$d hod %2$d min</string>
     <string name="break_picker_minutes">%1$d min</string>
     <string name="break_picker_hours">%1$d hod</string>
-    <string name="export_success_all">CSV pre všetky práce bolo vytvorené.</string>
     <string name="import_success_summary">Importovaných %1$d záznamov. Nové práce: %2$d, nájdené existujúce: %3$d.</string>
     <string name="import_failed">Import CSV zlyhal.</string>
     <string name="invoice_dialog_title">Vytvorenie faktúry</string>
@@ -195,26 +184,17 @@
     <string name="invoice_service_quantity">Množstvo hlavnej položky</string>
     <string name="invoice_service_unit">Jednotka hlavnej položky</string>
     <string name="invoice_extra_item_enable">Pridať dopravu</string>
-    <string name="invoice_settings_title">Nastavenia faktúry</string>
-    <string name="invoice_settings_subtitle">Tieto údaje sa automaticky vložia pred vytvorením PDF.</string>
-    <string name="invoice_default_customer_section">Predvolený odberateľ</string>
-    <string name="invoice_extra_template_section">Šablóna dopravy</string>
-    <string name="invoice_settings_saved">Nastavenia faktúry uložené.</string>
     <string name="invoice_extra_item_name">Názov dodatočnej položky</string>
     <string name="invoice_extra_quantity">Množstvo</string>
     <string name="invoice_extra_unit">MJ</string>
     <string name="invoice_extra_price">Cena za MJ</string>
-    <string name="invoice_extra_items">Dodatočné položky: názov | množstvo | MJ | cena</string>
     <string name="invoice_extra_items_section">Dodatočné položky</string>
-    <string name="invoice_extra_items_hint">Každú položku píšte na nový riadok: názov | množstvo | MJ | cena.</string>
     <string name="invoice_extra_add">Pridať položku</string>
     <string name="invoice_extra_remove">Odstrániť</string>
     <string name="invoice_issue_date">Dátum vystavenia YYYY-MM-DD</string>
-    <string name="invoice_due_date">Dátum splatnosti YYYY-MM-DD</string>
     <string name="invoice_due_date_auto">Dátum splatnosti bude: %1$s</string>
     <string name="invoice_dates_section">Dátumy faktúry</string>
     <string name="invoice_currency">Mena</string>
-    <string name="invoice_note">Poznámka, IBAN, platobné podmienky</string>
     <string name="invoice_create_pdf">Vytvoriť PDF</string>
     <string name="invoice_required_fields">Vyplňte číslo faktúry, vaše údaje, IBAN a údaje odberateľa.</string>
     <string name="invoice_iban_invalid">IBAN nevyzerá správne. Skontrolujte číslo účtu.</string>
@@ -225,7 +205,6 @@
     <string name="invoice_created">Faktúra vytvorená.</string>
     <string name="invoice_created_actions">PDF faktúry je pripravené.</string>
     <string name="invoice_archive_title">Archív faktúr</string>
-    <string name="invoice_archive_subtitle">Uložené PDF faktúry s číslom, odberateľom, mesiacom a sumou.</string>
     <string name="invoice_archive_empty">Zatiaľ nie sú uložené žiadne faktúry.</string>
     <string name="invoice_archive_number">Faktúra %1$s</string>
     <string name="invoice_archive_meta">%1$s %2$d · %3$s %4$s · vytvorené %5$s</string>
@@ -261,7 +240,6 @@
     <string name="backup_export_failed">Nepodarilo sa vytvoriť zálohu.</string>
     <string name="backup_restore_failed">Nepodarilo sa obnoviť zálohu.</string>
     <string name="backup_restore_confirm_title">Obnoviť zálohu?</string>
-    <string name="backup_restore_confirm_message">Aktuálne práce, záznamy a archív faktúr budú nahradené údajmi zo záložného súboru.</string>
     <string name="backup_restore_preview">V súbore: práce %1$d, záznamy %2$d, faktúry %3$d.\n\nAktuálne údaje budú nahradené.</string>
     <string name="backup_restore_confirm">Obnoviť</string>
     <string name="backup_reminder">Záloha nebola dlho vytvorená. Odporúča sa uložiť kópiu údajov.</string>
@@ -293,7 +271,6 @@
     <string name="invoice_export_zip">Export PDF za rok do ZIP</string>
     <string name="invoice_export_zip_created">ZIP s faktúrami bol vytvorený.</string>
     <string name="invoice_export_zip_empty">Za tento rok nie sú PDF na export.</string>
-    <string name="chart_income_title">Zarobené a fakturované</string>
     <string name="clients_title">Klienti</string>
     <string name="clients_subtitle">Každá práca má vlastné údaje odberateľa, sadzbu a šablónu popisu služby.</string>
     <string name="clients_empty">Zatiaľ nemáte žiadne práce. Pridajte prácu na hlavnej obrazovke.</string>
@@ -322,6 +299,13 @@
     <string name="job_delete_title">Odstrániť prácu?</string>
     <string name="job_delete_message">Práca „%1$s“ a všetky jej záznamy hodín a údaje klienta budú natrvalo odstránené.</string>
     <string name="job_delete_confirm">Odstrániť</string>
+
+    <string name="add_entry_params_title">Parametre zmeny</string>
+    <string name="job_detail_period_title">Obdobie</string>
+    <string name="job_detail_shifts_title">Zmeny a dni</string>
+    <string name="job_detail_bonuses_title">Príplatky</string>
+    <string name="calendar_prev_month">Predchádzajúci mesiac</string>
+    <string name="calendar_next_month">Nasledujúci mesiac</string>
 
     <string-array name="months">
         <item>Január</item>

@@ -3,7 +3,6 @@ package com.example.worktr.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -21,8 +20,14 @@ class JobListAdapter(
     private var monthlySummaries: Map<Int, JobMonthSummary> = emptyMap()
 
     fun setMonthlySummaries(summaries: Map<Int, JobMonthSummary>) {
+        if (summaries == monthlySummaries) return
+        val previous = monthlySummaries
         monthlySummaries = summaries
-        notifyDataSetChanged()
+        currentList.forEachIndexed { index, job ->
+            if (previous[job.jobId] != summaries[job.jobId]) {
+                notifyItemChanged(index)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -41,7 +46,6 @@ class JobListAdapter(
         private val rateText: TextView = itemView.findViewById(R.id.textJobRate)
         private val bonusesText: TextView = itemView.findViewById(R.id.textJobBonuses)
         private val captionText: TextView = itemView.findViewById(R.id.textJobCaption)
-        private val nextIcon: ImageView = itemView.findViewById(R.id.imageNext)
         private val editButton: MaterialButton = itemView.findViewById(R.id.buttonEditJob)
         private val numberFormatter = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
             maximumFractionDigits = 2
@@ -69,7 +73,6 @@ class JobListAdapter(
                 moneyFormatter.format(summary.salary)
             )
             captionText.visibility = View.GONE
-            nextIcon.contentDescription = job.name
             itemView.setOnClickListener { onClick(job) }
             itemView.setOnLongClickListener {
                 onEdit(job)

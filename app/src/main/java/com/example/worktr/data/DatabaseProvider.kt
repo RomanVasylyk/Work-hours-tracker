@@ -7,8 +7,10 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.worktr.util.ShiftType
+import java.time.Instant
+import java.time.ZoneId
 
-@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class, Client::class], version = 8, exportSchema = true)
+@Database(entities = [Job::class, WorkEntry::class, InvoiceRecord::class, Client::class], version = 9, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun jobDao(): JobDao
     abstract fun workEntryDao(): WorkEntryDao
@@ -142,6 +144,39 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Legacy CSV imports could store mid-day timestamps. Normalize every
+            // entry to the start of its local day and keep only the newest entry
+            // per (jobId, day) so the unique index really means one entry per
+            // calendar day.
+            val zone = ZoneId.systemDefault()
+            val rows = mutableListOf<Triple<Long, Long, Long>>() // entryId, jobId, date
+            db.query("SELECT entryId, jobId, date FROM work_entries").use { cursor ->
+                while (cursor.moveToNext()) {
+                    rows += Triple(cursor.getLong(0), cursor.getLong(1), cursor.getLong(2))
+                }
+            }
+            rows.groupBy { (_, jobId, date) ->
+                jobId to Instant.ofEpochMilli(date).atZone(zone).toLocalDate()
+            }.forEach { (key, group) ->
+                val normalized = key.second.atStartOfDay(zone).toInstant().toEpochMilli()
+                val keeperId = group.maxOf { (entryId, _, _) -> entryId }
+                group.forEach { (entryId, _, date) ->
+                    when {
+                        entryId != keeperId ->
+                            db.execSQL("DELETE FROM work_entries WHERE entryId = ?", arrayOf(entryId))
+                        date != normalized ->
+                            db.execSQL(
+                                "UPDATE work_entries SET date = ? WHERE entryId = ?",
+                                arrayOf(normalized, entryId)
+                            )
+                    }
+                }
+            }
+        }
+    }
+
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
@@ -159,6 +194,7 @@ object DatabaseProvider {
                 .addMigrations(MIGRATION_5_6)
                 .addMigrations(MIGRATION_6_7)
                 .addMigrations(MIGRATION_7_8)
+                .addMigrations(MIGRATION_8_9)
                 .build()
                 .also { INSTANCE = it }
         }

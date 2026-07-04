@@ -427,9 +427,9 @@ class JobListFragment : Fragment() {
             if (!isAdded) return@launch
             result.onSuccess { summary ->
                 requireContext()
-                    .getSharedPreferences(BACKUP_PREFS, Context.MODE_PRIVATE)
+                    .getSharedPreferences(AutoBackupManager.BACKUP_PREFS, Context.MODE_PRIVATE)
                     .edit()
-                    .putLong(PREF_LAST_BACKUP_EXPORT_MILLIS, System.currentTimeMillis())
+                    .putLong(AutoBackupManager.PREF_LAST_BACKUP_EXPORT_MILLIS, System.currentTimeMillis())
                     .apply()
                 Snackbar.make(
                     binding.root,
@@ -447,9 +447,9 @@ class JobListFragment : Fragment() {
     }
 
     private fun showBackupReminderIfNeeded() {
-        val prefs = requireContext().getSharedPreferences(BACKUP_PREFS, Context.MODE_PRIVATE)
+        val prefs = requireContext().getSharedPreferences(AutoBackupManager.BACKUP_PREFS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
-        val lastExport = prefs.getLong(PREF_LAST_BACKUP_EXPORT_MILLIS, 0L)
+        val lastExport = prefs.getLong(AutoBackupManager.PREF_LAST_BACKUP_EXPORT_MILLIS, 0L)
         val lastReminder = prefs.getLong(PREF_LAST_BACKUP_REMINDER_MILLIS, 0L)
         if (now - lastExport < BACKUP_REMINDER_INTERVAL_MILLIS) return
         if (now - lastReminder < BACKUP_REMINDER_SNOOZE_MILLIS) return
@@ -697,8 +697,6 @@ class JobListFragment : Fragment() {
     }
 
     private companion object {
-        const val BACKUP_PREFS = "backup_prefs"
-        const val PREF_LAST_BACKUP_EXPORT_MILLIS = "last_backup_export_millis"
         const val PREF_LAST_BACKUP_REMINDER_MILLIS = "last_backup_reminder_millis"
         const val BACKUP_REMINDER_INTERVAL_MILLIS = 30L * 24L * 60L * 60L * 1000L
         const val BACKUP_REMINDER_SNOOZE_MILLIS = 24L * 60L * 60L * 1000L

@@ -11,13 +11,9 @@
     <string name="add_entry">Додати/Редагувати запис</string>
     <string name="add_entry_selected_dates">Вибрано днів: %1$d</string>
     <string name="job_detail_add_entry">Додати запис</string>
-    <string name="hours_worked_month">Відпрацьовано годин за місяць: %1$d</string>
-    <string name="days_worked_month">Відпрацьовано днів за місяць: %1$d</string>
-    <string name="hours_worked_format">Відпрацьовано годин: %1$.1f</string>
     <string name="days_worked_format">Відпрацьовано днів: %1$d</string>
     <string name="select_date">Виберіть дату</string>
     <string name="worked_hours">Відпрацьовано годин</string>
-    <string name="break_hours">Години перерви</string>
     <string name="shift_type">Тип зміни</string>
     <string name="holiday">Святковий день</string>
     <string name="holiday_toggle_hint">Увімкніть, якщо зміна припадає на офіційне свято.</string>
@@ -36,8 +32,6 @@
     <string name="import_dialog_pick_job">Оберіть роботу для імпорту</string>
     <string name="import_csv">Імпорт CSV</string>
     <string name="overall_stats">Загальна статистика</string>
-    <string name="jobs_overview_title">Усі роботи під контролем</string>
-    <string name="jobs_overview_subtitle">Швидкий доступ до загальної аналітики, експорту та редагування ставок.</string>
     <string name="current_month_title">Цей місяць</string>
     <string name="current_month_hours_value">Години\n%1$s</string>
     <string name="current_month_salary_value">Зарплата\n%1$s €</string>
@@ -45,7 +39,6 @@
     <string name="current_month_invoice_ready">Є записи за місяць. Фактуру створюйте з потрібної роботи.</string>
     <string name="current_month_invoice_empty">За цей місяць ще немає записів.</string>
     <string name="jobs_overview_count">Активних робіт: %1$d</string>
-    <string name="jobs_overview_empty">Поки немає жодної роботи. Додайте першу, щоб почати облік.</string>
     <string name="jobs_overview_empty_badge">Немає робіт</string>
     <string name="quick_action_stats_title">Аналітика</string>
     <string name="quick_action_stats_subtitle">Зведення по всіх роботах</string>
@@ -69,14 +62,12 @@
     <string name="job_dialog_bonus_title">Надбавки</string>
     <string name="job_rate_badge">%1$s / год</string>
     <string name="job_month_summary">Tento mesiac: %1$s hod · %2$s €</string>
-    <string name="job_bonuses_summary">Ніч: %1$s  •  Сб: %2$s  •  Нд: %3$s  •  Свято: %4$s</string>
     <string name="job_item_hint">Натисніть для деталей. Довге натискання відкриває редагування.</string>
     <string name="morning_shifts_format">Ранкових змін: %1$d</string>
     <string name="day_shifts_format">Денних змін: %1$d</string>
     <string name="night_shifts_format">Нічних змін: %1$d</string>
     <string name="saturday_days_format">Субота: %1$d</string>
     <string name="sunday_days_format">Неділя: %1$d</string>
-    <string name="duplicate_entry">Запис за цю дату існує. Дані завантажено для редагування.</string>
     <string name="holiday_days_format">Святкових днів: %1$d</string>
     <string name="edit_job">Редагувати роботу</string>
     <string name="delete_job">Видалити роботу</string>
@@ -86,7 +77,6 @@
     <string name="sat_bonus">Надбавка субота</string>
     <string name="sun_bonus">Надбавка неділя</string>
     <string name="hol_bonus">Надбавка свято</string>
-    <string name="salary_format">Зарплата: %1$.2f</string>
     <string name="job_detail_salary_value">%1$s €</string>
     <string name="job_detail_hours_value">%1$s hod</string>
     <string name="job_detail_meta">%1$d dní · %2$s €/hod</string>
@@ -160,7 +150,6 @@
     <string name="break_picker_hours_minutes">%1$d год %2$d хв</string>
     <string name="break_picker_minutes">%1$d хв</string>
     <string name="break_picker_hours">%1$d год</string>
-    <string name="export_success_all">Створено CSV для всіх робіт.</string>
     <string name="import_success_summary">Імпортовано %1$d записів. Нових робіт: %2$d, знайдено існуючих: %3$d.</string>
     <string name="import_failed">Не вдалося імпортувати CSV.</string>
     <string name="invoice_dialog_title">Створення фактури</string>
@@ -195,26 +184,17 @@
     <string name="invoice_service_quantity">Кількість у головній позиції</string>
     <string name="invoice_service_unit">Одиниця головної позиції</string>
     <string name="invoice_extra_item_enable">Додати Doprava</string>
-    <string name="invoice_settings_title">Налаштування фактури</string>
-    <string name="invoice_settings_subtitle">Ці дані підставляються автоматично перед створенням PDF.</string>
-    <string name="invoice_default_customer_section">Типовий odberateľ</string>
-    <string name="invoice_extra_template_section">Шаблон Doprava</string>
-    <string name="invoice_settings_saved">Налаштування фактури збережено.</string>
     <string name="invoice_extra_item_name">Назва додаткової позиції</string>
     <string name="invoice_extra_quantity">Кількість</string>
     <string name="invoice_extra_unit">MJ</string>
     <string name="invoice_extra_price">Cena za MJ</string>
-    <string name="invoice_extra_items">Додаткові позиції: назва | кількість | MJ | ціна</string>
     <string name="invoice_extra_items_section">Додаткові позиції</string>
-    <string name="invoice_extra_items_hint">Кожну позицію пишіть з нового рядка у форматі: назва | кількість | MJ | ціна.</string>
     <string name="invoice_extra_add">Додати позицію</string>
     <string name="invoice_extra_remove">Видалити</string>
     <string name="invoice_issue_date">Dátum vystavenia YYYY-MM-DD</string>
-    <string name="invoice_due_date">Dátum splatnosti YYYY-MM-DD</string>
     <string name="invoice_due_date_auto">Термін оплати буде: %1$s</string>
     <string name="invoice_dates_section">Дати фактури</string>
     <string name="invoice_currency">Валюта</string>
-    <string name="invoice_note">Примітка, IBAN, умови оплати</string>
     <string name="invoice_create_pdf">Створити PDF</string>
     <string name="invoice_required_fields">Заповніть номер фактури, ваші дані, IBAN і дані клієнта.</string>
     <string name="invoice_iban_invalid">IBAN не виглядає правильним. Перевірте номер рахунку.</string>
@@ -225,7 +205,6 @@
     <string name="invoice_created">Фактуру створено.</string>
     <string name="invoice_created_actions">PDF фактури готовий.</string>
     <string name="invoice_archive_title">Архів фактур</string>
-    <string name="invoice_archive_subtitle">Збережені PDF-фактури з номером, клієнтом, місяцем і сумою.</string>
     <string name="invoice_archive_empty">Ще немає збережених фактур.</string>
     <string name="invoice_archive_number">Faktúra %1$s</string>
     <string name="invoice_archive_meta">%1$s %2$d · %3$s %4$s · створено %5$s</string>
@@ -261,7 +240,6 @@
     <string name="backup_export_failed">Не вдалося створити backup.</string>
     <string name="backup_restore_failed">Не вдалося відновити backup.</string>
     <string name="backup_restore_confirm_title">Відновити backup?</string>
-    <string name="backup_restore_confirm_message">Поточні роботи, записи і архів фактур буде замінено даними з backup-файлу.</string>
     <string name="backup_restore_preview">У файлі: робіт %1$d, записів %2$d, фактур %3$d.\n\nПоточні дані буде замінено.</string>
     <string name="backup_restore_confirm">Відновити</string>
     <string name="backup_reminder">Давно не створювався backup. Краще зберегти копію даних.</string>
@@ -293,7 +271,6 @@
     <string name="invoice_export_zip">Експорт PDF за рік ZIP</string>
     <string name="invoice_export_zip_created">ZIP з фактурами створено.</string>
     <string name="invoice_export_zip_empty">За цей рік немає PDF для експорту.</string>
-    <string name="chart_income_title">Зароблено і виставлено</string>
     <string name="clients_title">Клієнти</string>
     <string name="clients_subtitle">Кожна робота має власні дані odberateľ, ставку і шаблон опису послуг.</string>
     <string name="clients_empty">Поки немає робіт. Додайте роботу на головному екрані.</string>
@@ -322,6 +299,13 @@
     <string name="job_delete_title">Видалити роботу?</string>
     <string name="job_delete_message">«%1$s» і всі її записи годин та дані клієнта буде видалено назавжди.</string>
     <string name="job_delete_confirm">Видалити</string>
+
+    <string name="add_entry_params_title">Параметри зміни</string>
+    <string name="job_detail_period_title">Період</string>
+    <string name="job_detail_shifts_title">Зміни і дні</string>
+    <string name="job_detail_bonuses_title">Доплати</string>
+    <string name="calendar_prev_month">Попередній місяць</string>
+    <string name="calendar_next_month">Наступний місяць</string>
 
     <string-array name="months">
         <item>Січень</item>

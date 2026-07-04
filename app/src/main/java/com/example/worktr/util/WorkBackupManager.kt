@@ -12,6 +12,8 @@ import com.example.worktr.data.Job
 import com.example.worktr.data.WorkEntry
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.Instant
+import java.time.ZoneId
 
 data class BackupSummary(
     val jobs: Int,
@@ -221,7 +223,7 @@ class WorkBackupManager(
             WorkEntry(
                 entryId = json.optInt("entryId"),
                 jobId = json.optInt("jobId"),
-                date = json.optLong("date"),
+                date = normalizeToStartOfDay(json.optLong("date")),
                 hoursWorked = json.optDouble("hoursWorked", 0.0),
                 breakHours = json.optDouble("breakHours", 0.0),
                 shiftType = ShiftType.fromStored(json.optString("shiftType")).code,
@@ -332,6 +334,11 @@ class WorkBackupManager(
                 }
             }
         }
+    }
+
+    private fun normalizeToStartOfDay(millis: Long): Long {
+        val zone = ZoneId.systemDefault()
+        return Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
     }
 
     private fun migrateRestoredPlainBankPrefs() {

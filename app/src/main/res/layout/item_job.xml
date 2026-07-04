@@ -54,6 +54,7 @@
                 android:id="@+id/imageNext"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
                 android:src="@drawable/ic_chevron_right"
                 app:tint="@color/job_hint_text"
                 app:layout_constraintBottom_toBottomOf="parent"

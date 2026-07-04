@@ -11,13 +11,9 @@
     <string name="add_entry">Add/Edit entry</string>
     <string name="add_entry_selected_dates">Selected days: %1$d</string>
     <string name="job_detail_add_entry">Add entry</string>
-    <string name="hours_worked_month">Hours worked this month: %1$d</string>
-    <string name="days_worked_month">Days worked this month: %1$d</string>
-    <string name="hours_worked_format">Hours worked: %1$.1f</string>
     <string name="days_worked_format">Days worked: %1$d</string>
     <string name="select_date">Select date</string>
     <string name="worked_hours">Worked hours</string>
-    <string name="break_hours">Break hours</string>
     <string name="shift_type">Shift type</string>
     <string name="holiday">Holiday</string>
     <string name="holiday_toggle_hint">Enable when the shift falls on an official holiday.</string>
@@ -36,8 +32,6 @@
     <string name="import_dialog_pick_job">Choose a job for import</string>
     <string name="import_csv">Import CSV</string>
     <string name="overall_stats">Overall statistics</string>
-    <string name="jobs_overview_title">All jobs under control</string>
-    <string name="jobs_overview_subtitle">Quick access to analytics, export and rate editing.</string>
     <string name="current_month_title">This month</string>
     <string name="current_month_hours_value">Hours\n%1$s</string>
     <string name="current_month_salary_value">Pay\n%1$s €</string>
@@ -45,7 +39,6 @@
     <string name="current_month_invoice_ready">There are entries for this month. Create the invoice from the required job.</string>
     <string name="current_month_invoice_empty">There are no entries for this month yet.</string>
     <string name="jobs_overview_count">Active jobs: %1$d</string>
-    <string name="jobs_overview_empty">No jobs yet. Add your first one to start tracking.</string>
     <string name="jobs_overview_empty_badge">No jobs</string>
     <string name="quick_action_stats_title">Analytics</string>
     <string name="quick_action_stats_subtitle">Summary across all jobs</string>
@@ -69,14 +62,12 @@
     <string name="job_dialog_bonus_title">Bonuses</string>
     <string name="job_rate_badge">%1$s / hour</string>
     <string name="job_month_summary">This month: %1$s h · %2$s €</string>
-    <string name="job_bonuses_summary">Night: %1$s  •  Sat: %2$s  •  Sun: %3$s  •  Holiday: %4$s</string>
     <string name="job_item_hint">Tap for details. Long press opens editing.</string>
     <string name="morning_shifts_format">Morning shifts: %1$d</string>
     <string name="day_shifts_format">Day shifts: %1$d</string>
     <string name="night_shifts_format">Night shifts: %1$d</string>
     <string name="saturday_days_format">Saturdays: %1$d</string>
     <string name="sunday_days_format">Sundays: %1$d</string>
-    <string name="duplicate_entry">An entry for this date already exists. The data was loaded for editing.</string>
     <string name="holiday_days_format">Holidays: %1$d</string>
     <string name="edit_job">Edit job</string>
     <string name="delete_job">Delete job</string>
@@ -86,7 +77,6 @@
     <string name="sat_bonus">Saturday bonus</string>
     <string name="sun_bonus">Sunday bonus</string>
     <string name="hol_bonus">Holiday bonus</string>
-    <string name="salary_format">Pay: %1$.2f</string>
     <string name="job_detail_salary_value">%1$s €</string>
     <string name="job_detail_hours_value">%1$s h</string>
     <string name="job_detail_meta">%1$d days · %2$s €/h</string>
@@ -160,7 +150,6 @@
     <string name="break_picker_hours_minutes">%1$d h %2$d min</string>
     <string name="break_picker_minutes">%1$d min</string>
     <string name="break_picker_hours">%1$d h</string>
-    <string name="export_success_all">CSV for all jobs was created.</string>
     <string name="import_success_summary">Imported %1$d entries. New jobs: %2$d, existing found: %3$d.</string>
     <string name="import_failed">CSV import failed.</string>
     <string name="invoice_dialog_title">Create invoice</string>
@@ -195,26 +184,17 @@
     <string name="invoice_service_quantity">Main item quantity</string>
     <string name="invoice_service_unit">Main item unit</string>
     <string name="invoice_extra_item_enable">Add transport</string>
-    <string name="invoice_settings_title">Invoice settings</string>
-    <string name="invoice_settings_subtitle">These details are inserted automatically before PDF creation.</string>
-    <string name="invoice_default_customer_section">Default customer</string>
-    <string name="invoice_extra_template_section">Transport template</string>
-    <string name="invoice_settings_saved">Invoice settings saved.</string>
     <string name="invoice_extra_item_name">Extra item name</string>
     <string name="invoice_extra_quantity">Quantity</string>
     <string name="invoice_extra_unit">Unit</string>
     <string name="invoice_extra_price">Unit price</string>
-    <string name="invoice_extra_items">Extra items: name | quantity | unit | price</string>
     <string name="invoice_extra_items_section">Extra items</string>
-    <string name="invoice_extra_items_hint">Write each item on a new line: name | quantity | unit | price.</string>
     <string name="invoice_extra_add">Add item</string>
     <string name="invoice_extra_remove">Remove</string>
     <string name="invoice_issue_date">Issue date YYYY-MM-DD</string>
-    <string name="invoice_due_date">Due date YYYY-MM-DD</string>
     <string name="invoice_due_date_auto">Due date will be: %1$s</string>
     <string name="invoice_dates_section">Invoice dates</string>
     <string name="invoice_currency">Currency</string>
-    <string name="invoice_note">Note, IBAN, payment terms</string>
     <string name="invoice_create_pdf">Create PDF</string>
     <string name="invoice_required_fields">Fill in invoice number, supplier data, IBAN and customer data.</string>
     <string name="invoice_iban_invalid">IBAN does not look valid. Check the account number.</string>
@@ -225,7 +205,6 @@
     <string name="invoice_created">Invoice created.</string>
     <string name="invoice_created_actions">Invoice PDF is ready.</string>
     <string name="invoice_archive_title">Invoice archive</string>
-    <string name="invoice_archive_subtitle">Saved PDF invoices with number, customer, month and amount.</string>
     <string name="invoice_archive_empty">No saved invoices yet.</string>
     <string name="invoice_archive_number">Invoice %1$s</string>
     <string name="invoice_archive_meta">%1$s %2$d · %3$s %4$s · created %5$s</string>
@@ -261,7 +240,6 @@
     <string name="backup_export_failed">Could not create backup.</string>
     <string name="backup_restore_failed">Could not restore backup.</string>
     <string name="backup_restore_confirm_title">Restore backup?</string>
-    <string name="backup_restore_confirm_message">Current jobs, entries and invoice archive will be replaced with data from the backup file.</string>
     <string name="backup_restore_preview">File contains: jobs %1$d, entries %2$d, invoices %3$d.\n\nCurrent data will be replaced.</string>
     <string name="backup_restore_confirm">Restore</string>
     <string name="backup_reminder">No backup has been created for a while. Save a copy of your data.</string>
@@ -293,7 +271,6 @@
     <string name="invoice_export_zip">Export yearly PDFs as ZIP</string>
     <string name="invoice_export_zip_created">ZIP with invoices was created.</string>
     <string name="invoice_export_zip_empty">There are no PDFs to export for this year.</string>
-    <string name="chart_income_title">Earned and invoiced</string>
     <string name="clients_title">Clients</string>
     <string name="clients_subtitle">Each job has its own customer data, rate and service description template.</string>
     <string name="clients_empty">No jobs yet. Add a job on the main screen.</string>
@@ -322,6 +299,13 @@
     <string name="job_delete_title">Delete job?</string>
     <string name="job_delete_message">“%1$s” and all of its time entries and client data will be deleted permanently.</string>
     <string name="job_delete_confirm">Delete</string>
+
+    <string name="add_entry_params_title">Shift parameters</string>
+    <string name="job_detail_period_title">Period</string>
+    <string name="job_detail_shifts_title">Shifts and days</string>
+    <string name="job_detail_bonuses_title">Bonuses</string>
+    <string name="calendar_prev_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
 
     <string-array name="months">
         <item>January</item>

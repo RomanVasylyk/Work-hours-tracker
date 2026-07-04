@@ -55,14 +55,6 @@
                     style="@style/TextAppearance.Material3.HeadlineMedium"
                     tools:text="2026-04-20" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Оберіть дату, потім налаштуйте години, перерву і тип зміни."
-                    android:textColor="#E2F1F6"
-                    android:visibility="gone"
-                    style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buttonSelectDate"
@@ -95,17 +87,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Параметри зміни"
+                    android:text="@string/add_entry_params_title"
                     style="@style/TextAppearance.Material3.TitleLarge" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Усі значення зберігаються як snapshot на момент запису."
-                    android:textColor="@color/chart_axis_text"
-                    android:visibility="gone"
-                    style="@style/TextAppearance.Material3.BodyMedium" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.WorkTracker.TextInputLayout"
