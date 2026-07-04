@@ -24,6 +24,7 @@ object InvoicePrefs {
     const val PREF_EXTRA_PRICE = "extra_price"
     const val PREF_CURRENCY = "currency"
     const val PREF_PDF_LANGUAGE = "pdf_language"
+    const val PREF_DUE_DAYS = "invoice_due_days"
 
     const val PREF_CLIENT_NAME = "name"
     const val PREF_CLIENT_STREET = "street"
@@ -35,17 +36,21 @@ object InvoicePrefs {
     const val PREF_CLIENT_ICDPH = "icdph"
     const val PREF_CLIENT_DESCRIPTION = "description_template"
 
-    const val DEFAULT_SUPPLIER_NAME = "Ukážkový dodávateľ"
-    const val DEFAULT_SUPPLIER_STREET = "Hlavná 12"
-    const val DEFAULT_SUPPLIER_CITY = "Nitra"
-    const val DEFAULT_SUPPLIER_ZIP = "94901"
-    const val DEFAULT_SUPPLIER_ICO = "12345678"
+    const val DEFAULT_SUPPLIER_NAME = ""
+    const val DEFAULT_SUPPLIER_STREET = ""
+    const val DEFAULT_SUPPLIER_CITY = ""
+    const val DEFAULT_SUPPLIER_ZIP = ""
+    const val DEFAULT_SUPPLIER_ICO = ""
     const val DEFAULT_COUNTRY = "Slovensko"
     const val DEFAULT_EXTRA_NAME = "Doprava"
     const val DEFAULT_EXTRA_QUANTITY = "1"
     const val DEFAULT_EXTRA_UNIT = ""
     const val DEFAULT_EXTRA_PRICE = "10"
     const val DEFAULT_CURRENCY = "EUR"
+    const val DEFAULT_DUE_DAYS = 15
+
+    fun dueDays(prefs: android.content.SharedPreferences): Long =
+        prefs.getInt(PREF_DUE_DAYS, DEFAULT_DUE_DAYS).coerceIn(1, 365).toLong()
 
     private const val CLIENT_PREFIX = "client"
 

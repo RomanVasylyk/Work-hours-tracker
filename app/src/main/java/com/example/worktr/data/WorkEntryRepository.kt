@@ -17,6 +17,9 @@ class WorkEntryRepository(
     suspend fun getEntryForDay(jobId: Int, start: Long, end: Long) =
         withContext(ioDispatcher) { dao.getEntryForDay(jobId, start, end) }
 
+    suspend fun getLatestEntry(jobId: Int) =
+        withContext(ioDispatcher) { dao.getLatestEntry(jobId) }
+
     suspend fun insert(entry: WorkEntry) = withContext(ioDispatcher) { dao.insert(entry) }
 
     suspend fun update(entry: WorkEntry) = withContext(ioDispatcher) { dao.update(entry) }

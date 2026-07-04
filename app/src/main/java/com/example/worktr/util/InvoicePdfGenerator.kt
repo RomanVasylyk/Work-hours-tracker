@@ -75,6 +75,7 @@ class InvoicePdfGenerator(private val context: Context) {
         val page = document.startPage(pageInfo)
         drawInvoice(page.canvas, job, period, input, totals, invoiceExtraItems, invoiceTotal, payBySquareCode)
         document.finishPage(page)
+        drawAnnexPages(document, entries, input)
 
         val safeNumber = input.invoiceNumber
             .ifBlank { "invoice" }
@@ -296,6 +297,75 @@ class InvoicePdfGenerator(private val context: Context) {
             maxLines = 2,
             lineHeight = 8.7f
         )
+    }
+
+    /**
+     * Work-log annex: one row per entry so the customer can verify the
+     * invoiced hours day by day. Paginates when a month has many entries.
+     */
+    private fun drawAnnexPages(document: PdfDocument, entries: List<WorkEntry>, input: InvoiceInput) {
+        if (entries.isEmpty()) return
+        val texts = PdfTexts.forLanguage(input.pdfLanguage)
+        val annexDateFormatter = DateTimeFormatter.ofPattern("d.M.yyyy", texts.locale)
+        val sorted = entries.sortedBy { it.date }
+        val chunks = sorted.chunked(ANNEX_ROWS_PER_PAGE)
+
+        val titlePaint = textPaint(13f).apply { typeface = boldTypeface }
+        val headerPaint = textPaint(9.5f).apply { typeface = boldTypeface }
+        val headerRightPaint = Paint(headerPaint).apply { textAlign = Paint.Align.RIGHT }
+        val cellPaint = textPaint(9.5f)
+        val cellRightPaint = Paint(cellPaint).apply { textAlign = Paint.Align.RIGHT }
+        val totalPaint = textPaint(10.5f).apply { typeface = boldTypeface; textAlign = Paint.Align.RIGHT }
+        val thin = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.BLACK
+            strokeWidth = 0.6f
+            style = Paint.Style.STROKE
+        }
+
+        val colDateX = OUTER_LEFT + 2f
+        val colShiftX = 200f
+        val colHoursX = 360f
+        val colBreakX = 450f
+        val colWorkedX = OUTER_RIGHT - 4f
+
+        chunks.forEachIndexed { chunkIndex, chunk ->
+            val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, chunkIndex + 2).create()
+            val page = document.startPage(pageInfo)
+            val canvas = page.canvas
+            canvas.drawColor(Color.WHITE)
+
+            canvas.drawText("${texts.annexTitle} ${input.invoiceNumber}", OUTER_LEFT, 46f, titlePaint)
+
+            var y = 74f
+            canvas.drawText(texts.colDate, colDateX, y, headerPaint)
+            canvas.drawText(texts.colShift, colShiftX, y, headerPaint)
+            canvas.drawText(texts.colHours, colHoursX, y, headerRightPaint)
+            canvas.drawText(texts.colBreak, colBreakX, y, headerRightPaint)
+            canvas.drawText(texts.colWorked, colWorkedX, y, headerRightPaint)
+            canvas.drawLine(OUTER_LEFT, y + 5f, OUTER_RIGHT, y + 5f, thin)
+
+            chunk.forEach { entry ->
+                y += ANNEX_ROW_HEIGHT
+                canvas.drawText(entry.localDate().format(annexDateFormatter), colDateX, y, cellPaint)
+                canvas.drawText(texts.shiftLabel(ShiftType.fromStored(entry.shiftType)), colShiftX, y, cellPaint)
+                canvas.drawText(formatQuantity(entry.hoursWorked), colHoursX, y, cellRightPaint)
+                canvas.drawText(formatQuantity(entry.breakHours), colBreakX, y, cellRightPaint)
+                canvas.drawText(formatQuantity(entry.workedHours()), colWorkedX, y, cellRightPaint)
+            }
+
+            if (chunkIndex == chunks.lastIndex) {
+                y += ANNEX_ROW_HEIGHT
+                canvas.drawLine(OUTER_LEFT, y - 10f, OUTER_RIGHT, y - 10f, thin)
+                val totalHours = sorted.sumOf { it.workedHours() }
+                canvas.drawText(
+                    "${texts.total} ${formatQuantity(totalHours)} ${texts.hourUnit}",
+                    colWorkedX,
+                    y + 4f,
+                    totalPaint
+                )
+            }
+            document.finishPage(page)
+        }
     }
 
     private fun textPaint(size: Float): Paint =
@@ -888,8 +958,24 @@ class InvoicePdfGenerator(private val context: Context) {
         val paidByAdvances: String,
         val remaining: String,
         val amountDue: String,
+        val annexTitle: String,
+        val colDate: String,
+        val colShift: String,
+        val colHours: String,
+        val colBreak: String,
+        val colWorked: String,
+        val shiftMorning: String,
+        val shiftDay: String,
+        val shiftNight: String,
         val defaultDescription: (String) -> String
     ) {
+        fun shiftLabel(type: ShiftType): String =
+            when (type) {
+                ShiftType.MORNING -> shiftMorning
+                ShiftType.DAY -> shiftDay
+                ShiftType.NIGHT -> shiftNight
+            }
+
         companion object {
             fun forLanguage(code: String): PdfTexts =
                 when (InvoiceLanguage.fromCode(code)) {
@@ -916,6 +1002,15 @@ class InvoicePdfGenerator(private val context: Context) {
                         paidByAdvances = "Оплачено авансом:",
                         remaining = "Залишилось оплатити:",
                         amountDue = "До оплати:",
+                        annexTitle = "Додаток — розшифровка днів до фактури",
+                        colDate = "Дата",
+                        colShift = "Зміна",
+                        colHours = "Години",
+                        colBreak = "Перерва",
+                        colWorked = "Відпрацьовано",
+                        shiftMorning = "Ранкова",
+                        shiftDay = "Денна",
+                        shiftNight = "Нічна",
                         defaultDescription = { month -> "Виставляю оплату за виконану роботу за місяць $month" }
                     )
                     InvoiceLanguage.ENGLISH -> PdfTexts(
@@ -941,6 +1036,15 @@ class InvoicePdfGenerator(private val context: Context) {
                         paidByAdvances = "Paid by advances:",
                         remaining = "Remaining:",
                         amountDue = "Amount due:",
+                        annexTitle = "Annex — work log for invoice",
+                        colDate = "Date",
+                        colShift = "Shift",
+                        colHours = "Hours",
+                        colBreak = "Break",
+                        colWorked = "Worked",
+                        shiftMorning = "Morning",
+                        shiftDay = "Day",
+                        shiftNight = "Night",
                         defaultDescription = { month -> "Work performed in $month" }
                     )
                     InvoiceLanguage.SLOVAK -> PdfTexts(
@@ -966,6 +1070,15 @@ class InvoicePdfGenerator(private val context: Context) {
                         paidByAdvances = "Uhradené zálohami:",
                         remaining = "Zostáva uhradiť:",
                         amountDue = "K úhrade:",
+                        annexTitle = "Príloha — rozpis dní k faktúre",
+                        colDate = "Dátum",
+                        colShift = "Zmena",
+                        colHours = "Hodiny",
+                        colBreak = "Prestávka",
+                        colWorked = "Odpracované",
+                        shiftMorning = "Ranná",
+                        shiftDay = "Denná",
+                        shiftNight = "Nočná",
                         defaultDescription = { month -> "Fakturujem Vám za vykonanú prácu v mesiaci $month" }
                     )
                 }
@@ -973,6 +1086,8 @@ class InvoicePdfGenerator(private val context: Context) {
     }
 
     private companion object {
+        const val ANNEX_ROWS_PER_PAGE = 45
+        const val ANNEX_ROW_HEIGHT = 15f
         const val PAGE_WIDTH = 595
         const val PAGE_HEIGHT = 842
         const val OUTER_LEFT = 28f

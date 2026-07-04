@@ -3,14 +3,14 @@ package com.example.worktr.util
 import com.example.worktr.data.Client
 
 object ClientDefaults {
-    const val NAME = "Demo klient s.r.o."
-    const val STREET = "Obchodná 24"
-    const val CITY = "Bratislava"
-    const val ZIP = "81106"
+    const val NAME = ""
+    const val STREET = ""
+    const val CITY = ""
+    const val ZIP = ""
     const val COUNTRY = "Slovensko"
-    const val ICO = "87654321"
-    const val DIC = "2120000000"
-    const val ICDPH = "SK2120000000"
+    const val ICO = ""
+    const val DIC = ""
+    const val ICDPH = ""
     const val SERVICE_TEMPLATE =
         "Fakturujem Vám za vykonanú prácu – kontrolu kvality v mesiaci {month}"
 

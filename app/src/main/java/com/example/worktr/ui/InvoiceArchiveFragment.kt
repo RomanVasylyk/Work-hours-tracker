@@ -32,6 +32,7 @@ import com.example.worktr.util.InvoiceInput
 import com.example.worktr.util.InvoiceInputJson
 import com.example.worktr.util.InvoiceLanguage
 import com.example.worktr.util.InvoicePdfGenerator
+import com.example.worktr.util.InvoicePrefs
 import com.example.worktr.util.InvoiceRules
 import com.example.worktr.util.InvoiceStatus
 import com.example.worktr.util.workedHours
@@ -51,8 +52,6 @@ import java.text.NumberFormat
 import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
-private const val INVOICE_DUE_DAYS = 15L
 
 class InvoiceArchiveFragment : Fragment() {
     private var _binding: FragmentInvoiceArchiveBinding? = null
@@ -194,7 +193,7 @@ class InvoiceArchiveFragment : Fragment() {
                 (selectedYear == null || invoice.periodYear == selectedYear) &&
                 (selectedMonth == null || invoice.periodMonth == selectedMonth) &&
                 (selectedClient == null || invoice.customerName == selectedClient) &&
-                (selectedStatus == null || InvoiceStatus.fromValue(invoice.status) == selectedStatus)
+                (selectedStatus == null || InvoiceStatus.effective(invoice) == selectedStatus)
         }
         adapter.submitList(filtered)
         binding.textEmptyInvoices.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
@@ -296,10 +295,11 @@ class InvoiceArchiveFragment : Fragment() {
             addExtraItemRow(dialogBinding.layoutExtraItemsContainer)
         }
         dialogBinding.editIssueDate.setText(input.issueDate.toString())
+        val dueDays = InvoicePrefs.dueDays(InvoicePrefs.get(requireContext()))
         fun updateDueDatePreview() {
             val issueDate = dialogBinding.editIssueDate.value().let { runCatching { LocalDate.parse(it) }.getOrNull() }
             dialogBinding.textDueDatePreview.text = if (issueDate != null) {
-                getString(R.string.invoice_due_date_auto, issueDate.plusDays(INVOICE_DUE_DAYS).toString())
+                getString(R.string.invoice_due_date_auto, issueDate.plusDays(dueDays).toString())
             } else {
                 getString(R.string.invoice_due_date_auto, input.dueDate.toString())
             }
@@ -333,7 +333,7 @@ class InvoiceArchiveFragment : Fragment() {
                     currency = dialogBinding.editCurrency.value().uppercase(Locale.ROOT).ifBlank { "EUR" },
                     pdfLanguage = InvoiceLanguage.fromLabel(dialogBinding.inputPdfLanguage.text?.toString().orEmpty()).code,
                     issueDate = issueDate,
-                    dueDate = issueDate.plusDays(INVOICE_DUE_DAYS)
+                    dueDate = issueDate.plusDays(dueDays)
                 )
             }.getOrElse {
                 Snackbar.make(dialogBinding.root, it.message ?: getString(R.string.invoice_open_failed), Snackbar.LENGTH_LONG).show()

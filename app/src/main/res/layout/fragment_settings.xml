@@ -286,6 +286,22 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.WorkTracker.TextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:hint="@string/settings_due_days">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editDueDays"
+                        style="@style/Widget.WorkTracker.TextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:maxLength="3" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/layoutPdfLanguage"
                     style="@style/Widget.WorkTracker.TextInputLayout.Dropdown"
                     android:layout_width="match_parent"
@@ -480,6 +496,13 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:text="@string/auto_backup_folder" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchInvoiceReminder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/settings_invoice_reminder" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

@@ -34,8 +34,7 @@ import com.example.worktr.util.CsvImporter
 import com.example.worktr.util.CsvImportSummary
 import com.example.worktr.util.CsvExporter
 import com.example.worktr.util.WorkBackupManager
-import com.example.worktr.util.salaryBreakdown
-import com.example.worktr.util.workedHours
+import com.example.worktr.util.WorkSummaries
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -227,13 +226,15 @@ class JobListFragment : Fragment() {
             db.workEntryDao().getAllEntriesForPeriod(start, end)
                 .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { entries ->
-                    val hours = entries.sumOf { it.workedHours() }
-                    val salary = entries.sumOf { it.salaryBreakdown(zone).total }
+                    val monthSummary = WorkSummaries.summarize(entries, zone)
+                    val hours = monthSummary.hours
+                    val salary = monthSummary.totalSalary
                     val summaries = entries.groupBy { it.jobId }
                         .mapValues { (_, jobEntries) ->
+                            val jobSummary = WorkSummaries.summarize(jobEntries, zone)
                             JobMonthSummary(
-                                hours = jobEntries.sumOf { it.workedHours() },
-                                salary = jobEntries.sumOf { it.salaryBreakdown(zone).total }
+                                hours = jobSummary.hours,
+                                salary = jobSummary.totalSalary
                             )
                         }
                     binding.textCurrentHours.text = getString(

@@ -34,6 +34,9 @@ interface WorkEntryDao {
     @Query("SELECT * FROM work_entries WHERE jobId = :jobId AND date BETWEEN :start AND :end ORDER BY entryId DESC LIMIT 1")
     suspend fun getEntryForDay(jobId: Int, start: Long, end: Long): WorkEntry?
 
+    @Query("SELECT * FROM work_entries WHERE jobId = :jobId ORDER BY date DESC, entryId DESC LIMIT 1")
+    suspend fun getLatestEntry(jobId: Int): WorkEntry?
+
     @Query("SELECT * FROM work_entries ORDER BY date")
     suspend fun getAllEntriesList(): List<WorkEntry>
 

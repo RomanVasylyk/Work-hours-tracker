@@ -10,14 +10,12 @@ import com.example.worktr.R
 import com.example.worktr.data.DatabaseProvider
 import com.example.worktr.databinding.FragmentMonthOverviewBinding
 import com.example.worktr.ui.responsive.ResponsiveUi
-import com.example.worktr.util.salaryBreakdown
-import com.example.worktr.util.workedHours
+import com.example.worktr.util.WorkSummaries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.NumberFormat
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -68,24 +66,21 @@ class MonthOverviewFragment : Fragment() {
             val entries = data.first
             val jobs = data.second
             val invoices = data.third
-            val hours = entries.sumOf { it.workedHours() }
-            val salary = entries.sumOf { it.salaryBreakdown(zone).total }
-            val days = entries.map { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }.distinct().size
+            val summary = WorkSummaries.summarize(entries, zone)
 
-            binding.textMonthHours.text = getString(R.string.month_stat_hours, hoursFormat.format(hours))
-            binding.textMonthSalary.text = getString(R.string.month_stat_salary, numberFormat.format(salary))
-            binding.textMonthDays.text = getString(R.string.month_stat_days, days)
+            binding.textMonthHours.text = getString(R.string.month_stat_hours, hoursFormat.format(summary.hours))
+            binding.textMonthSalary.text = getString(R.string.month_stat_salary, numberFormat.format(summary.totalSalary))
+            binding.textMonthDays.text = getString(R.string.month_stat_days, summary.daysWorked)
             binding.textMonthInvoices.text = getString(R.string.month_stat_invoices, invoices.size)
             binding.textMonthJobs.text = entries.groupBy { it.jobId }
                 .map { (jobId, jobEntries) ->
                     val jobName = jobs[jobId]?.name ?: "Job $jobId"
-                    val jobHours = jobEntries.sumOf { it.workedHours() }
-                    val jobSalary = jobEntries.sumOf { it.salaryBreakdown(zone).total }
+                    val jobSummary = WorkSummaries.summarize(jobEntries, zone)
                     getString(
                         R.string.month_job_line,
                         jobName,
-                        hoursFormat.format(jobHours),
-                        numberFormat.format(jobSalary)
+                        hoursFormat.format(jobSummary.hours),
+                        numberFormat.format(jobSummary.totalSalary)
                     )
                 }
                 .ifEmpty { listOf(getString(R.string.month_no_jobs)) }

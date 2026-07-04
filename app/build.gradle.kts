@@ -22,8 +22,8 @@ android {
         applicationId = "com.example.worktr"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -69,6 +69,16 @@ ksp {
     arg("room.incremental", "true")
 }
 
+// Keep the R8 mapping of every release so obfuscated stack traces stay readable.
+val archiveReleaseMapping = tasks.register<Copy>("archiveReleaseMapping") {
+    from(layout.buildDirectory.file("outputs/mapping/release/mapping.txt"))
+    into(rootProject.layout.projectDirectory.dir("release-mappings"))
+    rename { "mapping-${android.defaultConfig.versionName}.txt" }
+}
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+    finalizedBy(archiveReleaseMapping)
+}
+
 dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("io.github.janhalasa:pay-by-square-java:1.0.0") {
@@ -94,7 +104,12 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
+    implementation(libs.androidx.work.runtime)
+
     testImplementation(libs.junit)
+    // Real org.json for JVM unit tests (the android.jar stub throws).
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.room.testing)
 }

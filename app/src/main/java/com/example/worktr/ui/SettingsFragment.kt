@@ -1,8 +1,11 @@
 package com.example.worktr.ui
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -26,8 +30,10 @@ import com.example.worktr.util.InvoicePrefs
 import com.example.worktr.util.LanguagePreferences
 import com.example.worktr.util.SecureInvoicePrefs
 import com.example.worktr.util.WorkBackupManager
+import com.example.worktr.worker.InvoiceReminderWorker
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
@@ -52,6 +58,13 @@ class SettingsFragment : Fragment() {
     private val autoBackupFolderLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
         if (uri != null) saveAutoBackupFolder(uri)
     }
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) {
+                view?.findViewById<MaterialSwitch>(R.id.switchInvoiceReminder)?.isChecked = false
+                saveReminderEnabled(false)
+            }
+        }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
         inflater.inflate(R.layout.fragment_settings, container, false)
@@ -63,6 +76,7 @@ class SettingsFragment : Fragment() {
         loadSettings(view)
         setupLanguagePickers(view)
         setupAutoBackup(view)
+        setupInvoiceReminder(view)
 
         view.findViewById<MaterialButton>(R.id.buttonSaveSettings).setOnClickListener {
             saveSettings(view)
@@ -98,6 +112,7 @@ class SettingsFragment : Fragment() {
         view.input(R.id.editIban).setText(SecureInvoicePrefs.readIban(requireContext()))
         view.input(R.id.editBic).setText(SecureInvoicePrefs.readBic(requireContext()))
         view.input(R.id.editCurrency).setText(prefs.getString(InvoicePrefs.PREF_CURRENCY, "EUR"))
+        view.input(R.id.editDueDays).setText(InvoicePrefs.dueDays(prefs).toString())
         view.input(R.id.editExtraName).setText(prefs.getString(InvoicePrefs.PREF_EXTRA_NAME, InvoicePrefs.DEFAULT_EXTRA_NAME))
         view.input(R.id.editExtraQuantity).setText(prefs.getString(InvoicePrefs.PREF_EXTRA_QUANTITY, InvoicePrefs.DEFAULT_EXTRA_QUANTITY))
         view.input(R.id.editExtraUnit).setText(prefs.getString(InvoicePrefs.PREF_EXTRA_UNIT, InvoicePrefs.DEFAULT_EXTRA_UNIT))
@@ -113,6 +128,11 @@ class SettingsFragment : Fragment() {
             .putString(InvoicePrefs.PREF_SUPPLIER_COUNTRY, view.input(R.id.editSupplierCountry).value())
             .putString(InvoicePrefs.PREF_SUPPLIER_ICO, view.input(R.id.editSupplierIco).value())
             .putString(InvoicePrefs.PREF_CURRENCY, view.input(R.id.editCurrency).value().uppercase(Locale.ROOT).ifBlank { "EUR" })
+            .putInt(
+                InvoicePrefs.PREF_DUE_DAYS,
+                view.input(R.id.editDueDays).value().toIntOrNull()?.coerceIn(1, 365)
+                    ?: InvoicePrefs.DEFAULT_DUE_DAYS
+            )
             .putString(
                 InvoicePrefs.PREF_PDF_LANGUAGE,
                 InvoiceLanguage.fromLabel(
@@ -221,6 +241,33 @@ class SettingsFragment : Fragment() {
                 Snackbar.make(requireView(), R.string.auto_backup_saved, Snackbar.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun setupInvoiceReminder(view: View) {
+        val switch = view.findViewById<MaterialSwitch>(R.id.switchInvoiceReminder)
+        switch.isChecked = requireContext()
+            .getSharedPreferences(AutoBackupManager.BACKUP_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(InvoiceReminderWorker.PREF_INVOICE_REMINDER_ENABLED, false)
+        switch.setOnCheckedChangeListener { _, isChecked ->
+            saveReminderEnabled(isChecked)
+            if (isChecked &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun saveReminderEnabled(enabled: Boolean) {
+        requireContext()
+            .getSharedPreferences(AutoBackupManager.BACKUP_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(InvoiceReminderWorker.PREF_INVOICE_REMINDER_ENABLED, enabled)
+            .apply()
     }
 
     private fun updateAutoBackupFolderLabel(view: View) {

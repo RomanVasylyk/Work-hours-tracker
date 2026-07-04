@@ -44,9 +44,7 @@ import com.example.worktr.util.InvoiceRules
 import com.example.worktr.util.PaymentValidation
 import com.example.worktr.util.PaymentValidationResult
 import com.example.worktr.util.SecureInvoicePrefs
-import com.example.worktr.util.ShiftType
-import com.example.worktr.util.localDate
-import com.example.worktr.util.salaryBreakdown
+import com.example.worktr.util.WorkSummaries
 import com.example.worktr.util.workedHours
 import com.example.worktr.viewmodel.JobDetailViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -61,7 +59,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.NumberFormat
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -235,80 +232,44 @@ class JobDetailFragment : Fragment() {
             workRepository.getEntriesForPeriod(args.jobId, start, end)
                 .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { list ->
-                    var hours = 0.0
-                    var morning = 0; var dayCount = 0; var night = 0
-                    var baseSalary = 0.0
-
-                    var bonusNight = 0.0
-                    var bonusSat = 0.0
-                    var bonusSun = 0.0
-                    var bonusHol = 0.0
-
-                    val dates = mutableSetOf<LocalDate>()
-                    val holidayDates = mutableSetOf<LocalDate>()
-                    var holidays = 0; var saturdays = 0; var sundays = 0
-
-                    list.forEach { entry ->
-                        hours += entry.workedHours()
-
-                        when (ShiftType.fromStored(entry.shiftType)) {
-                            ShiftType.MORNING -> morning++
-                            ShiftType.DAY -> dayCount++
-                            ShiftType.NIGHT -> night++
-                        }
-
-                        val date = entry.localDate(zone)
-                        if (dates.add(date)) {
-                            if (date.dayOfWeek == DayOfWeek.SATURDAY) saturdays++
-                            if (date.dayOfWeek == DayOfWeek.SUNDAY)   sundays++
-                        }
-                        if (entry.isHoliday) holidayDates.add(date)
-
-                        val breakdown = entry.salaryBreakdown(zone)
-                        baseSalary += breakdown.base
-                        bonusNight += breakdown.night
-                        bonusSat += breakdown.saturday
-                        bonusSun += breakdown.sunday
-                        bonusHol += breakdown.holiday
-                    }
-                    holidays = holidayDates.size
+                    val summary = WorkSummaries.summarize(list, zone)
 
                     binding.textMonth.text =
                         "${resources.getStringArray(R.array.months)[month - 1]} $year"
                     binding.textHours.text =
-                        getString(R.string.job_detail_hours_value, formatInvoiceQuantity(hours))
+                        getString(R.string.job_detail_hours_value, formatInvoiceQuantity(summary.hours))
                     binding.textHeroMeta.text =
                         getString(
                             R.string.job_detail_meta,
-                            dates.size,
+                            summary.daysWorked,
                             formatInvoiceNumber(currentWorkJob?.hourlyRate ?: 0.0)
                         )
                     binding.textDays.text =
-                        getString(R.string.days_worked_format, dates.size)
+                        getString(R.string.days_worked_format, summary.daysWorked)
                     binding.textMorning.text =
-                        getString(R.string.morning_shifts_format, morning)
+                        getString(R.string.morning_shifts_format, summary.morningShifts)
                     binding.textDay.text =
-                        getString(R.string.day_shifts_format, dayCount)
+                        getString(R.string.day_shifts_format, summary.dayShifts)
                     binding.textNight.text =
-                        getString(R.string.night_shifts_format, night)
+                        getString(R.string.night_shifts_format, summary.nightShifts)
                     binding.textHolidays.text =
-                        getString(R.string.holiday_days_format, holidays)
+                        getString(R.string.holiday_days_format, summary.holidayDays)
                     binding.textSaturday.text =
-                        getString(R.string.saturday_days_format, saturdays)
+                        getString(R.string.saturday_days_format, summary.saturdays)
                     binding.textSunday.text =
-                        getString(R.string.sunday_days_format, sundays)
+                        getString(R.string.sunday_days_format, summary.sundays)
                     binding.textNightBonus.text =
-                        getString(R.string.night_bonus_total, bonusNight)
+                        getString(R.string.night_bonus_total, summary.bonusNight)
                     binding.textSaturdayBonus.text =
-                        getString(R.string.saturday_bonus_total, bonusSat)
+                        getString(R.string.saturday_bonus_total, summary.bonusSaturday)
                     binding.textSundayBonus.text =
-                        getString(R.string.sunday_bonus_total, bonusSun)
+                        getString(R.string.sunday_bonus_total, summary.bonusSunday)
                     binding.textHolidayBonus.text =
-                        getString(R.string.holiday_bonus_total, bonusHol)
+                        getString(R.string.holiday_bonus_total, summary.bonusHoliday)
                     binding.textSalary.text =
                         getString(
                             R.string.job_detail_salary_value,
-                            formatInvoiceNumber(baseSalary + bonusNight + bonusSat + bonusSun + bonusHol)
+                            formatInvoiceNumber(summary.totalSalary)
                         )
                 }
         }
@@ -346,6 +307,10 @@ class JobDetailFragment : Fragment() {
                             }
                             true
                         }
+                        R.id.action_repeat_last -> {
+                            repeatLastEntryForToday()
+                            true
+                        }
                         R.id.action_import -> {
                             launchImportPicker()
                             true
@@ -364,6 +329,40 @@ class JobDetailFragment : Fragment() {
             viewLifecycleOwner,
             Lifecycle.State.RESUMED
         )
+    }
+
+    private fun repeatLastEntryForToday() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val zone = ZoneId.systemDefault()
+            val todayStart = LocalDate.now().atStartOfDay(zone).toInstant().toEpochMilli()
+            val todayEnd = LocalDate.now().plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+            val lastEntry = workRepository.getLatestEntry(args.jobId)
+            if (lastEntry == null) {
+                Snackbar.make(binding.root, R.string.repeat_last_empty, Snackbar.LENGTH_LONG).show()
+                return@launch
+            }
+            val existing = workRepository.getEntryForDay(args.jobId, todayStart, todayEnd)
+            if (existing != null) {
+                Snackbar.make(binding.root, R.string.repeat_last_exists, Snackbar.LENGTH_LONG).show()
+                return@launch
+            }
+            // Copy hours/break/shift from the last entry, but take a fresh
+            // rate snapshot from the job and never inherit the holiday flag.
+            val job = currentWorkJob
+            workRepository.insert(
+                lastEntry.copy(
+                    entryId = 0,
+                    date = todayStart,
+                    isHoliday = false,
+                    hourlyRate = job?.hourlyRate ?: lastEntry.hourlyRate,
+                    nightBonus = job?.nightBonus ?: lastEntry.nightBonus,
+                    saturdayBonus = job?.saturdayBonus ?: lastEntry.saturdayBonus,
+                    sundayBonus = job?.sundayBonus ?: lastEntry.sundayBonus,
+                    holidayBonus = job?.holidayBonus ?: lastEntry.holidayBonus
+                )
+            )
+            Snackbar.make(binding.root, R.string.repeat_last_done, Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupCalendarResults() {
@@ -432,6 +431,7 @@ class JobDetailFragment : Fragment() {
                 val unitPrice = calculation.unitPrice
                 val paymentValidation = PaymentValidation.validatePayment(draft.iban, draft.bic)
                 val checklist = listOf(
+                    ChecklistItem(getString(R.string.invoice_checklist_supplier), draft.supplier.name.isNotBlank()),
                     ChecklistItem(getString(R.string.invoice_checklist_iban), paymentValidation !is PaymentValidationResult.InvalidIban),
                     ChecklistItem(getString(R.string.invoice_checklist_bic), paymentValidation is PaymentValidationResult.Valid),
                     ChecklistItem(getString(R.string.invoice_checklist_client), draft.customer.name.isNotBlank()),
@@ -608,6 +608,7 @@ class JobDetailFragment : Fragment() {
         }
 
         val issueDate = LocalDate.now()
+        val dueDays = InvoicePrefs.dueDays(InvoicePrefs.get(requireContext()))
         val start = period.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val end = period.atEndOfMonth()
             .plusDays(1)
@@ -649,7 +650,7 @@ class JobDetailFragment : Fragment() {
                         bic = validPayment.bic,
                         variableSymbol = variableSymbol(draft.invoiceNumber),
                         issueDate = issueDate,
-                        dueDate = issueDate.plusDays(15)
+                        dueDate = issueDate.plusDays(dueDays)
                     )
                     val generatedFile = InvoicePdfGenerator(appContext).generate(job, entries, period, input)
                     val archiveFile = InvoiceFiles.persist(appContext, generatedFile)

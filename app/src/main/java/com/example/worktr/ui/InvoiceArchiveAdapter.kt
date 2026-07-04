@@ -78,7 +78,7 @@ class InvoiceArchiveAdapter(
     }
 
     private fun InvoiceRecord.statusLabel(context: android.content.Context): String =
-        when (InvoiceStatus.fromValue(status)) {
+        when (InvoiceStatus.effective(this)) {
             InvoiceStatus.CREATED -> context.getString(R.string.invoice_status_created)
             InvoiceStatus.SENT -> context.getString(R.string.invoice_status_sent)
             InvoiceStatus.PAID -> context.getString(R.string.invoice_status_paid)
@@ -86,7 +86,7 @@ class InvoiceArchiveAdapter(
         }
 
     private fun InvoiceRecord.statusColor(context: Context): Int =
-        when (InvoiceStatus.fromValue(status)) {
+        when (InvoiceStatus.effective(this)) {
             InvoiceStatus.CREATED -> ContextCompat.getColor(context, R.color.chart_highlight)
             InvoiceStatus.SENT -> ContextCompat.getColor(context, R.color.calendar_selected_fill)
             InvoiceStatus.PAID -> ContextCompat.getColor(context, R.color.primary)
