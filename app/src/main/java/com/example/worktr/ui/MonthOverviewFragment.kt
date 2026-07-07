@@ -24,6 +24,7 @@ import java.util.Locale
 class MonthOverviewFragment : Fragment() {
     private var _binding: FragmentMonthOverviewBinding? = null
     private val binding get() = _binding!!
+    private var currentPeriod: YearMonth = YearMonth.now()
     private val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
@@ -42,12 +43,22 @@ class MonthOverviewFragment : Fragment() {
         val profile = ResponsiveUi.profile(requireContext())
         ResponsiveUi.applyOuterPadding(binding.monthScroll, profile)
         ResponsiveUi.applyContentPadding(binding.monthContent, profile)
+        binding.buttonPrevOverviewMonth.setOnClickListener { showMonth(currentPeriod.minusMonths(1)) }
+        binding.buttonNextOverviewMonth.setOnClickListener { showMonth(currentPeriod.plusMonths(1)) }
+        attachHorizontalSwipe(binding.monthScroll) { forward ->
+            showMonth(if (forward) currentPeriod.plusMonths(1) else currentPeriod.minusMonths(1))
+        }
+        loadMonth()
+    }
+
+    private fun showMonth(period: YearMonth) {
+        currentPeriod = period
         loadMonth()
     }
 
     private fun loadMonth() {
         val zone = ZoneId.systemDefault()
-        val period = YearMonth.now()
+        val period = currentPeriod
         val month = resources.getStringArray(R.array.months)[period.monthValue - 1]
         binding.textMonthTitle.text = "$month ${period.year}"
         val start = period.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()

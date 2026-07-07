@@ -40,7 +40,6 @@ import java.text.NumberFormat
 import java.time.*
 import java.time.format.TextStyle
 import java.util.*
-import kotlin.math.abs
 import kotlin.math.max
 
 @AndroidEntryPoint
@@ -307,34 +306,11 @@ class CalendarDialogFragment : DialogFragment() {
      */
     @android.annotation.SuppressLint("ClickableViewAccessibility")
     private fun attachMonthSwipe(grid: GridView, view: View) {
-        val minDistancePx = ResponsiveUi.dp(requireContext(), 56)
-        val minVelocity = ViewConfiguration.get(requireContext()).scaledMinimumFlingVelocity * 2
-        val detector = GestureDetector(
-            requireContext(),
-            object : GestureDetector.SimpleOnGestureListener() {
-                override fun onFling(
-                    e1: MotionEvent?,
-                    e2: MotionEvent,
-                    velocityX: Float,
-                    velocityY: Float
-                ): Boolean {
-                    e1 ?: return false
-                    val dx = e2.x - e1.x
-                    val dy = e2.y - e1.y
-                    if (abs(dx) > abs(dy) && abs(dx) > minDistancePx && abs(velocityX) > minVelocity) {
-                        showMonth(
-                            if (dx > 0) currentMonth.minusMonths(1) else currentMonth.plusMonths(1),
-                            view
-                        )
-                        return true
-                    }
-                    return false
-                }
-            }
-        )
-        grid.setOnTouchListener { _, event ->
-            detector.onTouchEvent(event)
-            false
+        attachHorizontalSwipe(grid) { forward ->
+            showMonth(
+                if (forward) currentMonth.plusMonths(1) else currentMonth.minusMonths(1),
+                view
+            )
         }
     }
 
@@ -343,8 +319,6 @@ class CalendarDialogFragment : DialogFragment() {
         val first = currentMonth.atDay(1)
         val offset = first.dayOfWeek.ordinal
         days.clear()
-        selectedDates.clear()
-        selectionMode = null
         updateSelectionUi()
         repeat(offset) { days.add(null) }
         (1..currentMonth.lengthOfMonth()).map { currentMonth.atDay(it) }.forEach { days.add(it) }
