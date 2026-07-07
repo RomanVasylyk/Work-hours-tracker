@@ -29,10 +29,8 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.example.worktr.viewmodel.JobDetailViewModel
-import com.example.worktr.ui.chart.chartMarker
+import com.example.worktr.ui.chart.ChartStyle
 import com.patrykandpatrick.vico.core.cartesian.CartesianChart
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
@@ -41,6 +39,9 @@ import com.patrykandpatrick.vico.core.cartesian.layer.ColumnCartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.common.Fill
 import com.patrykandpatrick.vico.core.common.component.LineComponent
+import com.patrykandpatrick.vico.core.common.component.ShapeComponent
+import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
+import com.patrykandpatrick.vico.core.common.shape.CorneredShape
 import com.patrykandpatrick.vico.views.cartesian.CartesianChartView
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -49,6 +50,8 @@ import kotlinx.coroutines.Job as CoroutineJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
+import java.text.NumberFormat
 import java.time.*
 import java.time.DayOfWeek
 import java.time.Instant
@@ -66,6 +69,9 @@ class StatsFragment : Fragment() {
     private val hoursProducer = CartesianChartModelProducer()
     private val salaryProducer = CartesianChartModelProducer()
     private var axisLabels: List<String> = emptyList()
+    private val axisNumberFormatter = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+        maximumFractionDigits = 0
+    }
     private lateinit var yearSpinner: DynamicYearSpinner
     private lateinit var monthLabels: List<String>
     private var currentJob: Job? = null
@@ -287,26 +293,51 @@ class StatsFragment : Fragment() {
 
     private fun setupCharts() {
         val context = requireContext()
-        val axisLabelFormatter = CartesianValueFormatter { _, value, _ ->
+        val periodLabelFormatter = CartesianValueFormatter { _, value, _ ->
             axisLabels.getOrElse(value.roundToInt() - 1) { "" }
         }
+        val hoursAxisFormatter = CartesianValueFormatter { _, value, _ ->
+            axisNumberFormatter.format(value)
+        }
+        val moneyAxisFormatter = CartesianValueFormatter { _, value, _ ->
+            "${axisNumberFormatter.format(value)} €"
+        }
 
+        // ----- Hours: smooth line with a fading area fill and hollow points -----
         val hoursColor = ContextCompat.getColor(context, R.color.chart_hours_line)
+        val hoursPoint = LineCartesianLayer.Point(
+            component = ShapeComponent(
+                fill = Fill(ContextCompat.getColor(context, R.color.surface)),
+                shape = CorneredShape.Pill,
+                strokeThicknessDp = 2.5f,
+                strokeFill = Fill(hoursColor),
+            ),
+            sizeDp = 9f,
+        )
         val hoursLine = LineCartesianLayer.Line(
             fill = LineCartesianLayer.LineFill.single(Fill(hoursColor)),
             stroke = LineCartesianLayer.LineStroke.Continuous(thicknessDp = 3f),
             areaFill = LineCartesianLayer.AreaFill.single(
-                Fill(ColorUtils.setAlphaComponent(hoursColor, 60))
-            )
+                Fill(
+                    ShaderProvider.verticalGradient(
+                        ColorUtils.setAlphaComponent(hoursColor, 90),
+                        ColorUtils.setAlphaComponent(hoursColor, 0),
+                    )
+                )
+            ),
+            pointProvider = LineCartesianLayer.PointProvider.single(hoursPoint),
+            pointConnector = LineCartesianLayer.PointConnector.cubic(curvature = 0.4f),
         )
         chartHours.chart = CartesianChart(
             LineCartesianLayer(LineCartesianLayer.LineProvider.series(hoursLine)),
-            startAxis = VerticalAxis.start(),
-            bottomAxis = HorizontalAxis.bottom(valueFormatter = axisLabelFormatter),
-            marker = chartMarker(context)
+            startAxis = ChartStyle.startAxis(context, hoursAxisFormatter),
+            bottomAxis = ChartStyle.bottomAxis(context, periodLabelFormatter),
+            marker = ChartStyle.marker(context, DecimalFormat("#.#")),
         )
         chartHours.modelProducer = hoursProducer
 
+        // ----- Salary: softly rounded stacked columns + invoice trend line -----
+        val salaryShape = CorneredShape.rounded(allDp = 3f)
         val salaryColumns = listOf(
             R.color.chart_salary_base,
             R.color.chart_salary_night,
@@ -314,13 +345,27 @@ class StatsFragment : Fragment() {
             R.color.chart_salary_sunday,
             R.color.chart_salary_holiday
         ).map { colorRes ->
-            LineComponent(fill = Fill(ContextCompat.getColor(context, colorRes)), thicknessDp = 10f)
+            LineComponent(
+                fill = Fill(ContextCompat.getColor(context, colorRes)),
+                thicknessDp = 12f,
+                shape = salaryShape,
+            )
         }
-        val invoiceLine = LineCartesianLayer.Line(
-            fill = LineCartesianLayer.LineFill.single(
-                Fill(ContextCompat.getColor(context, R.color.chart_invoice_bar))
+        val invoiceColor = ContextCompat.getColor(context, R.color.chart_invoice_bar)
+        val invoicePoint = LineCartesianLayer.Point(
+            component = ShapeComponent(
+                fill = Fill(ContextCompat.getColor(context, R.color.surface)),
+                shape = CorneredShape.Pill,
+                strokeThicknessDp = 2f,
+                strokeFill = Fill(invoiceColor),
             ),
-            stroke = LineCartesianLayer.LineStroke.Continuous(thicknessDp = 2f)
+            sizeDp = 7f,
+        )
+        val invoiceLine = LineCartesianLayer.Line(
+            fill = LineCartesianLayer.LineFill.single(Fill(invoiceColor)),
+            stroke = LineCartesianLayer.LineStroke.Continuous(thicknessDp = 2.5f),
+            pointProvider = LineCartesianLayer.PointProvider.single(invoicePoint),
+            pointConnector = LineCartesianLayer.PointConnector.cubic(curvature = 0.4f),
         )
         chartSalary.chart = CartesianChart(
             ColumnCartesianLayer(
@@ -328,9 +373,9 @@ class StatsFragment : Fragment() {
                 mergeMode = { ColumnCartesianLayer.MergeMode.Stacked }
             ),
             LineCartesianLayer(LineCartesianLayer.LineProvider.series(invoiceLine)),
-            startAxis = VerticalAxis.start(),
-            bottomAxis = HorizontalAxis.bottom(valueFormatter = axisLabelFormatter),
-            marker = chartMarker(context)
+            startAxis = ChartStyle.startAxis(context, moneyAxisFormatter),
+            bottomAxis = ChartStyle.bottomAxis(context, periodLabelFormatter),
+            marker = ChartStyle.marker(context, DecimalFormat("#.## €")),
         )
         chartSalary.modelProducer = salaryProducer
     }

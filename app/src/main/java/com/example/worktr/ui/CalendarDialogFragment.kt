@@ -40,6 +40,7 @@ import java.text.NumberFormat
 import java.time.*
 import java.time.format.TextStyle
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.max
 
 @AndroidEntryPoint
@@ -106,29 +107,20 @@ class CalendarDialogFragment : DialogFragment() {
             render(view)
         }
         view.findViewById<MaterialButton>(R.id.buttonToday).setOnClickListener {
-            currentMonth = YearMonth.now()
-            yearSpinner.setYear(currentMonth.year)
-            render(view)
+            showMonth(YearMonth.now(), view)
         }
 
         // Prev/Next buttons
         val btnPrev = view.findViewById<ImageButton>(R.id.buttonPrevMonth)
         val btnNext = view.findViewById<ImageButton>(R.id.buttonNextMonth)
-        btnPrev.setOnClickListener {
-            currentMonth = currentMonth.minusMonths(1)
-            yearSpinner.setYear(currentMonth.year)
-            render(view)
-        }
-        btnNext.setOnClickListener {
-            currentMonth = currentMonth.plusMonths(1)
-            yearSpinner.setYear(currentMonth.year)
-            render(view)
-        }
+        btnPrev.setOnClickListener { showMonth(currentMonth.minusMonths(1), view) }
+        btnNext.setOnClickListener { showMonth(currentMonth.plusMonths(1), view) }
 
         // Calendar grid
         val grid = view.findViewById<GridView>(R.id.calendarGridDialog)
         grid.isNestedScrollingEnabled = false
         grid.adapter = adapter
+        attachMonthSwipe(grid, view)
         grid.onItemClickListener = AdapterView.OnItemClickListener { _, _, pos, _ ->
             val date = days[pos] ?: return@OnItemClickListener
             if (selectedDates.isNotEmpty()) {
@@ -298,6 +290,51 @@ class CalendarDialogFragment : DialogFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             repo.deleteEntriesForDates(jobId, millis)
             dismiss()
+        }
+    }
+
+    private fun showMonth(month: YearMonth, view: View) {
+        currentMonth = month
+        yearSpinner.setYear(currentMonth.year)
+        render(view)
+    }
+
+    /**
+     * Horizontal fling on the day grid switches months: swiping right reveals
+     * the previous month, swiping left the next one. The touch listener only
+     * observes events (always returns false), so taps and long presses on the
+     * day cells keep working as before.
+     */
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private fun attachMonthSwipe(grid: GridView, view: View) {
+        val minDistancePx = ResponsiveUi.dp(requireContext(), 56)
+        val minVelocity = ViewConfiguration.get(requireContext()).scaledMinimumFlingVelocity * 2
+        val detector = GestureDetector(
+            requireContext(),
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float
+                ): Boolean {
+                    e1 ?: return false
+                    val dx = e2.x - e1.x
+                    val dy = e2.y - e1.y
+                    if (abs(dx) > abs(dy) && abs(dx) > minDistancePx && abs(velocityX) > minVelocity) {
+                        showMonth(
+                            if (dx > 0) currentMonth.minusMonths(1) else currentMonth.plusMonths(1),
+                            view
+                        )
+                        return true
+                    }
+                    return false
+                }
+            }
+        )
+        grid.setOnTouchListener { _, event ->
+            detector.onTouchEvent(event)
+            false
         }
     }
 
